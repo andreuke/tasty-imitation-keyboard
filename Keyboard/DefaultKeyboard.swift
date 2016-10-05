@@ -56,6 +56,7 @@ func defaultKeyboard() -> Keyboard {
     returnKey.lowercaseOutput = "\n"
     defaultKeyboard.addKey(returnKey, row: 3, page: 0)
     
+    
     for key in ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"] {
         let keyModel = Key(.SpecialCharacter)
         keyModel.setLetter(key)

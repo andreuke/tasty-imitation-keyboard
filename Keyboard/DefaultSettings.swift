@@ -66,6 +66,10 @@ class DefaultSettings: ExtraView, UITableViewDataSource, UITableViewDelegate {
         fatalError("loading from nib not supported")
     }
     
+    required init(globalColors: GlobalColors.Type?, darkMode: Bool, solidColorMode: Bool, outputFunc: () -> Void) {
+        fatalError("init(globalColors:darkMode:solidColorMode:outputFunc:) has not been implemented")
+    }
+    
     func loadNib() {
         let assets = NSBundle(forClass: self.dynamicType).loadNibNamed("DefaultSettings", owner: self, options: nil)
         

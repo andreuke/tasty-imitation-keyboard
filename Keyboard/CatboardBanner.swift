@@ -35,6 +35,10 @@ class CatboardBanner: ExtraView {
         fatalError("init(coder:) has not been implemented")
     }
     
+    required init(globalColors: GlobalColors.Type?, darkMode: Bool, solidColorMode: Bool, outputFunc: () -> Void) {
+        fatalError("init(globalColors:darkMode:solidColorMode:outputFunc:) has not been implemented")
+    }
+    
     override func setNeedsLayout() {
         super.setNeedsLayout()
     }

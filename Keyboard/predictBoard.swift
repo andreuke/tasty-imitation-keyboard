@@ -1,5 +1,5 @@
 //
-//  Catboard.swift
+//  predictboard.swift
 //  TransliteratingKeyboard
 //
 //  Created by Alexei Baboulevitch on 9/24/14.
@@ -9,20 +9,19 @@
 import UIKit
 
 /*
-This is the demo keyboard. If you're implementing your own keyboard, simply follow the example here and then
-set the name of your KeyboardViewController subclass in the Info.plist file.
-*/
-let kCatTypeEnabled = "kCatTypeEnabled"
+ This is the demo keyboard. If you're implementing your own keyboard, simply follow the example here and then
+ set the name of your KeyboardViewController subclass in the Info.plist file.
+ */
+let predictionEnabled = "predictionEnabled"
 
-class Catboard: KeyboardViewController {
+class predictBoard: KeyboardViewController {
     
     let takeDebugScreenshot: Bool = false
-    
     override init(nibName nibNameOrNil: String?, bundle nibBundleOrNil: NSBundle?) {
-        NSUserDefaults.standardUserDefaults().registerDefaults([kCatTypeEnabled: true])
+        NSUserDefaults.standardUserDefaults().registerDefaults([predictionEnabled: true])
         super.init(nibName: nibNameOrNil, bundle: nibBundleOrNil)
     }
-
+    
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
@@ -31,7 +30,7 @@ class Catboard: KeyboardViewController {
         let textDocumentProxy = self.textDocumentProxy
         let keyOutput = key.outputForCase(self.shiftState.uppercase())
         
-        if !NSUserDefaults.standardUserDefaults().boolForKey(kCatTypeEnabled) {
+        if !NSUserDefaults.standardUserDefaults().boolForKey(predictionEnabled) {
             textDocumentProxy.insertText(keyOutput)
             return
         }
@@ -56,8 +55,7 @@ class Catboard: KeyboardViewController {
                     textDocumentProxy.insertText(keyOutput)
                     return
                 }
-
-                textDocumentProxy.insertText("\(randomCat())")
+                //textDocumentProxy.insertText("\(autoComplete())")
                 textDocumentProxy.insertText(" ")
                 textDocumentProxy.insertText(keyOutput)
                 return
@@ -94,7 +92,7 @@ class Catboard: KeyboardViewController {
     }
     
     override func createBanner() -> ExtraView? {
-        return CatboardBanner(globalColors: self.dynamicType.globalColors, darkMode: false, solidColorMode: self.solidColorMode())
+        return predictboardBanner(globalColors: self.dynamicType.globalColors, darkMode: false, solidColorMode: self.solidColorMode(), outputFunc: autoComplete)
     }
     
     func takeScreenshotDelay() {
@@ -124,15 +122,13 @@ class Catboard: KeyboardViewController {
             self.view.backgroundColor = oldViewColor
         }
     }
+    
+    //added
+    func autoComplete() -> () {
+        let textDocumentProxy = self.textDocumentProxy
+        textDocumentProxy.insertText(String("AUTO"))
+    }
+    
 }
 
-func randomCat() -> String {
-    let cats = "🐱😺😸😹😽😻😿😾😼🙀"
-    
-    let numCats = cats.characters.count
-    let randomCat = arc4random() % UInt32(numCats)
-    
-    let index = cats.startIndex.advancedBy(Int(randomCat))
-    let character = cats[index]
-    return String(character)
-}
+
