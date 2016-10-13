@@ -124,9 +124,42 @@ class predictBoard: KeyboardViewController {
     }
     
     //added
-    func autoComplete() -> () {
+    func autoComplete(word:String) -> () {
         let textDocumentProxy = self.textDocumentProxy
-        textDocumentProxy.insertText(String("AUTO"))
+        
+        if let context = textDocumentProxy.documentContextBeforeInput
+        {
+            if context.characters.count > 0
+            {
+                var index = context.endIndex
+                index = index.predecessor()
+
+                while index > context.startIndex && context[index] != " "
+                {
+                        index = index.predecessor()
+
+                    textDocumentProxy.deleteBackward()
+                }
+                if index == context.startIndex && context[index] != " "
+                {
+                    textDocumentProxy.deleteBackward()
+                }
+            }
+        }
+        var insertionWord = word
+        if let postContext = textDocumentProxy.documentContextAfterInput
+        {
+            let postIndex = postContext.startIndex
+            if postContext[postIndex] != " " //add space if next word doesnt begin with space
+            {
+                insertionWord = word + " "
+            }
+        }
+        else //add space if you are the last added word.
+        {
+            insertionWord = word + " "
+        }
+        textDocumentProxy.insertText(insertionWord)
     }
     
 }
