@@ -17,8 +17,8 @@ let predictionEnabled = "predictionEnabled"
 class predictBoard: KeyboardViewController {
     
     let takeDebugScreenshot: Bool = false
-    override init(nibName nibNameOrNil: String?, bundle nibBundleOrNil: NSBundle?) {
-        NSUserDefaults.standardUserDefaults().registerDefaults([predictionEnabled: true])
+    override init(nibName nibNameOrNil: String?, bundle nibBundleOrNil: Bundle?) {
+        UserDefaults.standard.register(defaults: [predictionEnabled: true])
         super.init(nibName: nibNameOrNil, bundle: nibBundleOrNil)
     }
     
@@ -26,16 +26,16 @@ class predictBoard: KeyboardViewController {
         fatalError("init(coder:) has not been implemented")
     }
     
-    override func keyPressed(key: Key) {
+    override func keyPressed(_ key: Key) {
         let textDocumentProxy = self.textDocumentProxy
         let keyOutput = key.outputForCase(self.shiftState.uppercase())
         
-        if !NSUserDefaults.standardUserDefaults().boolForKey(predictionEnabled) {
+        if !UserDefaults.standard.bool(forKey: predictionEnabled) {
             textDocumentProxy.insertText(keyOutput)
             return
         }
         
-        if key.type == .Character || key.type == .SpecialCharacter {
+        if key.type == .character || key.type == .specialCharacter {
             if let context = textDocumentProxy.documentContextBeforeInput {
                 if context.characters.count < 2 {
                     textDocumentProxy.insertText(keyOutput)
@@ -44,13 +44,13 @@ class predictBoard: KeyboardViewController {
                 
                 var index = context.endIndex
                 
-                index = index.predecessor()
+                index = context.index(before: index)
                 if context[index] != " " {
                     textDocumentProxy.insertText(keyOutput)
                     return
                 }
                 
-                index = index.predecessor()
+                index = context.index(before: index)
                 if context[index] == " " {
                     textDocumentProxy.insertText(keyOutput)
                     return
@@ -83,7 +83,7 @@ class predictBoard: KeyboardViewController {
                 for rowKeys in page.rows {
                     for key in rowKeys {
                         if let keyView = self.layout!.viewForKey(key) {
-                            keyView.addTarget(self, action: "takeScreenshotDelay", forControlEvents: .TouchDown)
+                            keyView.addTarget(self, action: "takeScreenshotDelay", for: .touchDown)
                         }
                     }
                 }
@@ -92,16 +92,16 @@ class predictBoard: KeyboardViewController {
     }
     
     override func createBanner() -> ExtraView? {
-        return predictboardBanner(globalColors: self.dynamicType.globalColors, darkMode: false, solidColorMode: self.solidColorMode(), outputFunc: autoComplete)
+        return predictboardBanner(globalColors: type(of: self).globalColors, darkMode: false, solidColorMode: self.solidColorMode(), outputFunc: autoComplete)
     }
     
     func takeScreenshotDelay() {
-        NSTimer.scheduledTimerWithTimeInterval(0.1, target: self, selector: Selector("takeScreenshot"), userInfo: nil, repeats: false)
+        Timer.scheduledTimer(timeInterval: 0.1, target: self, selector: #selector(predictBoard.takeScreenshot), userInfo: nil, repeats: false)
     }
     
     func takeScreenshot() {
-        if !CGRectIsEmpty(self.view.bounds) {
-            UIDevice.currentDevice().beginGeneratingDeviceOrientationNotifications()
+        if !self.view.bounds.isEmpty {
+            UIDevice.current.beginGeneratingDeviceOrientationNotifications()
             
             let oldViewColor = self.view.backgroundColor
             self.view.backgroundColor = UIColor(hue: (216/360.0), saturation: 0.05, brightness: 0.86, alpha: 1)
@@ -109,14 +109,14 @@ class predictBoard: KeyboardViewController {
             let rect = self.view.bounds
             UIGraphicsBeginImageContextWithOptions(rect.size, true, 0)
             var context = UIGraphicsGetCurrentContext()
-            self.view.drawViewHierarchyInRect(self.view.bounds, afterScreenUpdates: true)
+            self.view.drawHierarchy(in: self.view.bounds, afterScreenUpdates: true)
             let capturedImage = UIGraphicsGetImageFromCurrentImageContext()
             UIGraphicsEndImageContext()
             let name = (self.interfaceOrientation.isPortrait ? "Screenshot-Portrait" : "Screenshot-Landscape")
             let imagePath = "/Users/archagon/Documents/Programming/OSX/RussianPhoneticKeyboard/External/tasty-imitation-keyboard/\(name).png"
             
-            if let pngRep = UIImagePNGRepresentation(capturedImage) {
-                pngRep.writeToFile(imagePath, atomically: true)
+            if let pngRep = UIImagePNGRepresentation(capturedImage!) {
+                try? pngRep.write(to: URL(fileURLWithPath: imagePath), options: [.atomic])
             }
             
             self.view.backgroundColor = oldViewColor
@@ -124,7 +124,7 @@ class predictBoard: KeyboardViewController {
     }
     
     //added
-    func autoComplete(word:String) -> () {
+    func autoComplete(_ word:String) -> () {
         let textDocumentProxy = self.textDocumentProxy
         
         if let context = textDocumentProxy.documentContextBeforeInput
@@ -132,11 +132,11 @@ class predictBoard: KeyboardViewController {
             if context.characters.count > 0
             {
                 var index = context.endIndex
-                index = index.predecessor()
+                index = context.index(before: index)
 
                 while index > context.startIndex && context[index] != " "
                 {
-                        index = index.predecessor()
+                        index = context.index(before: index)
 
                     textDocumentProxy.deleteBackward()
                 }

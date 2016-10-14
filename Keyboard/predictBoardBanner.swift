@@ -20,20 +20,20 @@ class predictboardBanner: ExtraView {
     var predictButton: UIButton = UIButton()
     var outFunc: (String) -> ()
     
-    required init(globalColors: GlobalColors.Type?, darkMode: Bool, solidColorMode: Bool, outputFunc: (String)->()) {
+    required init(globalColors: GlobalColors.Type?, darkMode: Bool, solidColorMode: Bool, outputFunc: @escaping (String)->()) {
         
         self.outFunc = outputFunc //needs to be declared before the super.init
         
         super.init(globalColors: globalColors, darkMode: darkMode, solidColorMode: solidColorMode)
         
         self.addSubview(self.predictButton)
-        self.predictButton.backgroundColor = UIColor.blueColor()
-        self.predictButton.setTitle("Hello", forState: .Normal)
-        self.predictButton.frame = CGRectMake(100, 100, 60, 40)
+        self.predictButton.backgroundColor = UIColor.blue
+        self.predictButton.setTitle("Hello", for: UIControlState())
+        self.predictButton.frame = CGRect(x: 100, y: 100, width: 60, height: 40)
         //self.predictSwitch.on = NSUserDefaults.standardUserDefaults().boolForKey(predictionEnabled)
         //self.predictSwitch.transform = CGAffineTransformMakeScale(0.75, 0.75)
         //self.predictSwitch.addTarget(self, action: Selector("respondToSwitch"), forControlEvents: UIControlEvents.ValueChanged)
-        self.predictButton.addTarget(self, action: #selector(runOutputFunc), forControlEvents: .TouchUpInside)
+        self.predictButton.addTarget(self, action: #selector(runOutputFunc), for: .touchUpInside)
         //self.updateAppearance()
         
     }
@@ -60,24 +60,24 @@ class predictboardBanner: ExtraView {
         //self.predictButton.frame.origin = CGPointMake(self.predictSwitch.frame.origin.x + self.predictSwitch.frame.width + 8, self.predictButton.frame.origin.y)
     }
     
-    func runOutputFunc(sender:UIButton) {
+    func runOutputFunc(_ sender:UIButton) {
         
         self.outFunc(sender.titleLabel!.text!)
         if sender.titleLabel!.text! == "Hello"
         {
-            sender.setTitle("my", forState: .Normal)
+            sender.setTitle("my", for: UIControlState())
         }
         else if sender.titleLabel!.text! == "my"
         {
-            sender.setTitle("name", forState: .Normal)
+            sender.setTitle("name", for: UIControlState())
         }
         else if sender.titleLabel!.text! == "name"
         {
-            sender.setTitle("is", forState: .Normal)
+            sender.setTitle("is", for: UIControlState())
         }
         else
         {
-            sender.setTitle("Jon", forState: .Normal)
+            sender.setTitle("Jon", for: UIControlState())
         }
         
     }
