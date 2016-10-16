@@ -30,6 +30,30 @@ class ExtraView: UIView {
         self.solidColorMode = false
         super.init(coder: aDecoder)
     }
+    
+     func getMaxY()->CGFloat {
+        return self.frame.maxY
+    }
+    
+    func getMinY()->CGFloat {
+        return self.frame.minY
+    }
+    
+    func getMidY()->CGFloat {
+        return self.frame.midY
+    }
+    
+    func getMaxX()->CGFloat {
+        return self.frame.maxX
+    }
+    
+    func getMinX()->CGFloat {
+        return self.frame.minX
+    }
+    
+    func getMidX()->CGFloat {
+        return self.frame.midX
+    }
 }
 
 

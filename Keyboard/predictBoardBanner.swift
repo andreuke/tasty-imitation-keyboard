@@ -56,6 +56,7 @@ class predictboardBanner: ExtraView {
         //self.predictSwitch.center = self.center
         //self.predictLabel.center = self.center
         //self.predictLabel.frame.origin = CGPointMake(self.predictSwitch.frame.origin.x + self.predictSwitch.frame.width + 20, self.predictLabel.frame.origin.y)
+        var y = self.getMaxY()
         self.predictButton.center = self.center
         //self.predictButton.frame.origin = CGPointMake(self.predictSwitch.frame.origin.x + self.predictSwitch.frame.width + 8, self.predictButton.frame.origin.y)
     }
