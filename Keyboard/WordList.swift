@@ -22,5 +22,15 @@ class WordList: NSObject {
             print("Failed reading from URL: \(self.pathToFile), Error: " + error.localizedDescription)
         }
     }
+    
+    func recommendWords(input: String)->[String]{
+        var resultSet = [String]()
+        for word in self.words {
+            if word.hasPrefix(input) {
+                resultSet.append(word)
+            }
+        }
+        return resultSet
+    }
 
 }
