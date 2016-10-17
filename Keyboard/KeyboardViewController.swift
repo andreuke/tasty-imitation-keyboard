@@ -524,7 +524,6 @@ class KeyboardViewController: UIInputViewController {
     
     func backspaceDown(_ sender: KeyboardKey) {
         self.cancelBackspaceTimers()
-        
         self.textDocumentProxy.deleteBackward()
         self.setCapsIfNeeded()
         
@@ -534,6 +533,7 @@ class KeyboardViewController: UIInputViewController {
     
     func backspaceUp(_ sender: KeyboardKey) {
         self.cancelBackspaceTimers()
+         self.keyPressed(Key(.backspace))
     }
     
     func backspaceDelayCallback() {

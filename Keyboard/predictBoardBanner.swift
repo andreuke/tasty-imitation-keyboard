@@ -17,7 +17,9 @@ class predictboardBanner: ExtraView {
     
     //var predictSwitch: UISwitch = UISwitch()
     //var predictLabel: UILabel = UILabel()
-    var predictButton: UIButton = UIButton()
+    let numButtons = 5
+    var buttons = [UIButton]()
+    let recommendationEngine = WordList()
     var outFunc: (String) -> ()
     
     required init(globalColors: GlobalColors.Type?, darkMode: Bool, solidColorMode: Bool, outputFunc: @escaping (String)->()) {
@@ -26,16 +28,18 @@ class predictboardBanner: ExtraView {
         
         super.init(globalColors: globalColors, darkMode: darkMode, solidColorMode: solidColorMode)
         
-        self.addSubview(self.predictButton)
-        self.predictButton.backgroundColor = UIColor.blue
-        self.predictButton.setTitle("Hello", for: UIControlState())
-        self.predictButton.frame = CGRect(x: 100, y: 100, width: 60, height: 40)
-        //self.predictSwitch.on = NSUserDefaults.standardUserDefaults().boolForKey(predictionEnabled)
-        //self.predictSwitch.transform = CGAffineTransformMakeScale(0.75, 0.75)
-        //self.predictSwitch.addTarget(self, action: Selector("respondToSwitch"), forControlEvents: UIControlEvents.ValueChanged)
-        self.predictButton.addTarget(self, action: #selector(runOutputFunc), for: .touchUpInside)
-        //self.updateAppearance()
-        
+        for _ in 0..<self.numButtons {
+            let button: UIButton = UIButton()
+            buttons.append(button)
+            self.addSubview(button)
+            button.backgroundColor = UIColor.blue
+            //button.setTitle("Hello", for: UIControlState())
+            //self.predictSwitch.on = NSUserDefaults.standardUserDefaults().boolForKey(predictionEnabled)
+            //self.predictSwitch.transform = CGAffineTransformMakeScale(0.75, 0.75)
+            //self.predictSwitch.addTarget(self, action: Selector("respondToSwitch"), forControlEvents: UIControlEvents.ValueChanged)
+            button.addTarget(self, action: #selector(runOutputFunc), for: .touchUpInside)
+        }
+        updateButtons(prevWord: "")
     }
     
     required init?(coder aDecoder: NSCoder) {
@@ -56,31 +60,46 @@ class predictboardBanner: ExtraView {
         //self.predictSwitch.center = self.center
         //self.predictLabel.center = self.center
         //self.predictLabel.frame.origin = CGPointMake(self.predictSwitch.frame.origin.x + self.predictSwitch.frame.width + 20, self.predictLabel.frame.origin.y)
-        var y = self.getMaxY()
-        self.predictButton.center = self.center
+        
+        let yMax = self.getMaxY()
+        let yMin = self.getMinY()
+        let xMax = self.getMaxX()
+        let xMin = self.getMinX()
+        
+        var widthBut = (self.getMaxX() - self.getMinX()) / CGFloat(self.numButtons)
+        let heightBut = self.getMaxY() - self.getMinY()
+        let halfWidth = widthBut / CGFloat(2)
+        
+        var offset = CGFloat(0)
+        for button in self.buttons {
+            button.frame = CGRect(x: (self.getMinX() + offset), y: self.getMinY(), width: widthBut, height: heightBut)
+            offset += widthBut
+            //button.center = self.center
+        }
         //self.predictButton.frame.origin = CGPointMake(self.predictSwitch.frame.origin.x + self.predictSwitch.frame.width + 8, self.predictButton.frame.origin.y)
     }
     
     func runOutputFunc(_ sender:UIButton) {
+        let wordToAdd = sender.titleLabel!.text!
+        if wordToAdd != " "
+        {
+            self.outFunc(wordToAdd)
+            updateButtons(prevWord: "")
+        }
+
         
-        self.outFunc(sender.titleLabel!.text!)
-        if sender.titleLabel!.text! == "Hello"
-        {
-            sender.setTitle("my", for: UIControlState())
+    }
+    
+    func updateButtons(prevWord: String) {
+        let recommendations = recommendationEngine.recommendWords(input: prevWord)
+        for index in 0..<self.numButtons {
+            if index < recommendations.count {
+                self.buttons[index].setTitle(recommendations[index], for: UIControlState())
+            }
+            else {
+                self.buttons[index].setTitle(" ", for: UIControlState())
+            }
         }
-        else if sender.titleLabel!.text! == "my"
-        {
-            sender.setTitle("name", for: UIControlState())
-        }
-        else if sender.titleLabel!.text! == "name"
-        {
-            sender.setTitle("is", for: UIControlState())
-        }
-        else
-        {
-            sender.setTitle("Jon", for: UIControlState())
-        }
-        
     }
     
     /*
@@ -104,6 +123,7 @@ class predictboardBanner: ExtraView {
     }*/
     
 }
+
 
 
 

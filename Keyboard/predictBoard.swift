@@ -13,9 +13,10 @@ import UIKit
  set the name of your KeyboardViewController subclass in the Info.plist file.
  */
 let predictionEnabled = "predictionEnabled"
-
 class predictBoard: KeyboardViewController {
     
+    let words = WordList()
+    var banner: predictboardBanner? = nil
     let takeDebugScreenshot: Bool = false
     override init(nibName nibNameOrNil: String?, bundle nibBundleOrNil: Bundle?) {
         UserDefaults.standard.register(defaults: [predictionEnabled: true])
@@ -27,15 +28,20 @@ class predictBoard: KeyboardViewController {
     }
     
     override func keyPressed(_ key: Key) {
+        
         let textDocumentProxy = self.textDocumentProxy
-        let keyOutput = key.outputForCase(self.shiftState.uppercase())
+        var keyOutput = ""
+        if key.type != .backspace {
+            keyOutput = key.outputForCase(self.shiftState.uppercase())
+        }
+
         
         if !UserDefaults.standard.bool(forKey: predictionEnabled) {
             textDocumentProxy.insertText(keyOutput)
             return
         }
         
-        if key.type == .character || key.type == .specialCharacter {
+        /*if key.type == .character || key.type == .specialCharacter {
             if let context = textDocumentProxy.documentContextBeforeInput {
                 if context.characters.count < 2 {
                     textDocumentProxy.insertText(keyOutput)
@@ -68,7 +74,15 @@ class predictBoard: KeyboardViewController {
         else {
             textDocumentProxy.insertText(keyOutput)
             return
-        }
+        }*/
+        textDocumentProxy.insertText(keyOutput)
+        var lastWord = getLastWord(delete: false)
+        /*if key.type == .backspace
+        {
+            lastWord = lastWord.substring(to: lastWord.index(before: lastWord.endIndex))
+        }*/
+        self.banner?.updateButtons(prevWord: lastWord)
+        return
     }
     
     override func setupKeys() {
@@ -92,11 +106,12 @@ class predictBoard: KeyboardViewController {
     }
     
     override func createBanner() -> ExtraView? {
-        return predictboardBanner(globalColors: type(of: self).globalColors, darkMode: false, solidColorMode: self.solidColorMode(), outputFunc: autoComplete)
+        self.banner = predictboardBanner(globalColors: type(of: self).globalColors, darkMode: false, solidColorMode: self.solidColorMode(), outputFunc: autoComplete)
+        return self.banner
     }
     
     func takeScreenshotDelay() {
-        Timer.scheduledTimer(timeInterval: 0.1, target: self, selector: #selector(predictBoard.takeScreenshot), userInfo: nil, repeats: false)
+        Timer.scheduledTimer(timeInterval: 0.1, target: self, selector: #selector(getter: predictBoard.takeDebugScreenshot), userInfo: nil, repeats: false)
     }
     
     func takeScreenshot() {
@@ -127,25 +142,7 @@ class predictBoard: KeyboardViewController {
     func autoComplete(_ word:String) -> () {
         let textDocumentProxy = self.textDocumentProxy
         
-        if let context = textDocumentProxy.documentContextBeforeInput
-        {
-            if context.characters.count > 0
-            {
-                var index = context.endIndex
-                index = context.index(before: index)
-
-                while index > context.startIndex && context[index] != " "
-                {
-                        index = context.index(before: index)
-
-                    textDocumentProxy.deleteBackward()
-                }
-                if index == context.startIndex && context[index] != " "
-                {
-                    textDocumentProxy.deleteBackward()
-                }
-            }
-        }
+        getLastWord(delete: true)
         var insertionWord = word
         if let postContext = textDocumentProxy.documentContextAfterInput
         {
@@ -160,6 +157,38 @@ class predictBoard: KeyboardViewController {
             insertionWord = word + " "
         }
         textDocumentProxy.insertText(insertionWord)
+    }
+    
+    func getLastWord(delete: Bool) ->String {
+        let textDocumentProxy = self.textDocumentProxy
+        var prevWord = ""
+        if let context = textDocumentProxy.documentContextBeforeInput
+        {
+            if context.characters.count > 0
+            {
+                var index = context.endIndex
+                index = context.index(before: index)
+                
+                while index > context.startIndex && context[index] != " "
+                {
+                    prevWord.insert(context[index], at: prevWord.startIndex)
+                    //prevWord += String(context[index])
+                    index = context.index(before: index)
+                    if delete{
+                        textDocumentProxy.deleteBackward()
+                    }
+                }
+                if index == context.startIndex && context[index] != " "
+                {
+                    prevWord.insert(context[index], at: prevWord.startIndex)
+                    //prevWord += String(context[index])
+                    if delete {
+                        textDocumentProxy.deleteBackward()
+                    }
+                }
+            }
+        }
+        return prevWord
     }
     
 }
