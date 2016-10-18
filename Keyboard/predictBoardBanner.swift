@@ -32,11 +32,9 @@ class predictboardBanner: ExtraView {
             let button: UIButton = UIButton()
             buttons.append(button)
             self.addSubview(button)
-            button.backgroundColor = UIColor.blue
-            //button.setTitle("Hello", for: UIControlState())
-            //self.predictSwitch.on = NSUserDefaults.standardUserDefaults().boolForKey(predictionEnabled)
-            //self.predictSwitch.transform = CGAffineTransformMakeScale(0.75, 0.75)
-            //self.predictSwitch.addTarget(self, action: Selector("respondToSwitch"), forControlEvents: UIControlEvents.ValueChanged)
+            button.backgroundColor = UIColor.lightGray
+            button.layer.borderWidth = 1
+            button.layer.borderColor = UIColor.clear.cgColor
             button.addTarget(self, action: #selector(runOutputFunc), for: .touchUpInside)
         }
         updateButtons(prevWord: "")
@@ -72,7 +70,7 @@ class predictboardBanner: ExtraView {
         
         var offset = CGFloat(0)
         for button in self.buttons {
-            button.frame = CGRect(x: (self.getMinX() + offset), y: self.getMinY(), width: widthBut, height: heightBut)
+            button.frame = CGRect(x: (self.getMinX() + offset), y: self.getMinY(), width: widthBut - 1, height: heightBut)
             offset += widthBut
             //button.center = self.center
         }
