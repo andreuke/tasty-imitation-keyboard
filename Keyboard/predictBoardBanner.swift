@@ -17,7 +17,8 @@ class predictboardBanner: ExtraView {
     
     //var predictSwitch: UISwitch = UISwitch()
     //var predictLabel: UILabel = UILabel()
-    let numButtons = 5
+    let numButtons = 8
+    let numRows = 2
     var buttons = [UIButton]()
     let recommendationEngine = WordList()
     var outFunc: (String) -> ()
@@ -35,6 +36,8 @@ class predictboardBanner: ExtraView {
             button.backgroundColor = UIColor.lightGray
             button.layer.borderWidth = 1
             button.layer.borderColor = UIColor.clear.cgColor
+            button.titleLabel?.font = UIFont(name: "Helvetica",
+                                 size: 22)
             button.addTarget(self, action: #selector(runOutputFunc), for: .touchUpInside)
         }
         updateButtons(prevWord: "")
@@ -64,14 +67,19 @@ class predictboardBanner: ExtraView {
         let xMax = self.getMaxX()
         let xMin = self.getMinX()
         
-        var widthBut = (self.getMaxX() - self.getMinX()) / CGFloat(self.numButtons)
-        let heightBut = self.getMaxY() - self.getMinY()
+        var widthBut = (self.getMaxX() - self.getMinX()) / CGFloat(self.numButtons) * CGFloat(self.numRows)
+        let heightBut = (self.getMaxY() - self.getMinY()) / CGFloat(self.numRows)
         let halfWidth = widthBut / CGFloat(2)
         
-        var offset = CGFloat(0)
-        for button in self.buttons {
-            button.frame = CGRect(x: (self.getMinX() + offset), y: self.getMinY(), width: widthBut - 1, height: heightBut)
-            offset += widthBut
+        var x_offset = CGFloat(0)
+        var y_offset = CGFloat(0)
+        for index in 0..<self.numButtons {
+            buttons[index].frame = CGRect(x: (self.getMinX() + x_offset), y: self.getMinY() + y_offset, width: widthBut - 1, height: heightBut - 1)
+            x_offset += widthBut
+            if (index + 1) % (self.numButtons / self.numRows) == 0 {
+                y_offset += heightBut
+                x_offset = CGFloat(0)
+            }
             //button.center = self.center
         }
         //self.predictButton.frame.origin = CGPointMake(self.predictSwitch.frame.origin.x + self.predictSwitch.frame.width + 8, self.predictButton.frame.origin.y)
