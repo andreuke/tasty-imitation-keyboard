@@ -70,6 +70,7 @@ class Key: Hashable {
         case specialCharacter
         case shift
         case backspace
+        case tab
         case modeChange
         case keyboardChange
         case period

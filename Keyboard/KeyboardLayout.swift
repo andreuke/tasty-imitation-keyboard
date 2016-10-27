@@ -540,6 +540,12 @@ class KeyboardLayout: NSObject, KeyboardKeyProtocol {
             key.textColor = self.globalColors.darkModeTextColor
             key.downTextColor = self.globalColors.lightModeTextColor
         case
+        Key.KeyType.tab:
+            key.color = self.globalColors.specialKey(darkMode, solidColorMode: solidColorMode)
+            key.downColor = (darkMode ? self.globalColors.darkModeShiftKeyDown : self.globalColors.lightModeRegularKey)
+            key.textColor = self.globalColors.darkModeTextColor
+            key.downTextColor = self.globalColors.lightModeTextColor
+        case
         Key.KeyType.backspace:
             key.color = self.globalColors.specialKey(darkMode, solidColorMode: solidColorMode)
             // TODO: actually a bit different
@@ -779,7 +785,7 @@ class KeyboardLayout: NSObject, KeyboardKeyProtocol {
             
             let mostKeysInRow: Int = {
                 var currentMax: Int = 0
-                for (i, row) in page.rows.enumerated() {
+                for (_, row) in page.rows.enumerated() {
                     currentMax = max(currentMax, row.count)
                 }
                 return currentMax
@@ -821,9 +827,9 @@ class KeyboardLayout: NSObject, KeyboardKeyProtocol {
                     
                     // character row with side buttons: shift, backspace, etc.
                 else if self.doubleSidedRowHeuristic(row) {
-                    frames = self.layoutCharacterWithSidesRow(row, frame: frame, isLandscape: isLandscape, keyWidth: letterKeyWidth, keyGap: keyGap)
+                    //frames = self.layoutCharacterWithSidesRow(row, frame: frame, isLandscape: isLandscape, keyWidth: letterKeyWidth, keyGap: keyGap)
+                    frames = self.layoutCharacterRow(row, keyWidth: letterKeyWidth, gapWidth: keyGap, frame: frame)
                 }
-                    
                     // bottom row with things like space, return, etc.
                 else {
                     frames = self.layoutSpecialKeysRow(row, keyWidth: letterKeyWidth, gapWidth: lastRowKeyGap, leftSideRatio: lastRowLeftSideRatio, rightSideRatio: lastRowRightSideRatio, micButtonRatio: self.layoutConstants.micButtonPortraitWidthRatioToOtherSpecialButtons, isLandscape: isLandscape, frame: frame)
@@ -858,9 +864,14 @@ class KeyboardLayout: NSObject, KeyboardKeyProtocol {
             actualGapWidth = (frame.width - (CGFloat(row.count) * keyWidth)) / CGFloat(row.count - 1)
         }
         
-        var currentOrigin = frame.origin.x + sideSpace
+        var currentOrigin = frame.origin.x
         
-        for (_, _) in row.enumerated() {
+        //if first element should not be elongated offset
+        if row.first?.type == .specialCharacter || row.first?.type == .character {
+            currentOrigin += sideSpace
+        }
+        
+        for (iter, key) in row.enumerated() {
             let roundedOrigin = rounded(currentOrigin)
             
             // avoiding rounding errors
@@ -868,7 +879,15 @@ class KeyboardLayout: NSObject, KeyboardKeyProtocol {
                 frames.append(CGRect(x: rounded(frame.origin.x + frame.width - keyWidth), y: frame.origin.y, width: keyWidth, height: frame.height))
             }
             else {
-                frames.append(CGRect(x: rounded(currentOrigin), y: frame.origin.y, width: keyWidth, height: frame.height))
+                //check if first or last element should be elongated
+                if (iter == 0 || iter == row.count - 1) && (key.type != .specialCharacter && key.type != .character)
+                {
+                    frames.append(CGRect(x: rounded(currentOrigin), y: frame.origin.y, width: keyWidth + sideSpace, height: frame.height))
+                    currentOrigin += sideSpace
+                }
+                else {
+                    frames.append(CGRect(x: rounded(currentOrigin), y: frame.origin.y, width: keyWidth, height: frame.height))
+                }
             }
             
             currentOrigin += (keyWidth + actualGapWidth)

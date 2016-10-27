@@ -5,7 +5,6 @@
 //  Created by Alexei Baboulevitch on 7/10/14.
 //  Copyright (c) 2014 Alexei Baboulevitch ("Archagon"). All rights reserved.
 //
-
 func defaultKeyboard() -> Keyboard {
     let defaultKeyboard = Keyboard()
     
