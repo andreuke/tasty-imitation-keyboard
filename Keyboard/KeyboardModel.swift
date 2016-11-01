@@ -62,6 +62,35 @@ class Page {
 
         self.rows[row].append(key)
     }
+    
+    func maxRowSize()->Double {
+        var currentMax:Double = 0
+        for row in 0..<self.rows.count {
+            currentMax = max(currentMax, getRowSize(rowNum: row))
+        }
+        return currentMax
+    }
+    
+    func getRowSize(rowNum: Int) -> Double {
+        let row = self.rows[rowNum]
+        var sum: Double = 0
+        for key in row {
+            sum += key.size!
+        }
+        return sum
+    }
+    
+    func setRelativeSizes(percentArray: [Double], rowNum: Int) {
+        assert(self.rows.count > rowNum)
+        let sum = percentArray.reduce(0, +)
+        assert(sum < 1.01 && sum > 0.99)
+        assert(percentArray.count == self.rows[rowNum].count)
+        let maxSize = self.maxRowSize()
+        for i in 0..<percentArray.count {
+            self.rows[rowNum][i].size = percentArray[i] * maxSize
+        }
+    }
+    
 }
 
 class Key: Hashable {
@@ -86,6 +115,7 @@ class Key: Hashable {
     var uppercaseOutput: String?
     var lowercaseOutput: String?
     var toMode: Int? //if the key is a mode button, this indicates which page it links to
+    var size: Double? //relative size of key compared to the others
     
     var isCharacter: Bool {
         get {
@@ -134,6 +164,7 @@ class Key: Hashable {
     init(_ type: KeyType) {
         self.type = type
         self.hashValue = counter
+        self.size = 1
         counter += 1
     }
     
@@ -145,6 +176,7 @@ class Key: Hashable {
         self.uppercaseOutput = key.uppercaseOutput
         self.lowercaseOutput = key.lowercaseOutput
         self.toMode = key.toMode
+        self.size = 1
     }
     
     func setLetter(_ letter: String) {

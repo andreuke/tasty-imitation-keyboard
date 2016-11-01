@@ -36,6 +36,7 @@ func expandedKeyboard() -> Keyboard {
     tabKey.uppercaseOutput = "\t"
     tabKey.lowercaseOutput = "\t"
     expandedKeyboard.addKey(tabKey, row: 1 + offset, page: 0)
+    tabKey.size = 1.5
     for key in ["A", "S", "D", "F", "G", "H", "J", "K", "L", ":", "\"", "!"] {
         let keyModel = Key(.character)
         keyModel.setLetter(key)
@@ -77,7 +78,7 @@ func expandedKeyboard() -> Keyboard {
     returnKey.uppercaseOutput = "\n"
     returnKey.lowercaseOutput = "\n"
     expandedKeyboard.addKey(returnKey, row: 3 + offset, page: 0)
-    
+    expandedKeyboard.pages[0].setRelativeSizes(percentArray: [0.1, 0.1, 0.1, 0.5, 0.2], rowNum: 3 + offset)
     
     for key in ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"] {
         let keyModel = Key(.specialCharacter)
@@ -116,6 +117,7 @@ func expandedKeyboard() -> Keyboard {
     expandedKeyboard.addKey(Key(space), row: 3, page: 1)
     
     expandedKeyboard.addKey(Key(returnKey), row: 3, page: 1)
+    expandedKeyboard.pages[1].setRelativeSizes(percentArray: [0.1, 0.1, 0.1, 0.5, 0.2], rowNum: 3 + offset)
     
     for key in ["[", "]", "{", "}", "#", "%", "^", "*", "+", "="] {
         let keyModel = Key(.specialCharacter)
@@ -148,6 +150,6 @@ func expandedKeyboard() -> Keyboard {
     expandedKeyboard.addKey(Key(space), row: 3, page: 2)
     
     expandedKeyboard.addKey(Key(returnKey), row: 3, page: 2)
-    
+    expandedKeyboard.pages[2].setRelativeSizes(percentArray: [0.1, 0.1, 0.1, 0.5, 0.2], rowNum: 3 + offset)
     return expandedKeyboard
 }

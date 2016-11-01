@@ -33,6 +33,8 @@ class KeyboardKey: UIControl {
     var text: String {
         didSet {
             self.label.text = text
+            self.label.lineBreakMode = .byWordWrapping // or NSLineBreakMode.ByWordWrapping
+            self.label.numberOfLines = 0
             self.label.frame = CGRect(x: self.labelInset, y: self.labelInset, width: self.bounds.width - self.labelInset * 2, height: self.bounds.height - self.labelInset * 2)
             self.redrawText()
         }

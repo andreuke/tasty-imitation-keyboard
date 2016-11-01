@@ -97,11 +97,11 @@ class KeyboardViewController: UIInputViewController {
         UserDefaults.standard.register(defaults: [
             kAutoCapitalization: true,
             kPeriodShortcut: true,
-            kKeyboardClicks: false,
-            kSmallLowercase: false
+            kKeyboardClicks: true,
+            kSmallLowercase: true
         ])
         
-        self.keyboard = expandedKeyboard()
+        self.keyboard = exNumKeyboard()
         
         self.shiftState = .disabled
         self.currentMode = 0

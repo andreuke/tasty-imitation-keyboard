@@ -783,17 +783,12 @@ class KeyboardLayout: NSObject, KeyboardKeyProtocol {
             
             let numRows = page.rows.count
             
-            let mostKeysInRow: Int = {
-                var currentMax: Int = 0
-                for (_, row) in page.rows.enumerated() {
-                    currentMax = max(currentMax, row.count)
-                }
-                return currentMax
-            }()
+            let mostKeysInRow = page.maxRowSize()
+            
             
             let rowGapTotal = CGFloat(numRows - 1 - 1) * rowGap + lastRowGap
             
-            let keyGap: CGFloat = (isLandscape ? self.layoutConstants.keyGapLandscape(bounds.width, rowCharacterCount: mostKeysInRow) : self.layoutConstants.keyGapPortrait(bounds.width, rowCharacterCount: mostKeysInRow))
+            let keyGap: CGFloat = (isLandscape ? self.layoutConstants.keyGapLandscape(bounds.width, rowCharacterCount: Int(mostKeysInRow)) : self.layoutConstants.keyGapPortrait(bounds.width, rowCharacterCount: Int(mostKeysInRow)))
             
             let keyHeight: CGFloat = {
                 let totalGaps = bottomEdge + topEdge + rowGapTotal
@@ -832,7 +827,8 @@ class KeyboardLayout: NSObject, KeyboardKeyProtocol {
                 }
                     // bottom row with things like space, return, etc.
                 else {
-                    frames = self.layoutSpecialKeysRow(row, keyWidth: letterKeyWidth, gapWidth: lastRowKeyGap, leftSideRatio: lastRowLeftSideRatio, rightSideRatio: lastRowRightSideRatio, micButtonRatio: self.layoutConstants.micButtonPortraitWidthRatioToOtherSpecialButtons, isLandscape: isLandscape, frame: frame)
+                    frames = self.layoutCharacterRow(row, keyWidth: letterKeyWidth, gapWidth: keyGap, frame: frame)
+                    //frames = self.layoutSpecialKeysRow(row, keyWidth: letterKeyWidth, gapWidth: lastRowKeyGap, leftSideRatio: lastRowLeftSideRatio, rightSideRatio: lastRowRightSideRatio, micButtonRatio: self.layoutConstants.micButtonPortraitWidthRatioToOtherSpecialButtons, isLandscape: isLandscape, frame: frame)
                 }
                 
                 processRow(row, frames, &keyMap)
@@ -840,6 +836,14 @@ class KeyboardLayout: NSObject, KeyboardKeyProtocol {
         }
         
         return keyMap
+    }
+    
+    func getRowSize(_ row: [Key]) -> Double {
+        var sum: Double = 0
+        for key in row {
+            sum += key.size!
+        }
+        return sum
     }
     
     func characterRowHeuristic(_ row: [Key]) -> Bool {
@@ -852,8 +856,8 @@ class KeyboardLayout: NSObject, KeyboardKeyProtocol {
     
     func layoutCharacterRow(_ row: [Key], keyWidth: CGFloat, gapWidth: CGFloat, frame: CGRect) -> [CGRect] {
         var frames = [CGRect]()
-        
-        let keySpace = CGFloat(row.count) * keyWidth + CGFloat(row.count - 1) * gapWidth
+        let rowSize = getRowSize(row)
+        let keySpace = CGFloat(rowSize) * keyWidth + CGFloat(rowSize - 1) * gapWidth
         var actualGapWidth = gapWidth
         var sideSpace = (frame.width - keySpace) / CGFloat(2)
         
@@ -861,7 +865,7 @@ class KeyboardLayout: NSObject, KeyboardKeyProtocol {
         // avoiding rounding errors
         if sideSpace < 0 {
             sideSpace = 0
-            actualGapWidth = (frame.width - (CGFloat(row.count) * keyWidth)) / CGFloat(row.count - 1)
+            actualGapWidth = (frame.width - (CGFloat(rowSize) * keyWidth)) / CGFloat(rowSize - 1)
         }
         
         var currentOrigin = frame.origin.x
@@ -870,10 +874,10 @@ class KeyboardLayout: NSObject, KeyboardKeyProtocol {
         if row.first?.type == .specialCharacter || row.first?.type == .character {
             currentOrigin += sideSpace
         }
-        
         for (iter, key) in row.enumerated() {
             let roundedOrigin = rounded(currentOrigin)
             
+            let keySize = keyWidth * CGFloat(key.size!) + actualGapWidth * CGFloat(key.size! - 1)
             // avoiding rounding errors
             if roundedOrigin + keyWidth > frame.origin.x + frame.width {
                 frames.append(CGRect(x: rounded(frame.origin.x + frame.width - keyWidth), y: frame.origin.y, width: keyWidth, height: frame.height))
@@ -882,15 +886,15 @@ class KeyboardLayout: NSObject, KeyboardKeyProtocol {
                 //check if first or last element should be elongated
                 if (iter == 0 || iter == row.count - 1) && (key.type != .specialCharacter && key.type != .character)
                 {
-                    frames.append(CGRect(x: rounded(currentOrigin), y: frame.origin.y, width: keyWidth + sideSpace, height: frame.height))
+                    frames.append(CGRect(x: rounded(currentOrigin), y: frame.origin.y, width: keySize + sideSpace, height: frame.height))
                     currentOrigin += sideSpace
                 }
                 else {
-                    frames.append(CGRect(x: rounded(currentOrigin), y: frame.origin.y, width: keyWidth, height: frame.height))
+                    frames.append(CGRect(x: rounded(currentOrigin), y: frame.origin.y, width: keySize, height: frame.height))
                 }
             }
             
-            currentOrigin += (keyWidth + actualGapWidth)
+            currentOrigin += (keySize + actualGapWidth)
         }
         
         return frames

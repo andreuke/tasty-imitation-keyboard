@@ -25,7 +25,7 @@ func exNumKeyboard() -> Keyboard {
         exNumKeyboard.addKey(keyModel, row: 0, page: 0)
     }*/
 
-    for key in ["Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P", "{", "}"] {
+    for key in [":", "Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P", "(", ")", "/"] {
         let keyModel = Key(.character)
         keyModel.setLetter(key)
         exNumKeyboard.addKey(keyModel, row: 0 + offset, page: 0)
@@ -35,14 +35,20 @@ func exNumKeyboard() -> Keyboard {
     tabKey.uppercaseKeyCap = "tab"
     tabKey.uppercaseOutput = "\t"
     tabKey.lowercaseOutput = "\t"
+    tabKey.size = 1
     exNumKeyboard.addKey(tabKey, row: 1 + offset, page: 0)
-    for key in ["A", "S", "D", "F", "G", "H", "J", "K", "L", ":", "\"", "!"] {
+    for key in ["A", "S", "D", "F", "G", "H", "J", "K", "L", "!", "\"", "'"] {
         let keyModel = Key(.character)
         keyModel.setLetter(key)
         exNumKeyboard.addKey(keyModel, row: 1 + offset, page: 0)
     }
-    //exNumKeyboard.addKey(newBackspace, row: 1 + offset, page: 0)
-    //let keyModel = Key(.shift)
+    let tab2 = Key(.tab)
+    tab2.uppercaseKeyCap = "tab"
+    tab2.uppercaseOutput = "\t"
+    tab2.lowercaseOutput = "\t"
+    //exNumKeyboard.addKey(tab2, row: 1 + offset, page: 0)
+    
+    
     exNumKeyboard.addKey(shift, row: 2 + offset, page: 0)
     
     for key in ["Z", "X", "C", "V", "B", "N", "M", ",", ".", "?"] {
@@ -72,20 +78,28 @@ func exNumKeyboard() -> Keyboard {
     space.lowercaseOutput = " "
     exNumKeyboard.addKey(space, row: 3 + offset, page: 0)
     
+    let keyModel = Key(.specialCharacter)
+    keyModel.setLetter("@")
+    exNumKeyboard.addKey(keyModel, row: 3 + offset, page: 0)
+    
     let returnKey = Key(.return)
     returnKey.uppercaseKeyCap = "return"
     returnKey.uppercaseOutput = "\n"
     returnKey.lowercaseOutput = "\n"
     exNumKeyboard.addKey(returnKey, row: 3 + offset, page: 0)
     
+    let atSize = 1 / exNumKeyboard.pages[0].maxRowSize()
+    let spaceBarSize = 0.5 - atSize
     
-    for key in ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"] {
+    exNumKeyboard.pages[0].setRelativeSizes(percentArray: [0.1, 0.1, 0.1, spaceBarSize, atSize, 0.2], rowNum: 3 + offset)
+    
+    for key in ["#", "$", "&", ":", "-", "7", "8", "9", "/", "°"] {
         let keyModel = Key(.specialCharacter)
         keyModel.setLetter(key)
         exNumKeyboard.addKey(keyModel, row: 0, page: 1)
     }
     
-    for key in ["-", "/", ":", ";", "(", ")", "$", "&", "@", "\""] {
+    for key in ["@", "(", ")", "=", "+", "4", "5", "6", "*", "_"] {
         let keyModel = Key(.specialCharacter)
         keyModel.setLetter(key)
         exNumKeyboard.addKey(keyModel, row: 1, page: 1)
@@ -96,7 +110,7 @@ func exNumKeyboard() -> Keyboard {
     keyModeChangeSpecialCharacters.toMode = 2
     exNumKeyboard.addKey(keyModeChangeSpecialCharacters, row: 2, page: 1)
     
-    for key in [".", ",", "?", "!", "'", "\""] {
+    for key in ["'", "\"", "%", "1", "2", "3"] {
         let keyModel = Key(.specialCharacter)
         keyModel.setLetter(key)
         exNumKeyboard.addKey(keyModel, row: 2, page: 1)
@@ -115,15 +129,22 @@ func exNumKeyboard() -> Keyboard {
     
     exNumKeyboard.addKey(Key(space), row: 3, page: 1)
     
-    exNumKeyboard.addKey(Key(returnKey), row: 3, page: 1)
+    for key in [",", "0", "."] {
+        let keyModel = Key(.specialCharacter)
+        keyModel.setLetter(key)
+        exNumKeyboard.addKey(keyModel, row: 3, page: 1)
+    }
     
-    for key in ["[", "]", "{", "}", "#", "%", "^", "*", "+", "="] {
+    exNumKeyboard.addKey(Key(returnKey), row: 3, page: 1)
+    exNumKeyboard.pages[1].setRelativeSizes(percentArray: [0.1, 0.1, 0.1, 0.2, 0.1, 0.1, 0.1, 0.2], rowNum: 3 + offset)
+    
+    for key in ["£", "€", "¥", "₵", "©", "®", "™", "~", "¿", "≈"] {
         let keyModel = Key(.specialCharacter)
         keyModel.setLetter(key)
         exNumKeyboard.addKey(keyModel, row: 0, page: 2)
     }
     
-    for key in ["_", "\\", "|", "~", "<", ">", "€", "£", "¥", "•"] {
+    for key in ["[", "]", "{", "}", "<", ">", "^", "¡", "×", "•"] {
         let keyModel = Key(.specialCharacter)
         keyModel.setLetter(key)
         exNumKeyboard.addKey(keyModel, row: 1, page: 2)
@@ -131,7 +152,7 @@ func exNumKeyboard() -> Keyboard {
     
     exNumKeyboard.addKey(Key(keyModeChangeNumbers), row: 2, page: 2)
     
-    for key in [".", ",", "?", "!", "'", "\""] {
+    for key in ["`", ";", "÷", "\\", "|", "✓"] {
         let keyModel = Key(.specialCharacter)
         keyModel.setLetter(key)
         exNumKeyboard.addKey(keyModel, row: 2, page: 2)
@@ -148,6 +169,13 @@ func exNumKeyboard() -> Keyboard {
     exNumKeyboard.addKey(Key(space), row: 3, page: 2)
     
     exNumKeyboard.addKey(Key(returnKey), row: 3, page: 2)
+    exNumKeyboard.pages[2].setRelativeSizes(percentArray: [0.1, 0.1, 0.1, 0.5, 0.2], rowNum: 3 + offset)
     
     return exNumKeyboard
+}
+
+func proportionalButtonSize(page: Page, percentage: Double)->Double {
+    assert(percentage < 1)
+    let maxRowSize = page.maxRowSize()
+    return maxRowSize * percentage
 }
