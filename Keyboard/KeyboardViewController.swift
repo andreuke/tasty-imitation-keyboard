@@ -10,7 +10,7 @@ import UIKit
 import AudioToolbox
 
 let metrics: [String:Double] = [
-    "topBanner": 100
+    "topBanner": Double(45 * UserDefaults.standard.integer(forKey: "numberACSrows"))
 ]
 func metric(_ name: String) -> CGFloat { return CGFloat(metrics[name]!) }
 
@@ -21,7 +21,7 @@ let kKeyboardClicks = "kKeyboardClicks"
 let kSmallLowercase = "kSmallLowercase"
 
 class KeyboardViewController: UIInputViewController {
-    
+
     let backspaceDelay: TimeInterval = 0.5
     let backspaceRepeat: TimeInterval = 0.07
     
@@ -98,8 +98,11 @@ class KeyboardViewController: UIInputViewController {
             kAutoCapitalization: true,
             kPeriodShortcut: true,
             kKeyboardClicks: true,
-            kSmallLowercase: true
+            kSmallLowercase: true,
+            "numberACSrows": 2,
+            "numberACSbuttons": 8
         ])
+    
         
         self.keyboard = exNumKeyboard()
         
@@ -226,7 +229,6 @@ class KeyboardViewController: UIInputViewController {
         }
         
         self.bannerView?.frame = CGRect(x: 0, y: 0, width: self.view.bounds.width, height: metric("topBanner"))
-        
         let newOrigin = CGPoint(x: 0, y: self.view.bounds.height - self.forwardingView.bounds.height)
         self.forwardingView.frame.origin = newOrigin
     }

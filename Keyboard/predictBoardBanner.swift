@@ -17,18 +17,17 @@ class predictboardBanner: ExtraView {
     
     //var predictSwitch: UISwitch = UISwitch()
     //var predictLabel: UILabel = UILabel()
-    let numButtons = 8
-    let numRows = 2
+    let numButtons = UserDefaults.standard.integer(forKey: "numberACSbuttons")
+    let numRows = UserDefaults.standard.integer(forKey: "numberACSrows")
     var buttons = [UIButton]()
     let recommendationEngine = WordList()
     var outFunc: (String) -> ()
-    
     required init(globalColors: GlobalColors.Type?, darkMode: Bool, solidColorMode: Bool, outputFunc: @escaping (String)->()) {
-        
         self.outFunc = outputFunc //needs to be declared before the super.init
         
         super.init(globalColors: globalColors, darkMode: darkMode, solidColorMode: solidColorMode)
         
+        print(UserDefaults.standard.integer(forKey: "numberACSrows"))
         for _ in 0..<self.numButtons {
             let button: UIButton = UIButton()
             buttons.append(button)
@@ -62,14 +61,14 @@ class predictboardBanner: ExtraView {
         //self.predictLabel.center = self.center
         //self.predictLabel.frame.origin = CGPointMake(self.predictSwitch.frame.origin.x + self.predictSwitch.frame.width + 20, self.predictLabel.frame.origin.y)
         
-        let yMax = self.getMaxY()
-        let yMin = self.getMinY()
-        let xMax = self.getMaxX()
-        let xMin = self.getMinX()
+        //let yMax = self.getMaxY()
+        //let yMin = self.getMinY()
+        //let xMax = self.getMaxX()
+        //let xMin = self.getMinX()
         
-        var widthBut = (self.getMaxX() - self.getMinX()) / CGFloat(self.numButtons) * CGFloat(self.numRows)
+        let widthBut = (self.getMaxX() - self.getMinX()) / CGFloat(self.numButtons) * CGFloat(self.numRows)
         let heightBut = (self.getMaxY() - self.getMinY()) / CGFloat(self.numRows)
-        let halfWidth = widthBut / CGFloat(2)
+        //let halfWidth = widthBut / CGFloat(2)
         
         var x_offset = CGFloat(0)
         var y_offset = CGFloat(0)

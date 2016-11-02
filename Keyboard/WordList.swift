@@ -63,13 +63,6 @@ class WordList: NSObject {
         for word in self.words {
             if word.hasPrefix(input.lowercased()) {
                 resultSet.append(input.lowercased()+word.substring(from: input.endIndex))
-                resultSet.append(input+word.substring(from: input.endIndex))
-            }
-            if word.uppercased().hasPrefix(input) {
-                resultSet.append(input+word.uppercased().substring(from: input.endIndex))
-            }
-            if word.capitalized.hasPrefix(input) {
-                
             }
         }
         return resultSet

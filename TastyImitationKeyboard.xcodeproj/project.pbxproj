@@ -214,9 +214,9 @@
 				4E6AEE4B19D246D700931E8F /* Catboard.swift */,
 				4EEFD78819E0DC6B004D4974 /* CatboardBanner.swift */,
 				89AB7F321DA57D7800439FDC /* predictBoard.swift */,
+				89AB7F341DA57E4300439FDC /* predictBoardBanner.swift */,
 				895106A41DB55276006D85F2 /* BasicWords.txt */,
 				895106A21DB55271006D85F2 /* WordList.swift */,
-				89AB7F341DA57E4300439FDC /* predictBoardBanner.swift */,
 			);
 			name = Demo;
 			sourceTree = "<group>";
@@ -427,7 +427,7 @@
 					};
 					4E807DB819461DC700D875D1 = {
 						CreatedOnToolsVersion = 6.0;
-						DevelopmentTeam = XMMYXA7BA5;
+						DevelopmentTeam = RVGU7YMDGA;
 						LastSwiftMigration = 0800;
 					};
 					4E8EF38019F95D74009CBF5D = {
@@ -710,7 +710,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CLANG_ENABLE_MODULES = YES;
-				DEVELOPMENT_TEAM = XMMYXA7BA5;
+				DEVELOPMENT_TEAM = RVGU7YMDGA;
 				INFOPLIST_FILE = Keyboard/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = eecs481.MeBoard.Keyboard;
@@ -724,7 +724,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CLANG_ENABLE_MODULES = YES;
-				DEVELOPMENT_TEAM = XMMYXA7BA5;
+				DEVELOPMENT_TEAM = RVGU7YMDGA;
 				INFOPLIST_FILE = Keyboard/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = eecs481.MeBoard.Keyboard;
