@@ -38,6 +38,7 @@
 		89123E9F1DC86A46003A4BD3 /* SQLite.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 89123E9E1DC86A46003A4BD3 /* SQLite.framework */; };
 		895106A31DB55271006D85F2 /* WordList.swift in Sources */ = {isa = PBXBuildFile; fileRef = 895106A21DB55271006D85F2 /* WordList.swift */; };
 		895106A51DB55276006D85F2 /* BasicWords.txt in Resources */ = {isa = PBXBuildFile; fileRef = 895106A41DB55276006D85F2 /* BasicWords.txt */; };
+		8952662C1DCABCCE000F6540 /* BannerButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8952662B1DCABCCE000F6540 /* BannerButton.swift */; };
 		89A5DC431DC19D7F0087BEAA /* ExpandedKeyboard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89A5DC421DC19D7F0087BEAA /* ExpandedKeyboard.swift */; };
 		89A5DC451DC19ECA0087BEAA /* ExNumKeyboard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89A5DC441DC19ECA0087BEAA /* ExNumKeyboard.swift */; };
 		89AB7F331DA57D7800439FDC /* predictBoard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89AB7F321DA57D7800439FDC /* predictBoard.swift */; };
@@ -137,6 +138,7 @@
 		89123E9E1DC86A46003A4BD3 /* SQLite.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SQLite.framework; path = Carthage/Build/iOS/SQLite.framework; sourceTree = "<group>"; };
 		895106A21DB55271006D85F2 /* WordList.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = WordList.swift; sourceTree = "<group>"; };
 		895106A41DB55276006D85F2 /* BasicWords.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = BasicWords.txt; sourceTree = "<group>"; };
+		8952662B1DCABCCE000F6540 /* BannerButton.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = BannerButton.swift; path = ../BannerButton.swift; sourceTree = "<group>"; };
 		89A5DC421DC19D7F0087BEAA /* ExpandedKeyboard.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExpandedKeyboard.swift; sourceTree = "<group>"; };
 		89A5DC441DC19ECA0087BEAA /* ExNumKeyboard.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExNumKeyboard.swift; sourceTree = "<group>"; };
 		89AB7F321DA57D7800439FDC /* predictBoard.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = predictBoard.swift; sourceTree = "<group>"; };
@@ -217,6 +219,7 @@
 				89AB7F341DA57E4300439FDC /* predictBoardBanner.swift */,
 				895106A41DB55276006D85F2 /* BasicWords.txt */,
 				895106A21DB55271006D85F2 /* WordList.swift */,
+				8952662B1DCABCCE000F6540 /* BannerButton.swift */,
 			);
 			name = Demo;
 			sourceTree = "<group>";
@@ -535,6 +538,7 @@
 				89AB7F351DA57E4300439FDC /* predictBoardBanner.swift in Sources */,
 				4E3B5A941A0654A8003366F6 /* KeyboardInputTraits.swift in Sources */,
 				4E52A6D81A06C16C006A08CE /* DefaultSettings.swift in Sources */,
+				8952662C1DCABCCE000F6540 /* BannerButton.swift in Sources */,
 				4E72C96819E04A7A00DFDDB0 /* Catboard.swift in Sources */,
 				4E60A13E1979FB2E00854CC8 /* DirectionEnum.swift in Sources */,
 				4EC2A46D19DF811E00F789E1 /* KeyboardViewController.swift in Sources */,

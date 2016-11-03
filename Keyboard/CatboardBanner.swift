@@ -28,7 +28,7 @@ class CatboardBanner: ExtraView {
         self.catSwitch.transform = CGAffineTransform(scaleX: 0.75, y: 0.75)
         self.catSwitch.addTarget(self, action: #selector(CatboardBanner.respondToSwitch), for: UIControlEvents.valueChanged)
         
-        self.updateAppearance()
+        self.updateAppearances()
     }
 
     required init?(coder aDecoder: NSCoder) {
@@ -56,7 +56,7 @@ class CatboardBanner: ExtraView {
         self.updateAppearance()
     }
     
-    func updateAppearance() {
+    func updateAppearances() {
         if self.catSwitch.isOn {
             self.catLabel.text = "😺"
             self.catLabel.alpha = 1

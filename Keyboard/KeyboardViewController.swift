@@ -99,8 +99,8 @@ class KeyboardViewController: UIInputViewController {
             kPeriodShortcut: true,
             kKeyboardClicks: true,
             kSmallLowercase: true,
-            "numberACSrows": 2,
-            "numberACSbuttons": 8
+            "numberACSrows": 3,
+            "numberACSbuttons": 14
         ])
     
         
@@ -427,6 +427,7 @@ class KeyboardViewController: UIInputViewController {
         
         self.bannerView?.darkMode = appearanceIsDark
         self.settingsView?.darkMode = appearanceIsDark
+        self.bannerView?.updateAppearance()
     }
     
     func highlightKey(_ sender: KeyboardKey) {
