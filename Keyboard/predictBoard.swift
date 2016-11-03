@@ -18,7 +18,6 @@ class predictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
     let words = WordList()
     var banner: predictboardBanner? = nil
     let recommendationEngine = WordList()
-    
     override init(nibName nibNameOrNil: String?, bundle nibBundleOrNil: Bundle?) {
         UserDefaults.standard.register(defaults: ["profile": "Default"])
         super.init(nibName: nibNameOrNil, bundle: nibBundleOrNil)
@@ -55,7 +54,7 @@ class predictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
 
         //set up profile selector
         self.banner?.profileSelector.addTarget(self, action: #selector(showPopover), for: .touchUpInside)
-         self.banner?.profileSelector.setTitle(UserDefaults.standard.string(forKey: "profile")! + "  ▼", for: UIControlState())
+         self.banner?.profileSelector.setTitle(UserDefaults.standard.string(forKey: "profile")!, for: UIControlState())
         
         //setup autocomplete buttons
         for button in (self.banner?.buttons)! {
@@ -64,6 +63,15 @@ class predictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
 
         }
 
+        //Create selector pop up
+        /*var tableView = UITableView()
+        tableView = UITableView(frame: UIScreen.main.bounds, style: UITableViewStyle.plain)
+        tableView.delegate      =   self.popUpController
+        tableView.dataSource    =   self.popUpController
+        tableView.register(UITableViewCell.self, forCellReuseIdentifier: "cell")
+        self.view.addSubview(tableView)*/
+        
+        
         //populate buttons
         updateButtons(prevWord: "")
         
@@ -153,15 +161,20 @@ class predictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
         
     
     //Pop ups
-    @IBAction func showPopover(sender: AnyObject) {
+    @IBAction func showPopover(sender: UIButton) {
         
-        let tableViewController = UITableViewController()
+        let tableViewController = PopUpTableViewController(selector: sender as UIButton!)
         tableViewController.modalPresentationStyle = UIModalPresentationStyle.popover
         
         present(tableViewController, animated: true, completion: nil)
         
         let popoverPresentationController = tableViewController.popoverPresentationController
         popoverPresentationController?.sourceView = sender as? UIView
+        let height = Int(sender.frame.height)
+        let width = Int(sender.frame.height) / 2
+        //popoverPresentationController?.sourceRect = CGRect(origin: CGPoint(x: 0,y :height), size: CGSize(width: 100, height: 100))//CGRectMake(0, 0, sender.frame.size.width, sender.frame.size.height)
+        
+        popoverPresentationController?.sourceRect = CGRect(origin: CGPoint(x: 0,y :0), size: CGSize(width: width, height: height))
     }
     
     func adaptivePresentationStyleForPresentationController(controller: UIPresentationController) -> UIModalPresentationStyle {
