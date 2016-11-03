@@ -10,9 +10,6 @@ import UIKit
 import SQLite
 
 
-
-
-
 class WordList: NSObject {
     
     var words = [String]()
@@ -23,34 +20,37 @@ class WordList: NSObject {
         let path = NSSearchPathForDirectoriesInDomains(
             .documentDirectory, .userDomainMask, true
             ).first!
-        do {
-        _ = try Connection("\(path)/db.sqlite3")
-        }
-        catch{
-            print(error)
-        }
+
         words = wordText.characters.split{ $0 == "," }.map(String.init)
         
         do {
-            let db = try Connection()
-            let users = Table("users")
-            let id = Expression<Int64>("id")
-            let name = Expression<String?>("name")
-            let email = Expression<String>("email")
+            let db = try Connection("\(path)/db.sqlite3")
+
+            let ngrams = Table("Ngrams")
+            let gram = Expression<String>("gram")
+            let n = Expression<Int>("n")
             
-            try? db.run(users.create { t in
-                t.column(id, primaryKey: true)
-                t.column(name)
-                t.column(email, unique: true)
+            try? db.run(ngrams.create { t in
+                t.column(gram, primaryKey: true)
+                t.column(n)
             })
             
-            let insert = users.insert(name <- "Alice", email <- "alice@mac.com")
-            let rowid = try? db.run(insert)
-            // INSERT INTO "users" ("name", "email") VALUES ('Alice', 'alice@mac.com')
-            for user in try db.prepare(users) {
-                print("id: \(user[id]), name: \(user[name]), email: \(user[email])")
-                // id: 1, name: Optional("Alice"), email: alice@mac.com
+            for word in words {
+                // check if word is in db
+                let result = try? db.scalar(ngrams.filter(gram == word).count)
+                // if not in db, insert into db
+                if result! == 0 {
+                    let insert = ngrams.insert(gram <- word, n <- 1)
+                    _ = try? db.run(insert)
+                }
+                else if result! > 1{
+                    print("There's a duplicate word in the db!")
+                }
             }
+            
+            /*for ngram in try db.prepare(ngrams) {
+                print("Word: \(ngram[gram])")
+            }*/
         }
         catch {
             print("uh oh")
