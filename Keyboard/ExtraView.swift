@@ -31,6 +31,9 @@ class ExtraView: UIView {
         super.init(coder: aDecoder)
     }
     
+    func updateAppearance()
+    {print("Updating")}
+    
      func getMaxY()->CGFloat {
         return self.frame.maxY
     }
