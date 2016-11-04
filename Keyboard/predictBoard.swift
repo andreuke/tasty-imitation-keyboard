@@ -7,6 +7,7 @@
 //
 
 import UIKit
+import SQLite
 
 /*
  This is the demo keyboard. If you're implementing your own keyboard, simply follow the example here and then
@@ -98,6 +99,7 @@ class predictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
         {
             insertionWord = word + " "
         }
+        // update database with insertion word
         textDocumentProxy.insertText(insertionWord)
     }
     
@@ -138,6 +140,19 @@ class predictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
         if wordToAdd != " "
         {
             self.autoComplete(wordToAdd)
+            // increment frequency of word in database
+            do {
+                let db_path = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true).first!
+                let db = try Connection("\(db_path)/db.sqlite3")
+                let containers = Table("Containers")
+                let ngram = Expression<String>("ngram")
+                let profile = Expression<String>("profile")
+                let frequency = Expression<Int64>("frequency")
+                try db.run(containers.filter(ngram == wordToAdd).filter(profile == "Default").update(frequency++))
+            }
+            catch {
+                print("Incrementing word frequency failed")
+            }
             updateButtons(prevWord: "")
         }
     }
