@@ -23,25 +23,68 @@ class WordList: NSObject {
             
             let db = try Connection("\(db_path)/db.sqlite3")
 
+            // Create Ngrams table
             let ngrams = Table("Ngrams")
             let gram = Expression<String>("gram")
             let n = Expression<Int>("n")
             
-            try? db.run(ngrams.create { t in
+            try? db.run(ngrams.create(ifNotExists: true) { t in
                 t.column(gram, primaryKey: true)
                 t.column(n)
             })
             
+            // Create Profiles table
+            let profiles = Table("Profiles")
+            let profileId = Expression<Int64>("profileId")
+            let name = Expression<String>("name")
+            let linksTo = Expression<Int64>("linksTo")
+            
+            try? db.run(profiles.create(ifNotExists: true) { t in
+                t.column(profileId, primaryKey: .autoincrement)
+                t.column(name)
+                t.column(linksTo, defaultValue: 0)
+            })
+            
+            // Insert the Default profile into the Profiles table if it doesn't exist
+            if (try db.scalar(profiles.filter(profileId == 0).count)) == 0 {
+                let insert = profiles.insert(name <- "Default")
+                _ = try? db.run(insert)
+            }
+            
+            // Create Containers table (pairing of profile and ngram)
+            let containers = Table("Containers")
+            let containerId = Expression<Int64>("containerId")
+            let profile = Expression<String>("profile")
+            let ngram = Expression<String>("ngram")
+            let frequency = Expression<Int64>("frequency")
+            let lastused = Expression<Date>("lastused")
+            
+            try? db.run(containers.create(ifNotExists: true) { t in
+                t.column(containerId, primaryKey: .autoincrement)
+                t.column(profile)
+                t.column(ngram)
+                t.column(frequency, defaultValue: 0)
+                t.column(lastused, defaultValue: Date())
+            })
+            
+            // Populate the Ngrams table and Container table with words
             for word in allWords {
-                // check if word is in db
+                // check if word is in db, and insert it if it's not
                 let result = try? db.scalar(ngrams.filter(gram == word).count)
-                // if not in db, insert into db
                 if result! == 0 {
                     let insert = ngrams.insert(gram <- word, n <- 1)
                     _ = try? db.run(insert)
                 }
                 else if result! > 1{
                     print("There's a duplicate word in the db!")
+                }
+                
+                // check if word is paired with Default profile in Containers table, insert if not
+                let containerResult = try? db.scalar(containers.filter(profile == "Default")
+                                        .filter(ngram == word).count)
+                if containerResult == 0 {
+                    let insert = containers.insert(profile <- "Default", ngram <- word)
+                    _ = try? db.run(insert)
                 }
             }
         }
@@ -58,10 +101,13 @@ class WordList: NSObject {
                 .documentDirectory, .userDomainMask, true).first!
             let db = try Connection("\(db_path)/db.sqlite3")
             
-            for row in try db.prepare("SELECT gram, n FROM Ngrams WHERE gram LIKE '\(input.lowercased())%'") {
-                if (row[1] as! Int64) == 1 {
-                    resultSet.append((row[0] as! String))
-                }
+            let containers = Table("Containers")
+            let profile = Expression<String>("profile")
+            let ngram = Expression<String>("ngram")
+            let frequency = Expression<Int64>("frequency")
+            for row in try db.prepare(containers.filter(profile == "Default")
+                            .filter(ngram.like("\(input)%")).order(frequency.desc, ngram)) {
+                resultSet.append(row[ngram])
             }
         }
         catch {
