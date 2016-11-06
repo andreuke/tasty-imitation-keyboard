@@ -75,7 +75,8 @@ class WordList: NSObject {
                     let insert = ngrams.insert(gram <- word, n <- 1)
                     _ = try? db.run(insert)
                 }
-                else if result! > 1{
+                else {
+                    break
                     print("There's a duplicate word in the db!")
                 }
                 
