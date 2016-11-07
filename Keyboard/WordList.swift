@@ -74,7 +74,7 @@ class WordList: NSObject {
             if (try db.scalar(containers.filter(profile == "Default").count) < 9989) {
                 // Populate the Ngrams table and Container table with words
                 for word in allWords {
-                    // check if word is in db, and insert it if it's not
+                    // check if word is in Ngrams, and insert it if it's not
                     let result = try? db.scalar(ngrams.filter(gram == word).count)
                     if result! == 0 {
                         let insert = ngrams.insert(gram <- word, n <- 1)
@@ -111,8 +111,10 @@ class WordList: NSObject {
             let profile = Expression<String>("profile")
             let ngram = Expression<String>("ngram")
             let frequency = Expression<Int64>("frequency")
-            for row in try db.prepare(containers.filter(profile == "Default")
-                            .filter(ngram.like("\(input)%")).order(frequency.desc, ngram)) {
+            let userProfile = UserDefaults.standard.value(forKey: "profile")
+            for row in try db.prepare(containers.filter(profile == userProfile as! String)
+                                                .filter(ngram.like("\(input)%"))
+                                                .order(frequency.desc, ngram)) {
                 resultSet.append(row[ngram])
             }
         }
