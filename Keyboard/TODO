@@ -1,0 +1,6 @@
+--- TODO ---
+
+Zack:
+    - Find a resource for 2- and 3-grams, put them in the database with Default
+    - Start storing *new* words and n-grams instead of just incrementing banner button words
+    - Make a table for storing Brad's pre-defined phrases

@@ -44,6 +44,8 @@
 		89AB7F331DA57D7800439FDC /* predictBoard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89AB7F321DA57D7800439FDC /* predictBoard.swift */; };
 		89AB7F351DA57E4300439FDC /* predictBoardBanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89AB7F341DA57E4300439FDC /* predictBoardBanner.swift */; };
 		89BD86E91DCBACEF00BD9B1A /* popupTableViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89BD86E81DCBACEF00BD9B1A /* popupTableViewController.swift */; };
+		96C075141DCC17750097836D /* SQLite.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 89123E9E1DC86A46003A4BD3 /* SQLite.framework */; };
+		96C075161DCC36070097836D /* google-10000.txt in Resources */ = {isa = PBXBuildFile; fileRef = 96C075151DCC36070097836D /* google-10000.txt */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -145,6 +147,7 @@
 		89AB7F321DA57D7800439FDC /* predictBoard.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = predictBoard.swift; sourceTree = "<group>"; };
 		89AB7F341DA57E4300439FDC /* predictBoardBanner.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = predictBoardBanner.swift; sourceTree = "<group>"; };
 		89BD86E81DCBACEF00BD9B1A /* popupTableViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = popupTableViewController.swift; sourceTree = "<group>"; };
+		96C075151DCC36070097836D /* google-10000.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = "google-10000.txt"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -161,6 +164,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				4E8EF3A019F95D93009CBF5D /* KeyboardFramework.framework in Frameworks */,
+				96C075141DCC17750097836D /* SQLite.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -215,6 +219,7 @@
 		4E6AEE5319D2489C00931E8F /* Demo */ = {
 			isa = PBXGroup;
 			children = (
+				96C075151DCC36070097836D /* google-10000.txt */,
 				4E6AEE4B19D246D700931E8F /* Catboard.swift */,
 				4EEFD78819E0DC6B004D4974 /* CatboardBanner.swift */,
 				89AB7F321DA57D7800439FDC /* predictBoard.swift */,
@@ -433,7 +438,7 @@
 					};
 					4E807DB819461DC700D875D1 = {
 						CreatedOnToolsVersion = 6.0;
-						DevelopmentTeam = RVGU7YMDGA;
+						DevelopmentTeam = XMMYXA7BA5;
 						LastSwiftMigration = 0800;
 					};
 					4E8EF38019F95D74009CBF5D = {
@@ -477,6 +482,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				4E52A6DA1A06C198006A08CE /* DefaultSettings.xib in Resources */,
+				96C075161DCC36070097836D /* google-10000.txt in Resources */,
 				895106A51DB55276006D85F2 /* BasicWords.txt in Resources */,
 				4E52A6D61A06BADA006A08CE /* Media.xcassets in Resources */,
 			);
@@ -718,7 +724,11 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CLANG_ENABLE_MODULES = YES;
-				DEVELOPMENT_TEAM = RVGU7YMDGA;
+				DEVELOPMENT_TEAM = XMMYXA7BA5;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/Carthage/Build/iOS",
+				);
 				INFOPLIST_FILE = Keyboard/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = eecs481.MeBoard.Keyboard;
@@ -732,7 +742,11 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CLANG_ENABLE_MODULES = YES;
-				DEVELOPMENT_TEAM = RVGU7YMDGA;
+				DEVELOPMENT_TEAM = XMMYXA7BA5;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/Carthage/Build/iOS",
+				);
 				INFOPLIST_FILE = Keyboard/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = eecs481.MeBoard.Keyboard;

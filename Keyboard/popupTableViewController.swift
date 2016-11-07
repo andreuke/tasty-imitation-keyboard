@@ -8,11 +8,13 @@
 
 import Foundation
 import UIKit
-class PopUpTableViewController:  UIViewController,UITableViewDelegate, UITableViewDataSource {
+import SQLite
 
+class PopUpTableViewController:  UIViewController,UITableViewDelegate, UITableViewDataSource {
+    
     let tableView = UITableView()
     var selector: UIButton?
-    var items: [String] = ["Default", "Aero", "Family", "Friends"]
+    var items: [String] = []
     
     init(selector: UIButton)
     {
@@ -28,6 +30,20 @@ class PopUpTableViewController:  UIViewController,UITableViewDelegate, UITableVi
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        // Add all Profiles to items
+        let db_path = NSSearchPathForDirectoriesInDomains(
+            .documentDirectory, .userDomainMask, true).first!
+        do {
+            let db = try Connection("\(db_path)/db.sqlite3")
+            for profile in try db.prepare(Table("Profiles")) {
+                self.items.append(profile[Expression<String>("name")])
+                print(profile[Expression<String>("name")])
+            }
+        }
+        catch {
+            print("Database connection failed")
+        }
+        
         // Do any additional setup after loading the view, typically from a nib.
         tableView.rowHeight = 40
         let height = items.count * Int(self.tableView.rowHeight)
