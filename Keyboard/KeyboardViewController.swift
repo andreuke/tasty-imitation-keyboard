@@ -527,6 +527,7 @@ class KeyboardViewController: UIInputViewController {
     
     func backspaceDown(_ sender: KeyboardKey) {
         self.cancelBackspaceTimers()
+        self.keyPressed(Key(.backspace))
         self.textDocumentProxy.deleteBackward()
         self.setCapsIfNeeded()
         
@@ -536,7 +537,7 @@ class KeyboardViewController: UIInputViewController {
     
     func backspaceUp(_ sender: KeyboardKey) {
         self.cancelBackspaceTimers()
-         self.keyPressed(Key(.backspace))
+        self.keyPressed(Key(.backspace))
     }
     
     func backspaceDelayCallback() {
@@ -546,7 +547,7 @@ class KeyboardViewController: UIInputViewController {
     
     func backspaceRepeatCallback() {
         self.playKeySound()
-        
+        self.keyPressed(Key(.backspace))
         self.textDocumentProxy.deleteBackward()
         self.setCapsIfNeeded()
     }

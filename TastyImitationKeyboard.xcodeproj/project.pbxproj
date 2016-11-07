@@ -43,7 +43,8 @@
 		89A5DC451DC19ECA0087BEAA /* ExNumKeyboard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89A5DC441DC19ECA0087BEAA /* ExNumKeyboard.swift */; };
 		89AB7F331DA57D7800439FDC /* predictBoard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89AB7F321DA57D7800439FDC /* predictBoard.swift */; };
 		89AB7F351DA57E4300439FDC /* predictBoardBanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89AB7F341DA57E4300439FDC /* predictBoardBanner.swift */; };
-		89BD86E91DCBACEF00BD9B1A /* popupTableViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89BD86E81DCBACEF00BD9B1A /* popupTableViewController.swift */; };
+		89BD86E91DCBACEF00BD9B1A /* popupViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89BD86E81DCBACEF00BD9B1A /* popupViewController.swift */; };
+		89BD86EB1DCFFE5500BD9B1A /* passThroughView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89BD86EA1DCFFE5500BD9B1A /* passThroughView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -144,7 +145,8 @@
 		89A5DC441DC19ECA0087BEAA /* ExNumKeyboard.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExNumKeyboard.swift; sourceTree = "<group>"; };
 		89AB7F321DA57D7800439FDC /* predictBoard.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = predictBoard.swift; sourceTree = "<group>"; };
 		89AB7F341DA57E4300439FDC /* predictBoardBanner.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = predictBoardBanner.swift; sourceTree = "<group>"; };
-		89BD86E81DCBACEF00BD9B1A /* popupTableViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = popupTableViewController.swift; sourceTree = "<group>"; };
+		89BD86E81DCBACEF00BD9B1A /* popupViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = popupViewController.swift; sourceTree = "<group>"; };
+		89BD86EA1DCFFE5500BD9B1A /* passThroughView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = passThroughView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -219,10 +221,11 @@
 				4EEFD78819E0DC6B004D4974 /* CatboardBanner.swift */,
 				89AB7F321DA57D7800439FDC /* predictBoard.swift */,
 				89AB7F341DA57E4300439FDC /* predictBoardBanner.swift */,
+				89BD86E81DCBACEF00BD9B1A /* popupViewController.swift */,
+				89BD86EA1DCFFE5500BD9B1A /* passThroughView.swift */,
 				895106A41DB55276006D85F2 /* BasicWords.txt */,
 				895106A21DB55271006D85F2 /* WordList.swift */,
 				8952662B1DCABCCE000F6540 /* BannerButton.swift */,
-				89BD86E81DCBACEF00BD9B1A /* popupTableViewController.swift */,
 			);
 			name = Demo;
 			sourceTree = "<group>";
@@ -526,7 +529,7 @@
 				4E52A6D41A06A626006A08CE /* ExtraView.swift in Sources */,
 				4EC2A47019DF811E00F789E1 /* ForwardingView.swift in Sources */,
 				4EC2A46E19DF811E00F789E1 /* KeyboardLayout.swift in Sources */,
-				89BD86E91DCBACEF00BD9B1A /* popupTableViewController.swift in Sources */,
+				89BD86E91DCBACEF00BD9B1A /* popupViewController.swift in Sources */,
 				4E60A13A1979FA5C00854CC8 /* KeyboardKeyBackground.swift in Sources */,
 				4E5B67A2196E03B700114361 /* KeyboardModel.swift in Sources */,
 				89A5DC451DC19ECA0087BEAA /* ExNumKeyboard.swift in Sources */,
@@ -537,6 +540,7 @@
 				895106A31DB55271006D85F2 /* WordList.swift in Sources */,
 				4EEFD78919E0DC6B004D4974 /* CatboardBanner.swift in Sources */,
 				4EE7599B19F75A0D00B4E6ED /* Utilities.swift in Sources */,
+				89BD86EB1DCFFE5500BD9B1A /* passThroughView.swift in Sources */,
 				4EEFD78B19E0DF15004D4974 /* Shapes.swift in Sources */,
 				4ECBD90219F16DC7004FA2A3 /* DefaultKeyboard.swift in Sources */,
 				89AB7F351DA57E4300439FDC /* predictBoardBanner.swift in Sources */,

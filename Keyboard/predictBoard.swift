@@ -29,19 +29,15 @@ class predictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
     
     override func keyPressed(_ key: Key) {
         
-        let textDocumentProxy = self.textDocumentProxy
+        
         var keyOutput = ""
         if key.type != .backspace {
             keyOutput = key.outputForCase(self.shiftState.uppercase())
         }
+        let textDocumentProxy = self.textDocumentProxy
         textDocumentProxy.insertText(keyOutput)
         let lastWord = getLastWord(delete: false)
-        /*if key.type == .backspace
-        {
-            lastWord = lastWord.substring(to: lastWord.index(before: lastWord.endIndex))
-        }*/
         self.updateButtons(prevWord: lastWord)
-        return
     }
     
     override func setupKeys() {
@@ -62,14 +58,6 @@ class predictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
             //button.addTarget(self, action: #selector(KeyboardViewController.playKeySound), for: .touchDown)
 
         }
-
-        //Create selector pop up
-        /*var tableView = UITableView()
-        tableView = UITableView(frame: UIScreen.main.bounds, style: UITableViewStyle.plain)
-        tableView.delegate      =   self.popUpController
-        tableView.dataSource    =   self.popUpController
-        tableView.register(UITableViewCell.self, forCellReuseIdentifier: "cell")
-        self.view.addSubview(tableView)*/
         
         
         //populate buttons
@@ -163,16 +151,17 @@ class predictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
     //Pop ups
     @IBAction func showPopover(sender: UIButton) {
         
-        let tableViewController = PopUpTableViewController(selector: sender as UIButton!)
-        tableViewController.modalPresentationStyle = UIModalPresentationStyle.popover
         
-        present(tableViewController, animated: true, completion: nil)
+        let popUpViewController = PopUpViewController(selector: sender as UIButton!)
+        popUpViewController.modalPresentationStyle = UIModalPresentationStyle.popover
+        popUpViewController.addButton.addTarget(self, action: #selector(switchToTextMode), for: .touchUpInside)
+        present(popUpViewController, animated: true, completion: nil)
         
-        let popoverPresentationController = tableViewController.popoverPresentationController
-        popoverPresentationController?.sourceView = sender as? UIView
+        let popoverPresentationController = popUpViewController.popoverPresentationController
+        popoverPresentationController?.sourceView = sender
         let height = Int(sender.frame.height)
         let width = Int(sender.frame.height) / 2
-        //popoverPresentationController?.sourceRect = CGRect(origin: CGPoint(x: 0,y :height), size: CGSize(width: 100, height: 100))//CGRectMake(0, 0, sender.frame.size.width, sender.frame.size.height)
+        
         
         popoverPresentationController?.sourceRect = CGRect(origin: CGPoint(x: 0,y :0), size: CGSize(width: width, height: height))
     }
@@ -181,6 +170,13 @@ class predictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
         return .none
     }
     
+    func switchToTextMode(){
+        self.banner?.selectTextView()
+    }
+    
+    func saveProfile() {
+        
+    }
 }
 
 
