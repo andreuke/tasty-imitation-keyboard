@@ -67,24 +67,30 @@ class WordList: NSObject {
                 t.column(lastused, defaultValue: Date())
             })
             
-            // Populate the Ngrams table and Container table with words
-            for word in allWords {
-                // check if word is in db, and insert it if it's not
-                let result = try? db.scalar(ngrams.filter(gram == word).count)
-                if result! == 0 {
-                    let insert = ngrams.insert(gram <- word, n <- 1)
-                    _ = try? db.run(insert)
-                }
-                else if result! > 1{
-                    print("There's a duplicate word in the db!")
-                }
-                
-                // check if word is paired with Default profile in Containers table, insert if not
-                let containerResult = try? db.scalar(containers.filter(profile == "Default")
-                                        .filter(ngram == word).count)
-                if containerResult == 0 {
-                    let insert = containers.insert(profile <- "Default", ngram <- word)
-                    _ = try? db.run(insert)
+            // Check to make sure the number of words in Default matches the number
+            //   of words in google-10000.txt --- there were duplicates that I deleted,
+            //   so there are only 9989 unique words, not 10000
+            // If not, then insert the missing words
+            if (try db.scalar(containers.filter(profile == "Default").count) < 9989) {
+                // Populate the Ngrams table and Container table with words
+                for word in allWords {
+                    // check if word is in db, and insert it if it's not
+                    let result = try? db.scalar(ngrams.filter(gram == word).count)
+                    if result! == 0 {
+                        let insert = ngrams.insert(gram <- word, n <- 1)
+                        _ = try? db.run(insert)
+                    }
+                    else if result! > 1{
+                        print("There's a duplicate word in the db!")
+                    }
+                    
+                    // check if word is paired with Default profile in Containers table, insert if not
+                    let containerResult = try? db.scalar(containers.filter(profile == "Default")
+                                            .filter(ngram == word).count)
+                    if containerResult == 0 {
+                        let insert = containers.insert(profile <- "Default", ngram <- word)
+                        _ = try? db.run(insert)
+                    }
                 }
             }
         }
