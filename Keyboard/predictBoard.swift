@@ -48,27 +48,25 @@ class predictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
                 let count = (components?.count)! as Int
                 let lastWord = (components?[count-2])! as String
                 
-                let db_path = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true).first!
+                let db_path = dbObjects().db_path
                 let db = try Connection("\(db_path)/db.sqlite3")
-                let containers = Table("Containers")
-                let ngram = Expression<String>("ngram")
-                let profile = Expression<String>("profile")
-                let frequency = Expression<Int64>("frequency")
-                let lastused = Expression<Date>("lastused")
+                let containers = dbObjects.Containers()
+                
                 let currentProfile = UserDefaults.standard.value(forKey: "profile") as! String
                 // if word notExists in database
-                if (try db.scalar(containers.filter(ngram == lastWord).count) == 0) {
+                if (try db.scalar(containers.containers_table
+                                            .filter(containers.ngram == lastWord)
+                                            .count) == 0) {
                     // insert lastWord into database
-                    let insert = containers.insert(ngram <- lastWord,
-                                                   profile <- currentProfile,
-                                                   frequency <- 1)
+                    let insert = containers.containers_table.insert(containers.ngram <- lastWord,
+                                    containers.profile <- currentProfile, containers.frequency <- 1)
                     _ = try? db.run(insert)
                 }
                 else {
                     // increment lastWord in database
-                    try db.run(containers.filter(ngram == lastWord)
-                                         .filter(profile == currentProfile)
-                                         .update(frequency++, lastused <- Date()))
+                    try db.run(containers.containers_table.filter(containers.ngram == lastWord)
+                                         .filter(containers.profile == currentProfile)
+                                         .update(containers.frequency++, containers.lastused <- Date()))
                 }
             } catch {}
         }
