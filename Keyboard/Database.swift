@@ -10,13 +10,13 @@ import UIKit
 import SQLite
 
 
-class WordList: NSObject {
+class Database: NSObject {
     
     override init() {
         
         do {
             let db_path = NSSearchPathForDirectoriesInDomains(
-                        .documentDirectory, .userDomainMask, true).first!
+                .documentDirectory, .userDomainMask, true).first!
             let pathToWords = Bundle.main.path(forResource: "google-10000", ofType: "txt")
             let content = try String(contentsOfFile:pathToWords!, encoding: String.Encoding.utf8)
             let allWords = content.components(separatedBy: "\n")
@@ -27,7 +27,6 @@ class WordList: NSObject {
             let ngrams = Table("Ngrams")
             let gram = Expression<String>("gram")
             let n = Expression<Int>("n")
-            
             try? db.run(ngrams.create(ifNotExists: true) { t in
                 t.column(gram, primaryKey: true)
                 t.column(n)
@@ -38,7 +37,6 @@ class WordList: NSObject {
             let profileId = Expression<Int64>("profileId")
             let name = Expression<String>("name")
             let linksTo = Expression<Int64>("linksTo")
-            
             try? db.run(profiles.create(ifNotExists: true) { t in
                 t.column(profileId, primaryKey: .autoincrement)
                 t.column(name)
@@ -58,13 +56,21 @@ class WordList: NSObject {
             let ngram = Expression<String>("ngram")
             let frequency = Expression<Int64>("frequency")
             let lastused = Expression<Date>("lastused")
-            
             try? db.run(containers.create(ifNotExists: true) { t in
                 t.column(containerId, primaryKey: .autoincrement)
                 t.column(profile)
                 t.column(ngram)
                 t.column(frequency, defaultValue: 0)
                 t.column(lastused, defaultValue: Date())
+            })
+            
+            // Create Phrases table so user can store pre-defined phrases
+            let phrases = Table("Phrases")
+            let phraseId = Expression<Int64>("id")
+            let phrase = Expression<String>("phrase")
+            try? db.run(phrases.create(ifNotExists: true) { t in
+                t.column(phraseId, primaryKey: .autoincrement)
+                t.column(phrase)
             })
             
             // Check to make sure the number of words in Default matches the number
@@ -85,10 +91,12 @@ class WordList: NSObject {
                     }
                     
                     // check if word is paired with Default profile in Containers table, insert if not
-                    let containerResult = try? db.scalar(containers.filter(profile == "Default")
-                                            .filter(ngram == word).count)
+                    let containerResult = try? db.scalar(containers
+                                                        .filter(profile == "Default")
+                                                        .filter(ngram == word).count)
                     if containerResult == 0 {
-                        let insert = containers.insert(profile <- "Default", ngram <- word)
+                        let insert = containers.insert(profile <- "Default",
+                                                            ngram <- word)
                         _ = try? db.run(insert)
                     }
                 }
@@ -97,7 +105,6 @@ class WordList: NSObject {
         catch {
             print("uh oh")
         }
-        
     }
     
     func recommendWords(input: String)->[String]{
@@ -105,12 +112,14 @@ class WordList: NSObject {
         do {
             let db_path = NSSearchPathForDirectoriesInDomains(
                 .documentDirectory, .userDomainMask, true).first!
-            let db = try Connection("\(db_path)/db.sqlite3")
+            let pathToWords = Bundle.main.path(forResource: "google-10000", ofType: "txt")
             
+            let db = try Connection("\(db_path)/db.sqlite3")
             let containers = Table("Containers")
             let profile = Expression<String>("profile")
             let ngram = Expression<String>("ngram")
             let frequency = Expression<Int64>("frequency")
+            
             let userProfile = UserDefaults.standard.value(forKey: "profile")
             for row in try db.prepare(containers.filter(profile == userProfile as! String)
                                                 .filter(ngram.like("\(input)%"))

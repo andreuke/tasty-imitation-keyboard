@@ -16,9 +16,9 @@ import SQLite
 
 class predictBoard: KeyboardViewController, UIPopoverPresentationControllerDelegate {
     
-    let words = WordList()
+    let words = Database()
     var banner: predictboardBanner? = nil
-    let recommendationEngine = WordList()
+    let recommendationEngine = Database()
     override init(nibName nibNameOrNil: String?, bundle nibBundleOrNil: Bundle?) {
         UserDefaults.standard.register(defaults: ["profile": "Default"])
         super.init(nibName: nibNameOrNil, bundle: nibBundleOrNil)
@@ -41,6 +41,37 @@ class predictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
         {
             lastWord = lastWord.substring(to: lastWord.index(before: lastWord.endIndex))
         }*/
+        if key.type == .space {
+            do {
+                let context = textDocumentProxy.documentContextBeforeInput
+                let components = context?.components(separatedBy: " ")
+                let count = (components?.count)! as Int
+                let lastWord = (components?[count-2])! as String
+                
+                let db_path = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true).first!
+                let db = try Connection("\(db_path)/db.sqlite3")
+                let containers = Table("Containers")
+                let ngram = Expression<String>("ngram")
+                let profile = Expression<String>("profile")
+                let frequency = Expression<Int64>("frequency")
+                let lastused = Expression<Date>("lastused")
+                let currentProfile = UserDefaults.standard.value(forKey: "profile") as! String
+                // if word notExists in database
+                if (try db.scalar(containers.filter(ngram == lastWord).count) == 0) {
+                    // insert lastWord into database
+                    let insert = containers.insert(ngram <- lastWord,
+                                                   profile <- currentProfile,
+                                                   frequency <- 1)
+                    _ = try? db.run(insert)
+                }
+                else {
+                    // increment lastWord in database
+                    try db.run(containers.filter(ngram == lastWord)
+                                         .filter(profile == currentProfile)
+                                         .update(frequency++, lastused <- Date()))
+                }
+            } catch {}
+        }
         self.updateButtons(prevWord: lastWord)
         return
     }
@@ -148,7 +179,11 @@ class predictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
                 let ngram = Expression<String>("ngram")
                 let profile = Expression<String>("profile")
                 let frequency = Expression<Int64>("frequency")
-                try db.run(containers.filter(ngram == wordToAdd).filter(profile == "Default").update(frequency++))
+                let lastused = Expression<Date>("lastused")
+                let currentProfile = UserDefaults.standard.value(forKey: "profile") as! String
+                try db.run(containers.filter(ngram == wordToAdd)
+                                     .filter(profile == currentProfile)
+                                     .update(frequency++, lastused <- Date()))
             }
             catch {
                 print("Incrementing word frequency failed")
