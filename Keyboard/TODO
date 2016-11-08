@@ -2,5 +2,12 @@
 
 Zack:
     - Find a resource for 2- and 3-grams, put them in the database with Default
-    - Start storing *new* words and n-grams instead of just incrementing banner button words
-    - Make a table for storing Brad's pre-defined phrases
+        X Find resources
+        - Add to database
+    - Don't insert empty strings as words
+    - Some 2-grams are formatted like "wo  n't"... figure out how to make these 1-grams
+    - Capitalize certain words like "I"
+
+    ---Done---
+    X Start storing *new* words and n-grams instead of just incrementing banner button words
+    X Make a table for storing Brad's pre-defined phrases

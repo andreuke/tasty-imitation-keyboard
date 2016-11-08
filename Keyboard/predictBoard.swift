@@ -54,17 +54,15 @@ class predictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
                 
                 let currentProfile = UserDefaults.standard.value(forKey: "profile") as! String
                 // if word notExists in database
-                if (try db.scalar(containers.containers_table
-                                            .filter(containers.ngram == lastWord)
-                                            .count) == 0) {
+                if (try db.scalar(containers.table.filter(containers.ngram == lastWord).count) == 0) {
                     // insert lastWord into database
-                    let insert = containers.containers_table.insert(containers.ngram <- lastWord,
+                    let insert = containers.table.insert(containers.ngram <- lastWord,
                                     containers.profile <- currentProfile, containers.frequency <- 1)
                     _ = try? db.run(insert)
                 }
                 else {
                     // increment lastWord in database
-                    try db.run(containers.containers_table.filter(containers.ngram == lastWord)
+                    try db.run(containers.table.filter(containers.ngram == lastWord)
                                          .filter(containers.profile == currentProfile)
                                          .update(containers.frequency++, containers.lastused <- Date()))
                 }
@@ -171,17 +169,13 @@ class predictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
             self.autoComplete(wordToAdd)
             // increment frequency of word in database
             do {
-                let db_path = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true).first!
+                let db_path = dbObjects().db_path
                 let db = try Connection("\(db_path)/db.sqlite3")
-                let containers = Table("Containers")
-                let ngram = Expression<String>("ngram")
-                let profile = Expression<String>("profile")
-                let frequency = Expression<Int64>("frequency")
-                let lastused = Expression<Date>("lastused")
+                let containers = dbObjects.Containers()
                 let currentProfile = UserDefaults.standard.value(forKey: "profile") as! String
-                try db.run(containers.filter(ngram == wordToAdd)
-                                     .filter(profile == currentProfile)
-                                     .update(frequency++, lastused <- Date()))
+                try db.run(containers.table.filter(containers.ngram == wordToAdd)
+                                     .filter(containers.profile == currentProfile)
+                                     .update(containers.frequency++, containers.lastused <- Date()))
             }
             catch {
                 print("Incrementing word frequency failed")
