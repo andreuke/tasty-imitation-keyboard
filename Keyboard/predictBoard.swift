@@ -187,10 +187,12 @@ class predictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
     
     func switchToTextMode(){
         self.banner?.selectTextView()
+        self.banner?.saveButton.addTarget(self, action: #selector(saveProfile), for: .touchUpInside)
     }
     
     func saveProfile() {
-        
+        self.recommendationEngine.addProfile(profileName: (self.banner?.textField.text)!)
+        self.banner?.selectDefaultView()
     }
 }
 

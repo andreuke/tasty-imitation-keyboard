@@ -92,7 +92,6 @@ class predictboardBanner: ExtraView {
         self.saveButton.setTitle("Save", for: UIControlState())
         self.saveButton.layer.cornerRadius = 5
         self.saveButton.titleLabel?.font = UIFont.systemFont(ofSize: fontSize)
-        self.saveButton.addTarget(self, action: #selector(selectDefaultView), for: .touchUpInside)
         self.textInputView.addSubview(self.saveButton)
         
         updateAppearance()
