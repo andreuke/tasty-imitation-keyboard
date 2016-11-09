@@ -35,10 +35,34 @@ class predictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
         if key.type != .backspace {
             keyOutput = key.outputForCase(self.shiftState.uppercase())
         }
-        let textDocumentProxy = self.textDocumentProxy
-        textDocumentProxy.insertText(keyOutput)
-        let lastWord = getLastWord(delete: false)
-        self.updateButtons(prevWord: lastWord)
+        //type in main app
+        if UserDefaults.standard.bool(forKey: "keyboardInputToApp") == true
+        {
+            let textDocumentProxy = self.textDocumentProxy
+            if key.type != .backspace {
+                textDocumentProxy.insertText(keyOutput)
+            }
+            else {
+                textDocumentProxy.deleteBackward()
+            }
+            //let lastWord = getLastWord(delete: false)
+            self.updateButtons()
+        }
+        //type in in-keyboard textbox
+        else {
+            if key.type != .backspace {
+                self.banner?.textField.text? += keyOutput
+            }
+            else{
+                let oldText = (self.banner?.textField.text)!
+                if oldText.characters.count > 0 {
+                    var endIndex = oldText.endIndex
+                    
+                    self.banner?.textField.text? = oldText.substring(to: oldText.index(before: endIndex))
+                }
+                //self.banner?.textField.text? += keyOutput
+            }
+        }
     }
     
     override func setupKeys() {
@@ -62,7 +86,7 @@ class predictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
         
         
         //populate buttons
-        updateButtons(prevWord: "")
+        updateButtons()
         
         return self.banner
     }
@@ -141,11 +165,12 @@ class predictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
             catch {
                 print("Incrementing word frequency failed")
             }
-            updateButtons(prevWord: "")
+            updateButtons()
         }
     }
     
-    func updateButtons(prevWord: String) {
+    func updateButtons() {
+        let prevWord = self.getLastWord(delete: false)
         let recommendations = recommendationEngine.recommendWords(input: prevWord)
         var index = 0
         for button in (self.banner?.buttons)! {
@@ -167,7 +192,7 @@ class predictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
     @IBAction func showPopover(sender: UIButton) {
         
         
-        let popUpViewController = PopUpViewController(selector: sender as UIButton!)
+        let popUpViewController = PopUpViewController(selector: sender as UIButton!, callBack: updateButtons)
         popUpViewController.modalPresentationStyle = UIModalPresentationStyle.popover
         popUpViewController.addButton.addTarget(self, action: #selector(switchToTextMode), for: .touchUpInside)
         present(popUpViewController, animated: true, completion: nil)
@@ -193,6 +218,7 @@ class predictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
     func saveProfile() {
         self.recommendationEngine.addProfile(profileName: (self.banner?.textField.text)!)
         self.banner?.selectDefaultView()
+        
     }
 }
 

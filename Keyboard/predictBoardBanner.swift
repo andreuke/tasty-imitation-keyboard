@@ -38,7 +38,7 @@ class predictboardBanner: ExtraView {
         textInputView.frame = CGRect(x: self.getMinX(), y: self.getMinY(), width: self.frame.width, height: self.frame.height)
         self.addSubview(textInputView)
         textInputView.isHidden = true
-        
+        self.textField.isUserInteractionEnabled = false
         let fontSize = CGFloat(22)
         
         for _ in 0..<self.numButtons {
@@ -68,7 +68,7 @@ class predictboardBanner: ExtraView {
         self.profileSelector.addTarget(self, action: #selector(buttonUnclicked), for: .touchUpInside)
         
         
-        self.textField.placeholder = "Enter new profile name"
+        self.textField.placeholder = "Just Start Typing"
         self.textField.font = UIFont.systemFont(ofSize: fontSize)
         self.textField.borderStyle = UITextBorderStyle.roundedRect
         self.textField.autocorrectionType = UITextAutocorrectionType.no

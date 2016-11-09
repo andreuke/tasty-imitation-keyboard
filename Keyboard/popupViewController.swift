@@ -17,9 +17,10 @@ class PopUpViewController:  UIViewController,UITableViewDelegate, UITableViewDat
     var items: [String] = []
     var addButton = UIButton()
     var editButton = UIButton()
-    
-    init(selector: UIButton)
+    var callBack: () -> ()
+    init(selector: UIButton, callBack: @escaping () -> ())
     {
+        self.callBack = callBack
         super.init(nibName: nil, bundle: nil)
         self.selector = selector
         
@@ -106,6 +107,7 @@ class PopUpViewController:  UIViewController,UITableViewDelegate, UITableViewDat
     
     func dismissPopUp(){
         self.dismiss(animated: true, completion: { _ in })
+        self.callBack()
     }
     
     
