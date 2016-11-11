@@ -17,7 +17,7 @@ import SQLite
 class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDelegate {
     
     var banner: PredictboardBanner? = nil
-    var textInputBanner: textInputBanner? = nil
+    var textInputBanner: TextInputBanner? = nil
     let recommendationEngine = WordList()
     
     override init(nibName nibNameOrNil: String?, bundle nibBundleOrNil: Bundle?) {
