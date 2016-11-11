@@ -32,6 +32,8 @@ class KeyboardViewController: UIInputViewController {
     
     var bannerView: ExtraView?
     var settingsView: ExtraView?
+    var editProfilesView: ExtraView?
+    var profileView: ExtraView?
     
     var currentMode: Int {
         didSet {
@@ -671,6 +673,8 @@ class KeyboardViewController: UIInputViewController {
             }
         }
         
+        
+        
         if let settings = self.settingsView {
             let hidden = settings.isHidden
             settings.isHidden = !hidden
@@ -679,6 +683,76 @@ class KeyboardViewController: UIInputViewController {
             self.bannerView?.isHidden = hidden
         }
     }
+    
+    @IBAction func toggleEditProfile() {
+        // lazy load settings
+        if self.editProfilesView == nil {
+            if let aProfiles = self.createEditProfiles() {
+                aProfiles.darkMode = self.darkMode()
+                
+                aProfiles.isHidden = true
+                self.view.addSubview(aProfiles)
+                self.editProfilesView = aProfiles
+                
+                aProfiles.translatesAutoresizingMaskIntoConstraints = false
+                
+                let widthConstraint = NSLayoutConstraint(item: aProfiles, attribute: NSLayoutAttribute.width, relatedBy: NSLayoutRelation.equal, toItem: self.view, attribute: NSLayoutAttribute.width, multiplier: 1, constant: 0)
+                let heightConstraint = NSLayoutConstraint(item: aProfiles, attribute: NSLayoutAttribute.height, relatedBy: NSLayoutRelation.equal, toItem: self.view, attribute: NSLayoutAttribute.height, multiplier: 1, constant: 0)
+                let centerXConstraint = NSLayoutConstraint(item: aProfiles, attribute: NSLayoutAttribute.centerX, relatedBy: NSLayoutRelation.equal, toItem: self.view, attribute: NSLayoutAttribute.centerX, multiplier: 1, constant: 0)
+                let centerYConstraint = NSLayoutConstraint(item: aProfiles, attribute: NSLayoutAttribute.centerY, relatedBy: NSLayoutRelation.equal, toItem: self.view, attribute: NSLayoutAttribute.centerY, multiplier: 1, constant: 0)
+                
+                self.view.addConstraint(widthConstraint)
+                self.view.addConstraint(heightConstraint)
+                self.view.addConstraint(centerXConstraint)
+                self.view.addConstraint(centerYConstraint)
+            }
+        }
+        
+        
+        
+        if let editProfiles = self.editProfilesView {
+            let hidden = editProfiles.isHidden
+            editProfiles.isHidden = !hidden
+            self.forwardingView.isHidden = hidden
+            self.forwardingView.isUserInteractionEnabled = !hidden
+            self.bannerView?.isHidden = hidden
+        }
+    }
+    
+    @IBAction func toggleProfile() {
+        // lazy load settings
+        if self.profileView == nil {
+            if let aProfiles = self.createProfile() {
+                aProfiles.darkMode = self.darkMode()
+                
+                aProfiles.isHidden = true
+                self.view.addSubview(aProfiles)
+                self.profileView = aProfiles
+                
+                aProfiles.translatesAutoresizingMaskIntoConstraints = false
+                
+                let widthConstraint = NSLayoutConstraint(item: aProfiles, attribute: NSLayoutAttribute.width, relatedBy: NSLayoutRelation.equal, toItem: self.view, attribute: NSLayoutAttribute.width, multiplier: 1, constant: 0)
+                let heightConstraint = NSLayoutConstraint(item: aProfiles, attribute: NSLayoutAttribute.height, relatedBy: NSLayoutRelation.equal, toItem: self.view, attribute: NSLayoutAttribute.height, multiplier: 1, constant: 0)
+                let centerXConstraint = NSLayoutConstraint(item: aProfiles, attribute: NSLayoutAttribute.centerX, relatedBy: NSLayoutRelation.equal, toItem: self.view, attribute: NSLayoutAttribute.centerX, multiplier: 1, constant: 0)
+                let centerYConstraint = NSLayoutConstraint(item: aProfiles, attribute: NSLayoutAttribute.centerY, relatedBy: NSLayoutRelation.equal, toItem: self.view, attribute: NSLayoutAttribute.centerY, multiplier: 1, constant: 0)
+                
+                self.view.addConstraint(widthConstraint)
+                self.view.addConstraint(heightConstraint)
+                self.view.addConstraint(centerXConstraint)
+                self.view.addConstraint(centerYConstraint)
+            }
+        }
+        
+        
+        
+        if let profile = self.profileView {
+            let hidden = profile.isHidden
+            profile.isHidden = !hidden
+            self.editProfilesView?.isHidden = hidden
+            self.editProfilesView?.isUserInteractionEnabled = !hidden
+        }
+    }
+    
     
     func setCapsIfNeeded() -> Bool {
         if self.shouldAutoCapitalize() {
@@ -830,5 +904,28 @@ class KeyboardViewController: UIInputViewController {
         let settingsView = DefaultSettings(globalColors: type(of: self).globalColors, darkMode: false, solidColorMode: self.solidColorMode())
         settingsView.backButton?.addTarget(self, action: #selector(KeyboardViewController.toggleSettings), for: UIControlEvents.touchUpInside)
         return settingsView
+    }
+    
+    func createEditProfiles() -> ExtraView? {
+        // note that dark mode is not yet valid here, so we just put false for clarity
+        let editProfilesView = EditProfiles(globalColors: type(of: self).globalColors, darkMode: false, solidColorMode: self.solidColorMode())
+
+        editProfilesView.backButton?.addTarget(self, action: #selector(KeyboardViewController.toggleEditProfile), for: UIControlEvents.touchUpInside)
+        editProfilesView.callBack = printHere
+        return editProfilesView
+    }
+    
+    func createProfile() -> ExtraView? {
+        // note that dark mode is not yet valid here, so we just put false for clarity
+        let profileView = Profiles(globalColors: type(of: self).globalColors, darkMode: false, solidColorMode: self.solidColorMode())
+        
+        profileView.backButton?.addTarget(self, action: #selector(KeyboardViewController.toggleProfile), for: UIControlEvents.touchUpInside)
+        profileView.callBack = printHere
+        return profileView
+    }
+    
+    func printHere() {
+        toggleProfile()
+        print("i was clicked")
     }
 }

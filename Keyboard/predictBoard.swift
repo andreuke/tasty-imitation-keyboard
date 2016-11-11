@@ -14,14 +14,16 @@ import SQLite
  set the name of your KeyboardViewController subclass in the Info.plist file.
  */
 
-class predictBoard: KeyboardViewController, UIPopoverPresentationControllerDelegate {
+class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDelegate {
     
-    let words = WordList()
-    var banner: predictboardBanner? = nil
+    var banner: PredictboardBanner? = nil
+    var textInputBanner: textInputBanner? = nil
     let recommendationEngine = WordList()
+    
     override init(nibName nibNameOrNil: String?, bundle nibBundleOrNil: Bundle?) {
         UserDefaults.standard.register(defaults: ["profile": "Default"])
         super.init(nibName: nibNameOrNil, bundle: nibBundleOrNil)
+        
     }
     
     required init?(coder: NSCoder) {
@@ -36,7 +38,7 @@ class predictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
             keyOutput = key.outputForCase(self.shiftState.uppercase())
         }
         //type in main app
-        if UserDefaults.standard.bool(forKey: "keyboardInputToApp") == true
+        if true//UserDefaults.standard.bool(forKey: "keyboardInputToApp") == true
         {
             let textDocumentProxy = self.textDocumentProxy
             if key.type != .backspace {
@@ -70,7 +72,7 @@ class predictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
     }
     
     override func createBanner() -> ExtraView? {
-        self.banner = predictboardBanner(globalColors: type(of: self).globalColors, darkMode: self.darkMode(), solidColorMode: self.solidColorMode())
+        self.banner = PredictboardBanner(globalColors: type(of: self).globalColors, darkMode: self.darkMode(), solidColorMode: self.solidColorMode())
         self.layout?.darkMode
 
         //set up profile selector
@@ -171,7 +173,10 @@ class predictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
     
     func updateButtons() {
         let prevWord = self.getLastWord(delete: false)
-        let recommendations = recommendationEngine.recommendWords(input: prevWord)
+        var recommendations = recommendationEngine.recommendWords(input: prevWord)
+        //filter away any blank values, because it causes problems
+        recommendations = recommendations.filter() { $0 != "" }
+        
         var index = 0
         for button in (self.banner?.buttons)! {
             if index < recommendations.count {
@@ -195,6 +200,8 @@ class predictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
         let popUpViewController = PopUpViewController(selector: sender as UIButton!, callBack: updateButtons)
         popUpViewController.modalPresentationStyle = UIModalPresentationStyle.popover
         popUpViewController.addButton.addTarget(self, action: #selector(switchToTextMode), for: .touchUpInside)
+        popUpViewController.editButton.addTarget(self, action: #selector(KeyboardViewController.toggleEditProfile), for: .touchUpInside)
+
         present(popUpViewController, animated: true, completion: nil)
         
         let popoverPresentationController = popUpViewController.popoverPresentationController
@@ -220,6 +227,7 @@ class predictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
         self.banner?.selectDefaultView()
         
     }
+    
 }
 
 

@@ -12,6 +12,7 @@
                 <outlet property="effectsView" destination="p1b-aL-nFG" id="qVH-MN-nbd"/>
                 <outlet property="pixelLine" destination="ooR-t1-RO3" id="RNZ-JA-0tO"/>
                 <outlet property="settingsLabel" destination="YuR-yT-g8t" id="Zwy-Pa-l78"/>
+                <outlet property="tableView" destination="PIq-gg-rs6" id="rBh-eg-uhG"/>
             </connections>
         </placeholder>
         <placeholder placeholderIdentifier="IBFirstResponder" id="-2" customClass="UIResponder"/>
@@ -19,18 +20,28 @@
             <rect key="frame" x="0.0" y="0.0" width="679" height="392"/>
             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
             <subviews>
-                <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="Ibn-Pg-NVs" userLabel="TableView"/>
+                <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="Ibn-Pg-NVs" userLabel="TableView">
+                    <subviews>
+                        <tableView opaque="NO" clipsSubviews="YES" contentMode="scaleToFill" alwaysBounceVertical="YES" indicatorStyle="black" style="grouped" separatorStyle="default" allowsSelection="NO" rowHeight="44" sectionHeaderHeight="10" sectionFooterHeight="10" translatesAutoresizingMaskIntoConstraints="NO" id="PIq-gg-rs6">
+                            <color key="backgroundColor" red="0.0" green="0.0" blue="0.0" alpha="0.0" colorSpace="custom" customColorSpace="sRGB"/>
+                            <connections>
+                                <outlet property="dataSource" destination="-1" id="pOX-gT-pSA"/>
+                                <outlet property="delegate" destination="-1" id="6Mw-Uw-d7I"/>
+                            </connections>
+                        </tableView>
+                    </subviews>
+                    <constraints>
+                        <constraint firstItem="PIq-gg-rs6" firstAttribute="top" secondItem="Ibn-Pg-NVs" secondAttribute="top" id="5T4-Et-0qD"/>
+                        <constraint firstAttribute="bottom" secondItem="PIq-gg-rs6" secondAttribute="bottom" id="EIH-QE-G7s"/>
+                        <constraint firstAttribute="trailing" secondItem="PIq-gg-rs6" secondAttribute="trailing" id="JoT-Qt-6kS"/>
+                        <constraint firstItem="PIq-gg-rs6" firstAttribute="leading" secondItem="Ibn-Pg-NVs" secondAttribute="leading" id="ol6-uh-Kgp"/>
+                    </constraints>
+                </view>
                 <visualEffectView opaque="NO" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="p1b-aL-nFG">
                     <view key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" id="EjZ-Jw-9eM">
                         <frame key="frameInset"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
-                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" misplaced="YES" text="Settings" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="YuR-yT-g8t">
-                                <frame key="frameInset" minX="301" minY="7.5" width="75.5" height="25.5"/>
-                                <fontDescription key="fontDescription" type="system" pointSize="21"/>
-                                <color key="textColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
-                                <nil key="highlightedColor"/>
-                            </label>
                             <button opaque="NO" contentMode="scaleToFill" misplaced="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="x35-jI-wEW">
                                 <frame key="frameInset" minY="5" width="55" height="30"/>
                                 <state key="normal" title="〈 Back">
@@ -44,6 +55,12 @@
                                     <constraint firstAttribute="height" constant="1" id="8r2-39-dpi"/>
                                 </constraints>
                             </view>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" misplaced="YES" text="Edit Profiles" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="YuR-yT-g8t">
+                                <frame key="frameInset" minX="284" minY="5" width="111" height="26"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="21"/>
+                                <color key="textColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                                <nil key="highlightedColor"/>
+                            </label>
                         </subviews>
                         <constraints>
                             <constraint firstAttribute="centerY" secondItem="x35-jI-wEW" secondAttribute="centerY" id="CWy-gZ-H4o"/>

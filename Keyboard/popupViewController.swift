@@ -52,7 +52,6 @@ class PopUpViewController:  UIViewController,UITableViewDelegate, UITableViewDat
         let width = 300
         let height = items.count * Int(self.tableView.rowHeight)
         
-        //popUpView.frame = CGRect(origin: CGPoint(x: 0,y :0), size: CGSize(width: 300, height: Int(height + Int(tableView.rowHeight))))
         
         tableView.frame         =   CGRect(origin: CGPoint(x: 0,y :0), size: CGSize(width: width, height: height))
         self.preferredContentSize = CGSize(width: width, height: height + Int(tableView.rowHeight))
