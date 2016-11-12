@@ -21,7 +21,8 @@ class Profiles: ExtraView, UITableViewDataSource, UITableViewDelegate {
     @IBOutlet var settingsLabel: UILabel?
     @IBOutlet var pixelLine: UIView?
     
-    var callBack: () -> ()
+    @IBOutlet weak var editName: UIBarButtonItem!
+    //var callBack: () -> ()
     
     override var darkMode: Bool {
         didSet {
@@ -59,7 +60,7 @@ class Profiles: ExtraView, UITableViewDataSource, UITableViewDelegate {
     }
     
     required init(globalColors: GlobalColors.Type?, darkMode: Bool, solidColorMode: Bool) {
-        self.callBack = tempCallBack
+        //self.callBack = tempCallBack
         super.init(globalColors: globalColors, darkMode: darkMode, solidColorMode: solidColorMode)
         self.loadNib()
         
@@ -151,15 +152,13 @@ class Profiles: ExtraView, UITableViewDataSource, UITableViewDelegate {
             }
             
             cell.sw.isOn = UserDefaults.standard.bool(forKey: key!)
-            cell.label.setTitle(key!, for: UIControlState.normal)
-            cell.label.addTarget(self, action: #selector(printHere), for: .touchUpInside)
-            cell.longLabel.text = self.settingsNotes[key!]
+            cell.label.text = key!
+            cell.longLabel.text = nil
             
             cell.backgroundColor = (self.darkMode ? cellBackgroundColorDark : cellBackgroundColorLight)
-            cell.label.setTitleColor((self.darkMode ? cellLabelColorDark : cellLabelColorLight), for: UIControlState.normal)
-            //cell.label.textColor = (self.darkMode ? cellLabelColorDark : cellLabelColorLight)
+            //cell.label.setTitleColor((self.darkMode ? cellLabelColorDark : cellLabelColorLight), for: UIControlState.normal)
+            cell.label.textColor = (self.darkMode ? cellLabelColorDark : cellLabelColorLight)
             cell.longLabel.textColor = (self.darkMode ? cellLongLabelColorDark : cellLongLabelColorLight)
-            cell.accessoryType = .disclosureIndicator
             cell.changeConstraints()
             
             return cell
@@ -215,24 +214,21 @@ class Profiles: ExtraView, UITableViewDataSource, UITableViewDelegate {
         }
     }
     
-    func printHere() {
-        print("i was clicked")
-        self.callBack()
-    }
+
     
 }
 
 class ProfileTableViewCell: UITableViewCell {
     
     var sw: UISwitch
-    var label: UIButton
+    var label: UILabel
     var longLabel: UITextView
     var constraintsSetForLongLabel: Bool
     var cellConstraints: [NSLayoutConstraint]
     
     override init(style: UITableViewCellStyle, reuseIdentifier: String?) {
         self.sw = UISwitch()
-        self.label = UIButton()
+        self.label = UILabel()
         self.longLabel = UITextView()
         self.cellConstraints = []
         
@@ -252,12 +248,12 @@ class ProfileTableViewCell: UITableViewCell {
         self.sw.tag = 1
         self.label.tag = 2
         self.longLabel.tag = 3
-        self.sw.isHidden = true
+        
         self.addSubview(self.sw)
         self.addSubview(self.label)
         self.addSubview(self.longLabel)
         
-        //self.addConstraints()
+        self.addConstraints()
     }
     
     required init?(coder aDecoder: NSCoder) {

@@ -3,17 +3,12 @@
     <dependencies>
         <deployment identifier="iOS"/>
         <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="11161"/>
-        <capability name="Navigation items with more than one left or right bar item" minToolsVersion="7.0"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
-        <placeholder placeholderIdentifier="IBFilesOwner" id="-1" userLabel="File's Owner" customClass="Profiles" customModule="Keyboard" customModuleProvider="target">
+        <placeholder placeholderIdentifier="IBFilesOwner" id="-1" userLabel="File's Owner" customClass="DefaultSettings" customModule="Keyboard" customModuleProvider="target">
             <connections>
-                <outlet property="NavBar" destination="lTV-rN-yPI" id="r3i-NZ-BDy"/>
-                <outlet property="addButton" destination="QkP-7k-FA8" id="iIB-28-qz2"/>
                 <outlet property="backButton" destination="x35-jI-wEW" id="8Jf-cz-Pfk"/>
-                <outlet property="deleteButton" destination="3aQ-Hb-Otp" id="AMM-0S-wMp"/>
-                <outlet property="editName" destination="UqQ-VC-Q6G" id="z5O-7c-7jn"/>
                 <outlet property="effectsView" destination="p1b-aL-nFG" id="qVH-MN-nbd"/>
                 <outlet property="pixelLine" destination="ooR-t1-RO3" id="RNZ-JA-0tO"/>
                 <outlet property="settingsLabel" destination="YuR-yT-g8t" id="Zwy-Pa-l78"/>
@@ -34,28 +29,11 @@
                                 <outlet property="delegate" destination="-1" id="6Mw-Uw-d7I"/>
                             </connections>
                         </tableView>
-                        <navigationBar contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="VAq-uI-Z58">
-                            <items>
-                                <navigationItem title="Title" id="lTV-rN-yPI">
-                                    <barButtonItem key="leftBarButtonItem" title="Edit Name" id="UqQ-VC-Q6G"/>
-                                    <rightBarButtonItems>
-                                        <barButtonItem systemItem="trash" id="3aQ-Hb-Otp"/>
-                                        <barButtonItem systemItem="add" id="QkP-7k-FA8"/>
-                                    </rightBarButtonItems>
-                                </navigationItem>
-                            </items>
-                            <connections>
-                                <outlet property="delegate" destination="-1" id="OEn-m6-lHg"/>
-                            </connections>
-                        </navigationBar>
                     </subviews>
                     <constraints>
-                        <constraint firstItem="VAq-uI-Z58" firstAttribute="top" secondItem="Ibn-Pg-NVs" secondAttribute="top" id="66B-se-213"/>
+                        <constraint firstItem="PIq-gg-rs6" firstAttribute="top" secondItem="Ibn-Pg-NVs" secondAttribute="top" id="5T4-Et-0qD"/>
                         <constraint firstAttribute="bottom" secondItem="PIq-gg-rs6" secondAttribute="bottom" id="EIH-QE-G7s"/>
-                        <constraint firstItem="VAq-uI-Z58" firstAttribute="leading" secondItem="Ibn-Pg-NVs" secondAttribute="leading" id="HxP-HF-rH1"/>
                         <constraint firstAttribute="trailing" secondItem="PIq-gg-rs6" secondAttribute="trailing" id="JoT-Qt-6kS"/>
-                        <constraint firstAttribute="trailing" secondItem="VAq-uI-Z58" secondAttribute="trailing" id="OXN-uw-sxO"/>
-                        <constraint firstItem="PIq-gg-rs6" firstAttribute="top" secondItem="VAq-uI-Z58" secondAttribute="bottom" id="THm-kt-YDz"/>
                         <constraint firstItem="PIq-gg-rs6" firstAttribute="leading" secondItem="Ibn-Pg-NVs" secondAttribute="leading" id="ol6-uh-Kgp"/>
                     </constraints>
                 </view>
@@ -64,12 +42,6 @@
                         <frame key="frameInset"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
-                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" misplaced="YES" text="Edit Profiles" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="YuR-yT-g8t">
-                                <frame key="frameInset" minX="301" minY="7.5" width="111" height="26"/>
-                                <fontDescription key="fontDescription" type="system" pointSize="21"/>
-                                <color key="textColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
-                                <nil key="highlightedColor"/>
-                            </label>
                             <button opaque="NO" contentMode="scaleToFill" misplaced="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="x35-jI-wEW">
                                 <frame key="frameInset" minY="5" width="55" height="30"/>
                                 <state key="normal" title="〈 Back">
@@ -83,6 +55,12 @@
                                     <constraint firstAttribute="height" constant="1" id="8r2-39-dpi"/>
                                 </constraints>
                             </view>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" misplaced="YES" text="Edit Profiles" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="YuR-yT-g8t">
+                                <frame key="frameInset" minX="284" minY="5" width="111" height="26"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="21"/>
+                                <color key="textColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                                <nil key="highlightedColor"/>
+                            </label>
                         </subviews>
                         <constraints>
                             <constraint firstAttribute="centerY" secondItem="x35-jI-wEW" secondAttribute="centerY" id="CWy-gZ-H4o"/>

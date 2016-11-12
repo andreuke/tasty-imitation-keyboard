@@ -17,7 +17,7 @@ class EditProfiles: ExtraView, UITableViewDataSource, UITableViewDelegate {
     @IBOutlet var settingsLabel: UILabel?
     @IBOutlet var pixelLine: UIView?
     
-    var callBack: () -> ()
+    var callBack: (String) -> ()
     
     override var darkMode: Bool {
         didSet {
@@ -211,14 +211,14 @@ class EditProfiles: ExtraView, UITableViewDataSource, UITableViewDelegate {
         }
     }
     
-    func printHere() {
+    func printHere(_ sender:UIButton) {
         print("i was clicked")
-        self.callBack()
+        self.callBack(sender.titleLabel!.text!)
     }
     
 }
 
-func tempCallBack() {
+func tempCallBack(tempString:String) {
     print("Not innitialized")
 }
 

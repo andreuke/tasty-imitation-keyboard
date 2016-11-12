@@ -17,8 +17,9 @@ import SQLite
 class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDelegate {
     
     var banner: PredictboardBanner? = nil
-    var textInputBanner: TextInputBanner? = nil
     let recommendationEngine = WordList()
+    var editProfilesView: ExtraView?
+    var profileView: ExtraView?
     
     override init(nibName nibNameOrNil: String?, bundle nibBundleOrNil: Bundle?) {
         UserDefaults.standard.register(defaults: ["profile": "Default"])
@@ -74,7 +75,7 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
     override func createBanner() -> ExtraView? {
         self.banner = PredictboardBanner(globalColors: type(of: self).globalColors, darkMode: self.darkMode(), solidColorMode: self.solidColorMode())
         self.layout?.darkMode
-
+        self.banner?.isHidden = true
         //set up profile selector
         self.banner?.profileSelector.addTarget(self, action: #selector(showPopover), for: .touchUpInside)
          self.banner?.profileSelector.setTitle(UserDefaults.standard.string(forKey: "profile")!, for: UIControlState())
@@ -199,8 +200,8 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
         
         let popUpViewController = PopUpViewController(selector: sender as UIButton!, callBack: updateButtons)
         popUpViewController.modalPresentationStyle = UIModalPresentationStyle.popover
-        popUpViewController.addButton.addTarget(self, action: #selector(switchToTextMode), for: .touchUpInside)
-        popUpViewController.editButton.addTarget(self, action: #selector(KeyboardViewController.toggleEditProfile), for: .touchUpInside)
+        popUpViewController.addButton.addTarget(self, action: #selector(switchToAddTextMode), for: .touchUpInside)
+        popUpViewController.editButton.addTarget(self, action: #selector(toggleEditProfile), for: .touchUpInside)
 
         present(popUpViewController, animated: true, completion: nil)
         
@@ -217,15 +218,118 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
         return .none
     }
     
-    func switchToTextMode(){
+    func switchToAddTextMode(){
         self.banner?.selectTextView()
         self.banner?.saveButton.addTarget(self, action: #selector(saveProfile), for: .touchUpInside)
+        self.banner?.backButton.addTarget(self, action: #selector(completedAddTextMode), for: .touchUpInside)
     }
-    
+        
+    func completedAddTextMode(){
+        self.banner?.selectDefaultView()
+        self.banner?.saveButton.removeTarget(self, action: #selector(saveProfile), for: .touchUpInside)
+        self.banner?.backButton.removeTarget(self, action: #selector(completedAddTextMode), for: .touchUpInside)
+        self.banner?.textField.resignFirstResponder()
+        dismissKeyboard()
+    }
+
     func saveProfile() {
         self.recommendationEngine.addProfile(profileName: (self.banner?.textField.text)!)
-        self.banner?.selectDefaultView()
+        //completedAddTextMode()
+        showForwardingView(toShow: false)
+        showBanner(toShow: false)
+        let profile = createProfile() as! Profiles
+        profileView = profile
+        showView(viewToShow: profileView!, toShow: true)
+        profile.NavBar.title = self.banner?.textField.text
         
+        //remove old target of back button set in createProfile since we want different behavior here
+        profile.backButton?.removeTarget(self, action: #selector(toggleProfile), for: UIControlEvents.touchUpInside)
+        
+        profile.backButton?.addTarget(self, action: #selector(dismissKeyboardApp), for: UIControlEvents.touchUpInside)
+        
+    }
+    
+    func dismissKeyboardApp() {
+        dismissKeyboard()
+    }
+    
+    func showView(viewToShow: ExtraView, toShow: Bool) {
+        if toShow {
+            viewToShow.darkMode = self.darkMode()
+            viewToShow.isHidden = true
+            self.view.addSubview(viewToShow)
+            
+            viewToShow.translatesAutoresizingMaskIntoConstraints = false
+            
+            let widthConstraint = NSLayoutConstraint(item: viewToShow, attribute: NSLayoutAttribute.width, relatedBy: NSLayoutRelation.equal, toItem: self.view, attribute: NSLayoutAttribute.width, multiplier: 1, constant: 0)
+            let heightConstraint = NSLayoutConstraint(item: viewToShow, attribute: NSLayoutAttribute.height, relatedBy: NSLayoutRelation.equal, toItem: self.view, attribute: NSLayoutAttribute.height, multiplier: 1, constant: 0)
+            let centerXConstraint = NSLayoutConstraint(item: viewToShow, attribute: NSLayoutAttribute.centerX, relatedBy: NSLayoutRelation.equal, toItem: self.view, attribute: NSLayoutAttribute.centerX, multiplier: 1, constant: 0)
+            let centerYConstraint = NSLayoutConstraint(item: viewToShow, attribute: NSLayoutAttribute.centerY, relatedBy: NSLayoutRelation.equal, toItem: self.view, attribute: NSLayoutAttribute.centerY, multiplier: 1, constant: 0)
+            
+            self.view.addConstraint(widthConstraint)
+            self.view.addConstraint(heightConstraint)
+            self.view.addConstraint(centerXConstraint)
+            self.view.addConstraint(centerYConstraint)
+        }
+        viewToShow.isHidden = !toShow
+        viewToShow.isUserInteractionEnabled = toShow
+
+    }
+    
+    func showBanner(toShow: Bool) {
+        self.banner?.isHidden = !toShow
+        self.banner?.isUserInteractionEnabled = toShow
+    }
+    
+    func showForwardingView(toShow: Bool) {
+        self.forwardingView.isHidden = !toShow
+        self.forwardingView.isUserInteractionEnabled = toShow
+    }
+    
+    @IBAction func toggleEditProfile() {
+        let toShow = self.forwardingView.isHidden
+        showForwardingView(toShow: toShow)
+        showBanner(toShow: toShow)
+        if (!toShow) {
+            editProfilesView = createEditProfiles()
+        }
+        showView(viewToShow: editProfilesView!, toShow: !toShow)
+
+    }
+    
+    func toggleProfile() {
+        let toShow = (editProfilesView?.isHidden)!
+        if toShow {
+            editProfilesView = createEditProfiles()
+        }
+        else {
+            profileView = createProfile()
+        }
+        showView(viewToShow: editProfilesView!, toShow: toShow)
+        showView(viewToShow: profileView!, toShow: !toShow)
+    }
+    
+    func createEditProfiles() -> ExtraView? {
+        let editProfile = EditProfiles(globalColors: type(of: self).globalColors, darkMode: false, solidColorMode: self.solidColorMode())
+        
+        editProfile.backButton?.addTarget(self, action: #selector(toggleEditProfile), for: UIControlEvents.touchUpInside)
+        editProfile.callBack = openProfile
+        return editProfile
+    }
+    
+    func createProfile() -> ExtraView? {
+        // note that dark mode is not yet valid here, so we just put false for clarity
+        let profileView = Profiles(globalColors: type(of: self).globalColors, darkMode: false, solidColorMode: self.solidColorMode())
+        //profileView.NavBar.title = title
+        profileView.backButton?.addTarget(self, action: #selector(toggleProfile), for: UIControlEvents.touchUpInside)
+        //profileView.callBack = printHere
+        return profileView
+    }
+    
+    func openProfile(tableTitle:String) {
+        toggleProfile()
+        let profile = profileView as! Profiles
+        profile.NavBar.title = tableTitle
     }
     
 }

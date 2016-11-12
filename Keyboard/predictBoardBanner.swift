@@ -85,7 +85,6 @@ class PredictboardBanner: ExtraView {
         self.backButton.setTitle("Back", for: UIControlState())
         self.backButton.layer.cornerRadius = 5
         self.backButton.titleLabel?.font = UIFont.systemFont(ofSize: fontSize)
-        self.backButton.addTarget(self, action: #selector(selectDefaultView), for: .touchUpInside)
         self.textInputView.addSubview(self.backButton)
         
         
