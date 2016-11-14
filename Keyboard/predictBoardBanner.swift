@@ -124,15 +124,24 @@ class PredictboardBanner: ExtraView {
         
         var x_offset = CGFloat(0)
         var y_offset = CGFloat(0)
-        for index in 0..<self.numButtons {
-            buttons[index].frame = CGRect(x: (self.getMinX() + x_offset), y: self.getMinY() + y_offset, width: widthBut - 1, height: heightBut - 1)
+        var row = 0
+        var buttonIndex = 0
+        for index in 0..<self.allButtons {
+            if row == 0 && index + 1 == self.allButtons / self.numRows {
+                self.profileSelector.frame = CGRect(x: (self.getMinX() + x_offset), y: self.getMinY() + y_offset, width: widthBut - 1, height: heightBut - 1)
+            }
+            else{
+                buttons[buttonIndex].frame = CGRect(x: (self.getMinX() + x_offset), y: self.getMinY() + y_offset, width: widthBut - 1, height: heightBut - 1)
+                buttonIndex += 1
+            }
             x_offset += widthBut
             if (index + 1) % (self.allButtons / self.numRows) == 0 {
                 y_offset += heightBut
                 x_offset = CGFloat(0)
+                row += 1
             }
         }
-        self.profileSelector.frame = CGRect(x: (self.getMinX() + x_offset), y: self.getMinY() + y_offset, width: widthBut - 1, height: heightBut - 1)
+        //self.profileSelector.frame = CGRect(x: (self.getMinX() + x_offset), y: self.getMinY() + y_offset, width: widthBut - 1, height: heightBut - 1)
         
         let textWidth:CGFloat = 300
         let textHeight:CGFloat = 40

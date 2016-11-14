@@ -192,6 +192,21 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
         }
     }
     
+    /*func otherUpdate() {
+        let prevWord = self.getLastWord(delete: false)
+        var recommendations = recommendationEngine.recommendWords(input: prevWord)
+        //filter away any blank values, because it causes problems
+        recommendations = recommendations.filter() { $0 != "" }
+        let buttonsPerRow = (banner?.allButtons)! / (banner?.numRows)!
+        let numRows: Int = banner?.numRows
+        for row in stride(from: numRows, to: 0, by: -1) {
+            let constant = row * buttonsPerRow
+            for buttonIndex in 0..<buttonsPerRow {
+                
+            }
+        }
+    }*/
+    
         
     
     //Pop ups

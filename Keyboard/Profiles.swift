@@ -152,7 +152,8 @@ class Profiles: ExtraView, UITableViewDataSource, UITableViewDelegate {
                 cell.sw.addTarget(self, action: #selector(Profiles.toggleSetting(_:)), for: UIControlEvents.valueChanged)
             }
             
-            cell.sw.isOn = UserDefaults.standard.bool(forKey: key!)
+            //cell.sw.isOn = UserDefaults.standard.bool(forKey: key!)
+            //cell.sw.setTitle(title:", for: <#T##UIControlState#>)
             cell.label.text = key!
             cell.longLabel.text = nil
             
@@ -160,6 +161,7 @@ class Profiles: ExtraView, UITableViewDataSource, UITableViewDelegate {
             //cell.label.setTitleColor((self.darkMode ? cellLabelColorDark : cellLabelColorLight), for: UIControlState.normal)
             cell.label.textColor = (self.darkMode ? cellLabelColorDark : cellLabelColorLight)
             cell.longLabel.textColor = (self.darkMode ? cellLongLabelColorDark : cellLongLabelColorLight)
+            //cell.editingStyle = .delete
             cell.changeConstraints()
             
             return cell
@@ -215,20 +217,28 @@ class Profiles: ExtraView, UITableViewDataSource, UITableViewDelegate {
         }
     }
     
+    func tableView(_ tableView: UITableView, editActionsForRowAt indexPath: IndexPath) -> [UITableViewRowAction]? {
+        let delete = UITableViewRowAction(style: .destructive, title: "Delete") { (action, indexPath) in
+            self.settingsList![0].1.remove(at: indexPath.row)
+            tableView.reloadData()
+        }
 
+        
+        return [delete]
+    }
     
 }
 
 class ProfileTableViewCell: UITableViewCell {
     
-    var sw: UISwitch
+    var sw: UIButton
     var label: UILabel
     var longLabel: UITextView
     var constraintsSetForLongLabel: Bool
     var cellConstraints: [NSLayoutConstraint]
     
     override init(style: UITableViewCellStyle, reuseIdentifier: String?) {
-        self.sw = UISwitch()
+        self.sw = UIButton()
         self.label = UILabel()
         self.longLabel = UITextView()
         self.cellConstraints = []
@@ -319,4 +329,16 @@ class ProfileTableViewCell: UITableViewCell {
             self.addConstraints()
         }
     }
+    
+    /*func tableView(_ tableView: UITableView, canEditRowAt indexPath: IndexPath) -> Bool {
+        return true
+    }
+    
+    func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCellEditingStyle, forRowAt indexPath: IndexPath) {
+        if (editingStyle == UITableViewCellEditingStyle.delete) {
+            // delete data and row
+            dataList.remove(at: indexPath.row)
+            tableView.deleteRows(at: [indexPath], with: .fade)
+        }
+    }*/
 }
