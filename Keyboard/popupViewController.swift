@@ -18,9 +18,11 @@ class PopUpViewController:  UIViewController,UITableViewDelegate, UITableViewDat
     var addButton = UIButton()
     var editButton = UIButton()
     var callBack: () -> ()
-    init(selector: UIButton, callBack: @escaping () -> ())
+    var maxHeight: CGFloat?
+    init(selector: UIButton, maxHeight: CGFloat, callBack: @escaping () -> ())
     {
         self.callBack = callBack
+        self.maxHeight = maxHeight
         super.init(nibName: nil, bundle: nil)
         self.selector = selector
         
@@ -50,7 +52,12 @@ class PopUpViewController:  UIViewController,UITableViewDelegate, UITableViewDat
         // Do any additional setup after loading the view, typically from a nib.
         tableView.rowHeight = 40
         let width = 300
-        let height = items.count * Int(self.tableView.rowHeight)
+        let maxNumRows: Int = Int(Double(maxHeight!) / Double(tableView.rowHeight))
+        var numRows:Double = Double(items.count)
+        if Double(maxNumRows) < numRows + 1 {
+            numRows = Double(maxNumRows) - 1.5 //to make it clear that there is room to scroll
+        }
+        let height = Int(numRows * Double(self.tableView.rowHeight))//items.count * Int(self.tableView.rowHeight)
         
         
         tableView.frame         =   CGRect(origin: CGPoint(x: 0,y :0), size: CGSize(width: width, height: height))
@@ -83,10 +90,14 @@ class PopUpViewController:  UIViewController,UITableViewDelegate, UITableViewDat
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         
         let cell:UITableViewCell = tableView.dequeueReusableCell(withIdentifier: "cell")! as UITableViewCell
+        cell.textLabel?.adjustsFontSizeToFitWidth = true
         let text = self.items[indexPath.row]
         cell.textLabel?.text = text
         if text == selector?.titleLabel!.text! {
             cell.backgroundColor = UIColor.init(red: 242/255, green: 193/255, blue: 133/255, alpha: 1)
+        }
+        else {
+            cell.backgroundColor = UIColor.white
         }
         return cell
         

@@ -16,6 +16,7 @@
                 <outlet property="editName" destination="UqQ-VC-Q6G" id="z5O-7c-7jn"/>
                 <outlet property="effectsView" destination="p1b-aL-nFG" id="qVH-MN-nbd"/>
                 <outlet property="pixelLine" destination="ooR-t1-RO3" id="RNZ-JA-0tO"/>
+                <outlet property="profileViewButton" destination="AmN-Pr-rcX" id="FcO-If-jra"/>
                 <outlet property="settingsLabel" destination="YuR-yT-g8t" id="Zwy-Pa-l78"/>
                 <outlet property="tableView" destination="PIq-gg-rs6" id="rBh-eg-uhG"/>
             </connections>
@@ -71,8 +72,8 @@
                                 <nil key="highlightedColor"/>
                             </label>
                             <button opaque="NO" contentMode="scaleToFill" misplaced="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="x35-jI-wEW">
-                                <frame key="frameInset" minY="5" width="55" height="30"/>
-                                <state key="normal" title="〈 Back">
+                                <frame key="frameInset" minX="-15" minY="5" width="106" height="30"/>
+                                <state key="normal" title="〈 Keyboard">
                                     <color key="titleColor" red="0.0" green="0.47843137254901963" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                                     <color key="titleShadowColor" red="0.5" green="0.5" blue="0.5" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                                 </state>
@@ -83,6 +84,14 @@
                                     <constraint firstAttribute="height" constant="1" id="8r2-39-dpi"/>
                                 </constraints>
                             </view>
+                            <button opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="AmN-Pr-rcX">
+                                <frame key="frameInset" minX="99" minY="9" width="80" height="22"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <state key="normal" title="〈 Profiles">
+                                    <color key="titleColor" red="0.0" green="0.47843137250000001" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                                    <color key="titleShadowColor" red="0.5" green="0.5" blue="0.5" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                                </state>
+                            </button>
                         </subviews>
                         <constraints>
                             <constraint firstAttribute="centerY" secondItem="x35-jI-wEW" secondAttribute="centerY" id="CWy-gZ-H4o"/>

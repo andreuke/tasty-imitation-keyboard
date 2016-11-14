@@ -145,9 +145,13 @@ class EditProfiles: ExtraView, UITableViewDataSource, UITableViewDelegate {
             if cell.sw.allTargets.count == 0 {
                 cell.sw.addTarget(self, action: #selector(EditProfiles.toggleSetting(_:)), for: UIControlEvents.valueChanged)
             }
-            
-            cell.sw.isOn = UserDefaults.standard.bool(forKey: key!)
-            cell.label.setTitle(key!, for: UIControlState.normal)
+            var title = key!
+            let lengthTitle = 100
+            if title.characters.count < lengthTitle {
+                title += String(repeating: " ", count: (lengthTitle - title.characters.count))
+            }
+            //cell.sw.isOn = UserDefaults.standard.bool(forKey: title)
+            cell.label.setTitle(title, for: UIControlState.normal)
             cell.label.addTarget(self, action: #selector(printHere), for: .touchUpInside)
             cell.longLabel.text = self.settingsNotes[key!]
             

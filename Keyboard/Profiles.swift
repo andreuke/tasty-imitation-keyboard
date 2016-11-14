@@ -23,6 +23,7 @@ class Profiles: ExtraView, UITableViewDataSource, UITableViewDelegate {
     
     @IBOutlet weak var editName: UIBarButtonItem!
     //var callBack: () -> ()
+    @IBOutlet weak var profileViewButton: UIButton!
     
     override var darkMode: Bool {
         didSet {

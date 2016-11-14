@@ -38,7 +38,9 @@ class PredictboardBanner: ExtraView {
         textInputView.frame = CGRect(x: self.getMinX(), y: self.getMinY(), width: self.frame.width, height: self.frame.height)
         self.addSubview(textInputView)
         textInputView.isHidden = true
-        self.textField.isUserInteractionEnabled = true
+        
+        //if textField is selected, we cant type on the main app anymore
+        self.textField.isUserInteractionEnabled = false
         let fontSize = CGFloat(22)
         
         for _ in 0..<self.numButtons {
@@ -49,6 +51,7 @@ class PredictboardBanner: ExtraView {
             button.layer.borderWidth = 1
             button.layer.borderColor = UIColor.clear.cgColor
             button.titleLabel?.font = UIFont.systemFont(ofSize: fontSize)
+            button.titleLabel?.adjustsFontSizeToFitWidth = true
             button.addTarget(self, action: #selector(buttonClicked), for: .touchDown)
             button.addTarget(self, action: #selector(buttonClicked), for: .touchDragEnter)
             button.addTarget(self, action: #selector(buttonUnclicked), for: .touchDragExit)
@@ -58,6 +61,7 @@ class PredictboardBanner: ExtraView {
         //add profile selector button
         self.profileSelector.type = "SelectorButton"
         defaultView.addSubview(self.profileSelector)
+        self.profileSelector.titleLabel?.adjustsFontSizeToFitWidth = true
         self.profileSelector.layer.borderWidth = 1
         self.profileSelector.layer.cornerRadius = 5
         self.profileSelector.layer.borderColor = UIColor.clear.cgColor
@@ -77,7 +81,7 @@ class PredictboardBanner: ExtraView {
         self.textField.contentVerticalAlignment = UIControlContentVerticalAlignment.center
         self.textInputView.addSubview(self.textField)
         
-        self.textFieldLabel.text = "Profile Name:"
+        //self.textFieldLabel.text = "Profile Name:"
         self.textFieldLabel.textAlignment = .right
         self.textFieldLabel.font = UIFont.systemFont(ofSize: fontSize)
         self.textInputView.addSubview(self.textFieldLabel)
@@ -184,12 +188,12 @@ class PredictboardBanner: ExtraView {
     }
     
     func selectDefaultView() {
-        self.textField.text = ""
         UserDefaults.standard.register(defaults: ["keyboardInputToApp": true])
         switchView()
     }
     
     func selectTextView() {
+        self.textField.text = ""
         UserDefaults.standard.register(defaults: ["keyboardInputToApp": false])
         switchView()
     }
