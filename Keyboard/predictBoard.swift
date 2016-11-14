@@ -185,7 +185,20 @@ class predictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
     }
     
     func updateButtons(prevWord: String) {
-        let recommendations = recommendationEngine.recommendWords(input: prevWord)
+        // Get previous words to give to recommendWords()
+        // ------------------------
+        let context = textDocumentProxy.documentContextBeforeInput
+        let components = context?.components(separatedBy: " ")
+        let count = (components?.count)! as Int
+        var word1 = ""
+        var word2 = ""
+        if count >= 3 {
+            word1 = (components?[count-3])! as String
+            word2 = (components?[count-2])! as String
+        }
+        // ------------------------
+        let recommendations = Array(recommendationEngine.recommendWords(word1: word1, word2: word2,
+                                                                        current_input:prevWord)).sorted()
         var index = 0
         for button in (self.banner?.buttons)! {
             if index < recommendations.count {
