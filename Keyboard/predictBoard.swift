@@ -17,7 +17,7 @@ import SQLite
 class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDelegate {
     
     var banner: PredictboardBanner? = nil
-    let recommendationEngine = WordList()
+    let recommendationEngine = Database()
     var editProfilesView: ExtraView?
     var profileView: ExtraView?
     
@@ -44,6 +44,33 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
             let textDocumentProxy = self.textDocumentProxy
             if key.type != .backspace {
                 textDocumentProxy.insertText(keyOutput)
+                if key.type == .space {
+                    do {
+                        let context = textDocumentProxy.documentContextBeforeInput
+                        let components = context?.components(separatedBy: " ")
+                        let count = (components?.count)! as Int
+                        let lastWord = (components?[count-2])! as String
+                        
+                        let db_path = dbObjects().db_path
+                        let db = try Connection("\(db_path)/db.sqlite3")
+                        let containers = dbObjects.Containers()
+                        
+                        let currentProfile = UserDefaults.standard.value(forKey: "profile") as! String
+                        // if word notExists in database
+                        if (try db.scalar(containers.table.filter(containers.ngram == lastWord).count) == 0) {
+                            // insert lastWord into database
+                            let insert = containers.table.insert(containers.ngram <- lastWord,
+                                                                 containers.profile <- currentProfile, containers.frequency <- 1)
+                            _ = try? db.run(insert)
+                        }
+                        else {
+                            // increment lastWord in database
+                            try db.run(containers.table.filter(containers.ngram == lastWord)
+                                .filter(containers.profile == currentProfile)
+                                .update(containers.frequency++, containers.lastused <- Date()))
+                        }
+                    } catch {}
+                }
             }
             else {
                 textDocumentProxy.deleteBackward()
@@ -51,7 +78,7 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
             //let lastWord = getLastWord(delete: false)
             self.updateButtons()
         }
-        //type in in-keyboard textbox
+            //type in in-keyboard textbox
         else {
             if key.type != .backspace {
                 self.banner?.textField.text? += keyOutput
@@ -78,13 +105,13 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
         self.banner?.isHidden = true
         //set up profile selector
         self.banner?.profileSelector.addTarget(self, action: #selector(showPopover), for: .touchUpInside)
-         self.banner?.profileSelector.setTitle(UserDefaults.standard.string(forKey: "profile")!, for: UIControlState())
+        self.banner?.profileSelector.setTitle(UserDefaults.standard.string(forKey: "profile")!, for: UIControlState())
         
         //setup autocomplete buttons
         for button in (self.banner?.buttons)! {
             button.addTarget(self, action: #selector(autocompleteClicked), for: .touchUpInside)
             //button.addTarget(self, action: #selector(KeyboardViewController.playKeySound), for: .touchDown)
-
+            
         }
         
         
@@ -157,13 +184,13 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
             self.autoComplete(wordToAdd)
             // increment frequency of word in database
             do {
-                let db_path = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true).first!
+                let db_path = dbObjects().db_path
                 let db = try Connection("\(db_path)/db.sqlite3")
-                let containers = Table("Containers")
-                let ngram = Expression<String>("ngram")
-                let profile = Expression<String>("profile")
-                let frequency = Expression<Int64>("frequency")
-                try db.run(containers.filter(ngram == wordToAdd).filter(profile == "Default").update(frequency++))
+                let containers = dbObjects.Containers()
+                let currentProfile = UserDefaults.standard.value(forKey: "profile") as! String
+                try db.run(containers.table.filter(containers.ngram == wordToAdd)
+                    .filter(containers.profile == currentProfile)
+                    .update(containers.frequency++, containers.lastused <- Date()))
             }
             catch {
                 print("Incrementing word frequency failed")
@@ -174,9 +201,23 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
     
     func updateButtons() {
         let prevWord = self.getLastWord(delete: false)
-        var recommendations = recommendationEngine.recommendWords(input: prevWord)
-        //filter away any blank values, because it causes problems
-        recommendations = recommendations.filter() { $0 != "" }
+        // Get previous words to give to recommendWords()
+        // ------------------------
+        let context = textDocumentProxy.documentContextBeforeInput
+        let components = context?.components(separatedBy: " ")
+        var count = 0
+        if (components != nil) {
+            count = (components?.count)! as Int
+        }
+        var word1 = ""
+        var word2 = ""
+        if count >= 3 {
+            word1 = (components?[count-3])! as String
+            word2 = (components?[count-2])! as String
+        }
+        // ------------------------
+        let recommendations = Array(recommendationEngine.recommendWords(word1: word1, word2: word2,
+                                                                        current_input:prevWord)).sorted()
         
         var index = 0
         for button in (self.banner?.buttons)! {
@@ -193,21 +234,21 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
     }
     
     /*func otherUpdate() {
-        let prevWord = self.getLastWord(delete: false)
-        var recommendations = recommendationEngine.recommendWords(input: prevWord)
-        //filter away any blank values, because it causes problems
-        recommendations = recommendations.filter() { $0 != "" }
-        let buttonsPerRow = (banner?.allButtons)! / (banner?.numRows)!
-        let numRows: Int = banner?.numRows
-        for row in stride(from: numRows, to: 0, by: -1) {
-            let constant = row * buttonsPerRow
-            for buttonIndex in 0..<buttonsPerRow {
-                
-            }
-        }
-    }*/
+     let prevWord = self.getLastWord(delete: false)
+     var recommendations = recommendationEngine.recommendWords(input: prevWord)
+     //filter away any blank values, because it causes problems
+     recommendations = recommendations.filter() { $0 != "" }
+     let buttonsPerRow = (banner?.allButtons)! / (banner?.numRows)!
+     let numRows: Int = banner?.numRows
+     for row in stride(from: numRows, to: 0, by: -1) {
+     let constant = row * buttonsPerRow
+     for buttonIndex in 0..<buttonsPerRow {
+     
+     }
+     }
+     }*/
     
-        
+    
     
     //Pop ups
     @IBAction func showPopover(sender: UIButton) {
@@ -217,7 +258,7 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
         popUpViewController.modalPresentationStyle = UIModalPresentationStyle.popover
         popUpViewController.addButton.addTarget(self, action: #selector(switchToAddProfileMode), for: .touchUpInside)
         popUpViewController.editButton.addTarget(self, action: #selector(toggleEditProfile), for: .touchUpInside)
-
+        
         present(popUpViewController, animated: true, completion: nil)
         
         let popoverPresentationController = popUpViewController.popoverPresentationController
@@ -238,7 +279,7 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
     
     //go from internal text input mode to forwarding view
     func completedAddProfileMode(){
-
+        
         self.banner?.saveButton.removeTarget(self, action: #selector(saveProfile), for: .touchUpInside)
         self.banner?.backButton.removeTarget(self, action: #selector(completedAddProfileMode), for: .touchUpInside)
         self.banner?.selectDefaultView()
@@ -279,7 +320,7 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
         }
         viewToShow.isHidden = !toShow
         viewToShow.isUserInteractionEnabled = toShow
-
+        
     }
     
     func showBanner(toShow: Bool) {
@@ -314,7 +355,7 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
         //showForwardingView(toShow: false)
         //showBanner(toShow: false)
         //self.banner?.selectDefaultView()
-
+        
         //if you cancel just reopen view.  showView will recreate it, we dont need to do that
         //profileView?.isHidden = false
         //profileView?.isUserInteractionEnabled = true
@@ -368,7 +409,7 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
             editProfilesView = createEditProfiles()
         }
         showView(viewToShow: editProfilesView!, toShow: !toShow)
-
+        
     }
     
     func toggleProfile() {
@@ -376,7 +417,7 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
         if (editProfilesView != nil) {
             toShow = (editProfilesView?.isHidden)!
         }
-        if toShow {
+        if toShow || editProfilesView == nil{
             editProfilesView = createEditProfiles()
         }
         else {
