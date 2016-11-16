@@ -21,10 +21,6 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
     var editProfilesView: ExtraView?
     var profileView: ExtraView?
 
-    let words = Database()
-    var banner: predictboardBanner? = nil
-    let recommendationEngine = Database()
-
     override init(nibName nibNameOrNil: String?, bundle nibBundleOrNil: Bundle?) {
         UserDefaults.standard.register(defaults: ["profile": "Default"])
         super.init(nibName: nibNameOrNil, bundle: nibBundleOrNil)
