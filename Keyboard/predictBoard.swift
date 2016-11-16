@@ -20,7 +20,7 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
     let recommendationEngine = Database()
     var editProfilesView: ExtraView?
     var profileView: ExtraView?
-    
+
     override init(nibName nibNameOrNil: String?, bundle nibBundleOrNil: Bundle?) {
         UserDefaults.standard.register(defaults: ["profile": "Default"])
         super.init(nibName: nibNameOrNil, bundle: nibBundleOrNil)
@@ -186,6 +186,7 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
             do {
                 let db_path = dbObjects().db_path
                 let db = try Connection("\(db_path)/db.sqlite3")
+
                 let containers = dbObjects.Containers()
                 let currentProfile = UserDefaults.standard.value(forKey: "profile") as! String
                 try db.run(containers.table.filter(containers.ngram == wordToAdd)
@@ -199,6 +200,7 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
         }
     }
     
+
     func updateButtons() {
         let prevWord = self.getLastWord(delete: false)
         // Get previous words to give to recommendWords()

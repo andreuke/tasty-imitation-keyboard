@@ -40,21 +40,19 @@
 		890536941DD55C7F0096C729 /* Profiles.swift in Sources */ = {isa = PBXBuildFile; fileRef = 890536931DD55C7F0096C729 /* Profiles.swift */; };
 		890536981DD6D5990096C729 /* NewProfile.xib in Resources */ = {isa = PBXBuildFile; fileRef = 890536971DD6D5990096C729 /* NewProfile.xib */; };
 		89123E9F1DC86A46003A4BD3 /* SQLite.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 89123E9E1DC86A46003A4BD3 /* SQLite.framework */; };
-		895106A31DB55271006D85F2 /* WordList.swift in Sources */ = {isa = PBXBuildFile; fileRef = 895106A21DB55271006D85F2 /* WordList.swift */; };
-		895106A51DB55276006D85F2 /* BasicWords.txt in Resources */ = {isa = PBXBuildFile; fileRef = 895106A41DB55276006D85F2 /* BasicWords.txt */; };
 		8952662C1DCABCCE000F6540 /* BannerButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8952662B1DCABCCE000F6540 /* BannerButton.swift */; };
 		897067D81DDAE57E008592E9 /* SQLite.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 89123E9E1DC86A46003A4BD3 /* SQLite.framework */; };
-		897067DA1DDAE6C5008592E9 /* Database.swift in Sources */ = {isa = PBXBuildFile; fileRef = 897067D91DDAE6C5008592E9 /* Database.swift */; };
-		897067DD1DDAE77A008592E9 /* 2grams-10000.txt in Resources */ = {isa = PBXBuildFile; fileRef = 897067DB1DDAE77A008592E9 /* 2grams-10000.txt */; };
-		897067DE1DDAE77A008592E9 /* 3grams-10000.txt in Resources */ = {isa = PBXBuildFile; fileRef = 897067DC1DDAE77A008592E9 /* 3grams-10000.txt */; };
 		89A5DC431DC19D7F0087BEAA /* ExpandedKeyboard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89A5DC421DC19D7F0087BEAA /* ExpandedKeyboard.swift */; };
 		89A5DC451DC19ECA0087BEAA /* ExNumKeyboard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89A5DC441DC19ECA0087BEAA /* ExNumKeyboard.swift */; };
 		89AB7F331DA57D7800439FDC /* predictBoard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89AB7F321DA57D7800439FDC /* predictBoard.swift */; };
 		89AB7F351DA57E4300439FDC /* predictBoardBanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89AB7F341DA57E4300439FDC /* predictBoardBanner.swift */; };
 		89BD86E91DCBACEF00BD9B1A /* popupViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89BD86E81DCBACEF00BD9B1A /* popupViewController.swift */; };
 		89BD86EB1DCFFE5500BD9B1A /* passThroughView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89BD86EA1DCFFE5500BD9B1A /* passThroughView.swift */; };
-		89BD86F11DD29BBF00BD9B1A /* google-10000.txt in Resources */ = {isa = PBXBuildFile; fileRef = 89BD86F01DD29BBF00BD9B1A /* google-10000.txt */; };
 		89BD86F31DD3AA9C00BD9B1A /* EditProfile.xib in Resources */ = {isa = PBXBuildFile; fileRef = 89BD86F21DD3AA9C00BD9B1A /* EditProfile.xib */; };
+		961D4CDC1DDCCA02002DFF28 /* 2grams-10000.txt in Resources */ = {isa = PBXBuildFile; fileRef = 897067DB1DDAE77A008592E9 /* 2grams-10000.txt */; };
+		961D4CDD1DDCCA02002DFF28 /* 3grams-10000.txt in Resources */ = {isa = PBXBuildFile; fileRef = 897067DC1DDAE77A008592E9 /* 3grams-10000.txt */; };
+		961D4CDE1DDCCA02002DFF28 /* google-10000.txt in Resources */ = {isa = PBXBuildFile; fileRef = 89BD86F01DD29BBF00BD9B1A /* google-10000.txt */; };
+		961D4CE01DDCD5B4002DFF28 /* Database.swift in Sources */ = {isa = PBXBuildFile; fileRef = 961D4CDF1DDCD5B4002DFF28 /* Database.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -152,10 +150,8 @@
 		890536931DD55C7F0096C729 /* Profiles.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Profiles.swift; sourceTree = "<group>"; };
 		890536971DD6D5990096C729 /* NewProfile.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = NewProfile.xib; sourceTree = "<group>"; };
 		89123E9E1DC86A46003A4BD3 /* SQLite.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SQLite.framework; path = Carthage/Build/iOS/SQLite.framework; sourceTree = "<group>"; };
-		895106A21DB55271006D85F2 /* WordList.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = WordList.swift; sourceTree = "<group>"; };
 		895106A41DB55276006D85F2 /* BasicWords.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = BasicWords.txt; sourceTree = "<group>"; };
 		8952662B1DCABCCE000F6540 /* BannerButton.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = BannerButton.swift; path = ../BannerButton.swift; sourceTree = "<group>"; };
-		897067D91DDAE6C5008592E9 /* Database.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Database.swift; sourceTree = "<group>"; };
 		897067DB1DDAE77A008592E9 /* 2grams-10000.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = "2grams-10000.txt"; sourceTree = "<group>"; };
 		897067DC1DDAE77A008592E9 /* 3grams-10000.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = "3grams-10000.txt"; sourceTree = "<group>"; };
 		89A5DC421DC19D7F0087BEAA /* ExpandedKeyboard.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExpandedKeyboard.swift; sourceTree = "<group>"; };
@@ -166,6 +162,7 @@
 		89BD86EA1DCFFE5500BD9B1A /* passThroughView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = passThroughView.swift; sourceTree = "<group>"; };
 		89BD86F01DD29BBF00BD9B1A /* google-10000.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = "google-10000.txt"; sourceTree = "<group>"; };
 		89BD86F21DD3AA9C00BD9B1A /* EditProfile.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = EditProfile.xib; sourceTree = "<group>"; };
+		961D4CDF1DDCD5B4002DFF28 /* Database.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Database.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -237,6 +234,7 @@
 		4E6AEE5319D2489C00931E8F /* Demo */ = {
 			isa = PBXGroup;
 			children = (
+				961D4CDF1DDCD5B4002DFF28 /* Database.swift */,
 				897067DB1DDAE77A008592E9 /* 2grams-10000.txt */,
 				897067DC1DDAE77A008592E9 /* 3grams-10000.txt */,
 				89BD86F01DD29BBF00BD9B1A /* google-10000.txt */,
@@ -244,12 +242,10 @@
 				4EEFD78819E0DC6B004D4974 /* CatboardBanner.swift */,
 				890536971DD6D5990096C729 /* NewProfile.xib */,
 				89AB7F321DA57D7800439FDC /* predictBoard.swift */,
-				897067D91DDAE6C5008592E9 /* Database.swift */,
 				89AB7F341DA57E4300439FDC /* predictBoardBanner.swift */,
 				89BD86E81DCBACEF00BD9B1A /* popupViewController.swift */,
 				89BD86EA1DCFFE5500BD9B1A /* passThroughView.swift */,
 				895106A41DB55276006D85F2 /* BasicWords.txt */,
-				895106A21DB55271006D85F2 /* WordList.swift */,
 				8952662B1DCABCCE000F6540 /* BannerButton.swift */,
 				890536931DD55C7F0096C729 /* Profiles.swift */,
 				890536911DD558040096C729 /* Profile.xib */,
@@ -508,11 +504,10 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				897067DD1DDAE77A008592E9 /* 2grams-10000.txt in Resources */,
+				961D4CDC1DDCCA02002DFF28 /* 2grams-10000.txt in Resources */,
+				961D4CDD1DDCCA02002DFF28 /* 3grams-10000.txt in Resources */,
+				961D4CDE1DDCCA02002DFF28 /* google-10000.txt in Resources */,
 				4E52A6DA1A06C198006A08CE /* DefaultSettings.xib in Resources */,
-				89BD86F11DD29BBF00BD9B1A /* google-10000.txt in Resources */,
-				895106A51DB55276006D85F2 /* BasicWords.txt in Resources */,
-				897067DE1DDAE77A008592E9 /* 3grams-10000.txt in Resources */,
 				4E52A6D61A06BADA006A08CE /* Media.xcassets in Resources */,
 				890536981DD6D5990096C729 /* NewProfile.xib in Resources */,
 				890536921DD558040096C729 /* Profile.xib in Resources */,
@@ -573,7 +568,6 @@
 				4E00A6E5197183EE009414F2 /* KeyboardKey.swift in Sources */,
 				89A5DC431DC19D7F0087BEAA /* ExpandedKeyboard.swift in Sources */,
 				89AB7F331DA57D7800439FDC /* predictBoard.swift in Sources */,
-				895106A31DB55271006D85F2 /* WordList.swift in Sources */,
 				4EEFD78919E0DC6B004D4974 /* CatboardBanner.swift in Sources */,
 				890536941DD55C7F0096C729 /* Profiles.swift in Sources */,
 				4EE7599B19F75A0D00B4E6ED /* Utilities.swift in Sources */,
@@ -585,8 +579,8 @@
 				4E52A6D81A06C16C006A08CE /* DefaultSettings.swift in Sources */,
 				8952662C1DCABCCE000F6540 /* BannerButton.swift in Sources */,
 				4E72C96819E04A7A00DFDDB0 /* Catboard.swift in Sources */,
+				961D4CE01DDCD5B4002DFF28 /* Database.swift in Sources */,
 				4E60A13E1979FB2E00854CC8 /* DirectionEnum.swift in Sources */,
-				897067DA1DDAE6C5008592E9 /* Database.swift in Sources */,
 				4EC2A46D19DF811E00F789E1 /* KeyboardViewController.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

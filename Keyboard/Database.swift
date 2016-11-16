@@ -1,3 +1,4 @@
+
 //
 //  Database.swift
 //  TastyImitationKeyboard
@@ -259,6 +260,32 @@ class Database: NSObject {
         } catch {}
     }
     
+    /*func recommendationQuery(user_profile: String, n: Int, pattern: String,
+                             current_input: String, result_set: Set<String>) -> Set<String> {
+        var resultSet = result_set
+        do {
+            let db_path = dbObjects().db_path
+            let db = try Connection("\(db_path)/db.sqlite3")
+            let containers = dbObjects.Containers()
+            
+            for row in try db.prepare(containers.table
+                .filter(containers.profile == user_profile)
+                .filter(containers.ngram.like(pattern))
+                .filter(containers.ngram != current_input)
+                .filter(containers.ngram != "")
+                .filter(containers.n == n)
+                .order(containers.frequency.desc, containers.ngram)
+                .limit(14, offset: 0)) {
+                    // Insert the last word of the 3gram
+                    let row_components = row[containers.ngram].components(separatedBy: " ")
+                    if row_components[2].hasPrefix(current_input) {
+                        resultSet.insert(row_components[2])
+                    }
+            }
+        } catch {}
+        return resultSet
+    }*/
+    
     func recommendWords(word1: String = "", word2: String = "", current_input: String)->Set<String>{
         var resultSet = Set<String>()
         do {
@@ -268,35 +295,66 @@ class Database: NSObject {
             let containers = dbObjects.Containers()
             
             let userProfile = UserDefaults.standard.value(forKey: "profile")
-            // Get words from 3grams
             
             // If any previous words are available, use those
+            
+            // If 2 previous words are available...
             if word1 != "" && word2 != "" {
+                // Get recommendations from 3grams where word1 and 
+                // word2 are the first two words of the 3gram
                 for row in try db.prepare(containers.table
                     .filter(containers.profile == userProfile as! String)
-                    .filter(containers.ngram
-                        .like("\(word1) \(word2) \(current_input)%"))
+                    .filter(containers.ngram.like("\(word1) \(word2) \(current_input)%"))
                     .filter(containers.ngram != current_input)
                     .filter(containers.ngram != "")
                     .filter(containers.n == 3)
                     .order(containers.frequency.desc, containers.ngram)
                     .limit(14, offset: 0)) {
-                        // Find which word to insert
+                        // Insert the last word of the 3gram
                         let row_components = row[containers.ngram].components(separatedBy: " ")
                         if row_components[2].hasPrefix(current_input) {
                             resultSet.insert(row_components[2])
                         }
-                        else {
-                            resultSet.insert(row_components[1]+" "+row_components[2])
+                }
+                
+                // Get recommendations from 2grams where 
+                // word2 is the first word in the 2gram
+                for row in try db.prepare(containers.table
+                    .filter(containers.profile == userProfile as! String)
+                    .filter(containers.ngram.like("\(word2) \(current_input)%"))
+                    .filter(containers.ngram != current_input)
+                    .filter(containers.ngram != "")
+                    .filter(containers.n == 2)
+                    .order(containers.frequency.desc, containers.ngram)
+                    .limit(14, offset: 0)) {
+                        // Insert the last word of the 2gram
+                        let row_components = row[containers.ngram].components(separatedBy: " ")
+                        if row_components[1].hasPrefix(current_input) && resultSet.count < 14 {
+                            resultSet.insert(row_components[1])
+                        }
+                }
+                
+                // Get recommendations from 1grams
+                for row in try db.prepare(containers.table
+                    .filter(containers.profile == userProfile as! String)
+                    .filter(containers.ngram.like("\(current_input)%"))
+                    .filter(containers.ngram != current_input)
+                    .filter(containers.ngram != "")
+                    .filter(containers.n == 1)
+                    .order(containers.frequency.desc, containers.ngram)
+                    .limit(14, offset: 0)) {
+                        // Insert word
+                        if resultSet.count < 14 {
+                            resultSet.insert(row[containers.ngram])
                         }
                 }
             }
-                
+            
+            
             else if word1 == "" && word2 != "" {
                 for row in try db.prepare(containers.table
                     .filter(containers.profile == userProfile as! String)
-                    .filter(containers.ngram
-                        .like("% \(word2) \(current_input)%"))
+                    .filter(containers.ngram.like("% \(word2) \(current_input)%"))
                     .filter(containers.ngram != current_input)
                     .filter(containers.ngram != "")
                     .filter(containers.n == 3)
@@ -317,56 +375,21 @@ class Database: NSObject {
                 }
             }
             
-            // If not, just use the current input
-            for row in try db.prepare(containers.table
-                .filter(containers.profile == userProfile as! String)
-                .filter(containers.ngram.like("% \(current_input)%"))
-                .filter(containers.ngram != current_input)
-                .filter(containers.ngram != "")
-                .filter(containers.n == 3)
-                .order(containers.frequency.desc, containers.ngram)
-                .limit(14, offset: 0)) {
-                    // Find which word to insert
-                    let row_components = row[containers.ngram].components(separatedBy: " ")
-                    if row_components[2].hasPrefix(current_input) {
-                        if resultSet.count < 14 {
-                            resultSet.insert(row_components[2])
-                        }
-                    }
-                    else {
-                        if resultSet.count < 14 {
-                            resultSet.insert(row_components[1]+" "+row_components[2])
-                        }
-                    }
-                    
-            }
-            // Get words from 2grams
-            for row in try db.prepare(containers.table
-                .filter(containers.profile == userProfile as! String)
-                .filter(containers.ngram.like("% \(current_input)%"))
-                .filter(containers.ngram != current_input)
-                .filter(containers.ngram != "")
-                .filter(containers.n == 2)
-                .order(containers.frequency.desc, containers.ngram)
-                .limit(14, offset: 0)) {
-                    if resultSet.count < 14 {
-                        resultSet.insert(row[containers.ngram].components(separatedBy: " ")[1])
-                    }
-            }
-            
-            // Get words from 1grams
+            // If not, just use the current input...
+            // Get recommendations where input is the beginning of the ngram
+            // Prioritize 2grams for better specificity
             for row in try db.prepare(containers.table
                 .filter(containers.profile == userProfile as! String)
                 .filter(containers.ngram.like("\(current_input)%"))
                 .filter(containers.ngram != current_input)
                 .filter(containers.ngram != "")
-                .filter(containers.n == 1)
-                .order(containers.frequency.desc, containers.ngram)
+                .order(containers.n, containers.frequency.desc, containers.ngram)
                 .limit(14, offset: 0)) {
                     if resultSet.count < 14 {
                         resultSet.insert(row[containers.ngram])
                     }
             }
+    
         }
         catch {
             print("There was an error while fetching recommendations")
@@ -376,23 +399,95 @@ class Database: NSObject {
     
     func addProfile(profileName:String){
         do {
-            let db_path = NSSearchPathForDirectoriesInDomains(
-                .documentDirectory, .userDomainMask, true).first!
+            let db_path = dbObjects().db_path
             let db = try Connection("\(db_path)/db.sqlite3")
             
-            let profiles = Table("Profiles")
-            let profileId = Expression<Int64>("profileId")
-            let name = Expression<String>("name")
-            let linksTo = Expression<Int64>("linksTo")
-            if (try db.scalar(profiles.filter(name == profileName).count)) == 0 {
-                let insert = profiles.insert(name <- profileName)
+            // Insert the new profile into the database
+            let profiles = dbObjects.Profiles()
+            
+            if (try db.scalar(profiles.table.filter(profiles.name == profileName).count)) == 0 {
+                let insert = profiles.table.insert(profiles.name <- profileName)
                 _ = try? db.run(insert)
             }
             
-        }
-        catch {
+            // Insert all of the original words into the new profile
+            let ngrams = dbObjects.Ngrams()
+            let containers = dbObjects.Containers()
             
-        }
+            for row in try db.prepare(ngrams.table) {
+                let insert = containers.table.insert(containers.profile <- profileName,
+                                                     containers.ngram <- row[ngrams.gram],
+                                                     containers.n <- row[ngrams.n])
+                _ = try? db.run(insert)
+            }
+            
+        } catch {}
+    }
+    
+    // Delete profile function
+    func deleteProfile(profile_name: String) {
+        do {
+            let db_path = dbObjects().db_path
+            let db = try Connection("\(db_path)/db.sqlite3")
+            
+            // Delete profile from Profiles
+            let profiles = dbObjects.Profiles()
+            _ = try db.run(profiles.table.filter(profiles.name == profile_name).delete())
+            
+            // Delete all ngrams associated with profile from Containers
+            let containers = dbObjects.Containers()
+            _ = try db.run(containers.table.filter(containers.profile == profile_name).delete())
+            
+            // Delete all data sources associated with profile
+            let data_sources = dbObjects.DataSources()
+            _ = try db.run(data_sources.table.filter(data_sources.profile == profile_name).delete())
+            
+        } catch {}
+    }
+    
+    func editProfileName(current_name: String, new_name: String) {
+        do {
+            let db_path = dbObjects().db_path
+            let db = try Connection("\(db_path)/db.sqlite3")
+            
+            let profiles = dbObjects.Profiles()
+            let containers = dbObjects.Containers()
+            let data_sources = dbObjects.DataSources()
+            
+            _ = try db.run(profiles.table
+                            .filter(profiles.name == current_name)
+                            .update(profiles.name <- new_name))
+            _ = try db.run(containers.table
+                            .filter(containers.profile == current_name)
+                            .update(containers.profile <- new_name))
+            _ = try db.run(data_sources.table
+                            .filter(data_sources.profile == current_name)
+                            .update(data_sources.profile <- new_name))
+        } catch {}
+    }
+    
+    // Get list of profiles
+    // FIX ME
+    func getProfiles() /*-> [String]*/ {
+        
+    }
+    
+    // Add data source
+    // FIX ME
+    func addDataSource() {
+        
+    }
+    
+    // Remove data source
+    // FIX ME
+    func removeDataSource() {
+        
+    }
+    
+    // Get list of data sources, given a profile name
+    // FIX ME
+    func getDataSources() /*-> [String]*/ {
+        
     }
     
 }
