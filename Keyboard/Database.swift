@@ -1,5 +1,6 @@
+
 //
-//  WordList.swift
+//  Database.swift
 //  TastyImitationKeyboard
 //
 //  Created by Zack Burns on 10/16/16.
@@ -67,7 +68,7 @@ class Database: NSObject {
             let containers = dbObjects.Containers()
             let phrases = dbObjects.Phrases()
             let data_sources = dbObjects.DataSources()
-
+            
             // Create Ngrams table
             try? db.run(ngrams.table.create(ifNotExists: true) { t in
                 t.column(ngrams.gram, primaryKey: true)
@@ -81,7 +82,10 @@ class Database: NSObject {
                 t.column(profiles.linksTo, defaultValue: 0)
             })
             
+            //try? db.run(profiles.delete())
+            
             // Insert the Default profile into the Profiles table if it doesn't exist
+            
             if (try db.scalar(profiles.table.filter(profiles.profileId == 0).count)) == 0 {
                 let insert = profiles.table.insert(profiles.name <- "Default")
                 _ = try? db.run(insert)
@@ -144,12 +148,12 @@ class Database: NSObject {
                     
                     // check if word is paired with Default profile in Containers table, insert if not
                     let containerResult = try? db.scalar(containers.table
-                                                        .filter(containers.profile == "Default")
-                                                        .filter(containers.ngram == word).count)
+                        .filter(containers.profile == "Default")
+                        .filter(containers.ngram == word).count)
                     if containerResult == 0 {
                         let insert = containers.table.insert(containers.profile <- "Default",
-                                                            containers.ngram <- word,
-                                                            containers.n <- 1)
+                                                             containers.ngram <- word,
+                                                             containers.n <- 1)
                         _ = try? db.run(insert)
                     }
                 }
@@ -166,7 +170,7 @@ class Database: NSObject {
                         insertNgram = twoGramComponents[1]+twoGramComponents[2]
                         insert_n = 1
                     }
-                    // else insert with n=2
+                        // else insert with n=2
                     else {
                         insertNgram = twoGramComponents[1]+" "+twoGramComponents[2]
                         insert_n = 2
@@ -267,35 +271,59 @@ class Database: NSObject {
             // If any previous words are available, use those
             if word1 != "" && word2 != "" {
                 for row in try db.prepare(containers.table
-                                                    .filter(containers.profile == userProfile as! String)
-                                                    .filter(containers.ngram
-                                                        .like("\(word1) \(word2) \(current_input)%"))
-                                                    .filter(containers.ngram != current_input)
-                                                    .filter(containers.ngram != "")
-                                                    .filter(containers.n == 3)
-                                                    .order(containers.frequency.desc, containers.ngram)
-                                                    .limit(14, offset: 0)) {
-                    // Find which word to insert
-                    let row_components = row[containers.ngram].components(separatedBy: " ")
-                    if row_components[2].hasPrefix(current_input) {
-                        resultSet.insert(row_components[2])
-                    }
-                    else {
-                        resultSet.insert(row_components[1]+" "+row_components[2])
-                    }
+                    .filter(containers.profile == userProfile as! String)
+                    .filter(containers.ngram
+                        .like("\(word1) \(word2) \(current_input)%"))
+                    .filter(containers.ngram != current_input)
+                    .filter(containers.ngram != "")
+                    .filter(containers.n == 3)
+                    .order(containers.frequency.desc, containers.ngram)
+                    .limit(14, offset: 0)) {
+                        // Find which word to insert
+                        let row_components = row[containers.ngram].components(separatedBy: " ")
+                        if row_components[2].hasPrefix(current_input) {
+                            resultSet.insert(row_components[2])
+                        }
+                        else {
+                            resultSet.insert(row_components[1]+" "+row_components[2])
+                        }
+                }
+            }
+                
+            else if word1 == "" && word2 != "" {
+                for row in try db.prepare(containers.table
+                    .filter(containers.profile == userProfile as! String)
+                    .filter(containers.ngram
+                        .like("% \(word2) \(current_input)%"))
+                    .filter(containers.ngram != current_input)
+                    .filter(containers.ngram != "")
+                    .filter(containers.n == 3)
+                    .order(containers.frequency.desc, containers.ngram)
+                    .limit(14, offset: 0)) {
+                        // Find which word to insert
+                        let row_components = row[containers.ngram].components(separatedBy: " ")
+                        if row_components[2].hasPrefix(current_input) {
+                            if resultSet.count < 14 {
+                                resultSet.insert(row_components[2])
+                            }
+                        }
+                        else {
+                            if resultSet.count < 14 {
+                                resultSet.insert(row_components[1]+" "+row_components[2])
+                            }
+                        }
                 }
             }
             
-            else if word1 == "" && word2 != "" {
-                for row in try db.prepare(containers.table
-                                                    .filter(containers.profile == userProfile as! String)
-                                                    .filter(containers.ngram
-                                                        .like("% \(word2) \(current_input)%"))
-                                                    .filter(containers.ngram != current_input)
-                                                    .filter(containers.ngram != "")
-                                                    .filter(containers.n == 3)
-                                                    .order(containers.frequency.desc, containers.ngram)
-                                                    .limit(14, offset: 0)) {
+            // If not, just use the current input
+            for row in try db.prepare(containers.table
+                .filter(containers.profile == userProfile as! String)
+                .filter(containers.ngram.like("% \(current_input)%"))
+                .filter(containers.ngram != current_input)
+                .filter(containers.ngram != "")
+                .filter(containers.n == 3)
+                .order(containers.frequency.desc, containers.ngram)
+                .limit(14, offset: 0)) {
                     // Find which word to insert
                     let row_components = row[containers.ngram].components(separatedBy: " ")
                     if row_components[2].hasPrefix(current_input) {
@@ -308,64 +336,61 @@ class Database: NSObject {
                             resultSet.insert(row_components[1]+" "+row_components[2])
                         }
                     }
-                }
-            }
-        
-            // If not, just use the current input
-            for row in try db.prepare(containers.table
-                                                .filter(containers.profile == userProfile as! String)
-                                                .filter(containers.ngram.like("% \(current_input)%"))
-                                                .filter(containers.ngram != current_input)
-                                                .filter(containers.ngram != "")
-                                                .filter(containers.n == 3)
-                                                .order(containers.frequency.desc, containers.ngram)
-                                                .limit(14, offset: 0)) {
-                // Find which word to insert
-                let row_components = row[containers.ngram].components(separatedBy: " ")
-                if row_components[2].hasPrefix(current_input) {
-                    if resultSet.count < 14 {
-                        resultSet.insert(row_components[2])
-                    }
-                }
-                else {
-                    if resultSet.count < 14 {
-                        resultSet.insert(row_components[1]+" "+row_components[2])
-                    }
-                }
-                
+                    
             }
             // Get words from 2grams
             for row in try db.prepare(containers.table
-                                                .filter(containers.profile == userProfile as! String)
-                                                .filter(containers.ngram.like("% \(current_input)%"))
-                                                .filter(containers.ngram != current_input)
-                                                .filter(containers.ngram != "")
-                                                .filter(containers.n == 2)
-                                                .order(containers.frequency.desc, containers.ngram)
-                                                .limit(14, offset: 0)) {
-                if resultSet.count < 14 {
-                    resultSet.insert(row[containers.ngram].components(separatedBy: " ")[1])
-                }
+                .filter(containers.profile == userProfile as! String)
+                .filter(containers.ngram.like("% \(current_input)%"))
+                .filter(containers.ngram != current_input)
+                .filter(containers.ngram != "")
+                .filter(containers.n == 2)
+                .order(containers.frequency.desc, containers.ngram)
+                .limit(14, offset: 0)) {
+                    if resultSet.count < 14 {
+                        resultSet.insert(row[containers.ngram].components(separatedBy: " ")[1])
+                    }
             }
             
             // Get words from 1grams
             for row in try db.prepare(containers.table
-                                                .filter(containers.profile == userProfile as! String)
-                                                .filter(containers.ngram.like("\(current_input)%"))
-                                                .filter(containers.ngram != current_input)
-                                                .filter(containers.ngram != "")
-                                                .filter(containers.n == 1)
-                                                .order(containers.frequency.desc, containers.ngram)
-                                                .limit(14, offset: 0)) {
-                if resultSet.count < 14 {
-                    resultSet.insert(row[containers.ngram])
-                }
+                .filter(containers.profile == userProfile as! String)
+                .filter(containers.ngram.like("\(current_input)%"))
+                .filter(containers.ngram != current_input)
+                .filter(containers.ngram != "")
+                .filter(containers.n == 1)
+                .order(containers.frequency.desc, containers.ngram)
+                .limit(14, offset: 0)) {
+                    if resultSet.count < 14 {
+                        resultSet.insert(row[containers.ngram])
+                    }
             }
         }
         catch {
             print("There was an error while fetching recommendations")
         }
         return resultSet
+    }
+    
+    func addProfile(profileName:String){
+        do {
+            let db_path = NSSearchPathForDirectoriesInDomains(
+                .documentDirectory, .userDomainMask, true).first!
+            let db = try Connection("\(db_path)/db.sqlite3")
+            
+            let profiles = Table("Profiles")
+            let profileId = Expression<Int64>("profileId")
+            let name = Expression<String>("name")
+            let linksTo = Expression<Int64>("linksTo")
+            if (try db.scalar(profiles.filter(name == profileName).count)) == 0 {
+                let insert = profiles.insert(name <- profileName)
+                _ = try? db.run(insert)
+            }
+            
+        }
+        catch {
+            
+        }
     }
     
 }

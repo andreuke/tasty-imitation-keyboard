@@ -14,14 +14,21 @@ import SQLite
  set the name of your KeyboardViewController subclass in the Info.plist file.
  */
 
-class predictBoard: KeyboardViewController, UIPopoverPresentationControllerDelegate {
+class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDelegate {
     
+    var banner: PredictboardBanner? = nil
+    let recommendationEngine = Database()
+    var editProfilesView: ExtraView?
+    var profileView: ExtraView?
+
     let words = Database()
     var banner: predictboardBanner? = nil
     let recommendationEngine = Database()
+
     override init(nibName nibNameOrNil: String?, bundle nibBundleOrNil: Bundle?) {
         UserDefaults.standard.register(defaults: ["profile": "Default"])
         super.init(nibName: nibNameOrNil, bundle: nibBundleOrNil)
+        
     }
     
     required init?(coder: NSCoder) {
@@ -30,46 +37,66 @@ class predictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
     
     override func keyPressed(_ key: Key) {
         
-        let textDocumentProxy = self.textDocumentProxy
+        
         var keyOutput = ""
         if key.type != .backspace {
             keyOutput = key.outputForCase(self.shiftState.uppercase())
         }
-        textDocumentProxy.insertText(keyOutput)
-        let lastWord = getLastWord(delete: false)
-        /*if key.type == .backspace
+        //type in main app
+        if UserDefaults.standard.bool(forKey: "keyboardInputToApp") == true
         {
-            lastWord = lastWord.substring(to: lastWord.index(before: lastWord.endIndex))
-        }*/
-        if key.type == .space {
-            do {
-                let context = textDocumentProxy.documentContextBeforeInput
-                let components = context?.components(separatedBy: " ")
-                let count = (components?.count)! as Int
-                let lastWord = (components?[count-2])! as String
-                
-                let db_path = dbObjects().db_path
-                let db = try Connection("\(db_path)/db.sqlite3")
-                let containers = dbObjects.Containers()
-                
-                let currentProfile = UserDefaults.standard.value(forKey: "profile") as! String
-                // if word notExists in database
-                if (try db.scalar(containers.table.filter(containers.ngram == lastWord).count) == 0) {
-                    // insert lastWord into database
-                    let insert = containers.table.insert(containers.ngram <- lastWord,
-                                    containers.profile <- currentProfile, containers.frequency <- 1)
-                    _ = try? db.run(insert)
+            let textDocumentProxy = self.textDocumentProxy
+            if key.type != .backspace {
+                textDocumentProxy.insertText(keyOutput)
+                if key.type == .space {
+                    do {
+                        let context = textDocumentProxy.documentContextBeforeInput
+                        let components = context?.components(separatedBy: " ")
+                        let count = (components?.count)! as Int
+                        let lastWord = (components?[count-2])! as String
+                        
+                        let db_path = dbObjects().db_path
+                        let db = try Connection("\(db_path)/db.sqlite3")
+                        let containers = dbObjects.Containers()
+                        
+                        let currentProfile = UserDefaults.standard.value(forKey: "profile") as! String
+                        // if word notExists in database
+                        if (try db.scalar(containers.table.filter(containers.ngram == lastWord).count) == 0) {
+                            // insert lastWord into database
+                            let insert = containers.table.insert(containers.ngram <- lastWord,
+                                                                 containers.profile <- currentProfile, containers.frequency <- 1)
+                            _ = try? db.run(insert)
+                        }
+                        else {
+                            // increment lastWord in database
+                            try db.run(containers.table.filter(containers.ngram == lastWord)
+                                .filter(containers.profile == currentProfile)
+                                .update(containers.frequency++, containers.lastused <- Date()))
+                        }
+                    } catch {}
                 }
-                else {
-                    // increment lastWord in database
-                    try db.run(containers.table.filter(containers.ngram == lastWord)
-                                         .filter(containers.profile == currentProfile)
-                                         .update(containers.frequency++, containers.lastused <- Date()))
-                }
-            } catch {}
+            }
+            else {
+                textDocumentProxy.deleteBackward()
+            }
+            //let lastWord = getLastWord(delete: false)
+            self.updateButtons()
         }
-        self.updateButtons(prevWord: lastWord)
-        return
+            //type in in-keyboard textbox
+        else {
+            if key.type != .backspace {
+                self.banner?.textField.text? += keyOutput
+            }
+            else{
+                let oldText = (self.banner?.textField.text)!
+                if oldText.characters.count > 0 {
+                    var endIndex = oldText.endIndex
+                    
+                    self.banner?.textField.text? = oldText.substring(to: oldText.index(before: endIndex))
+                }
+                //self.banner?.textField.text? += keyOutput
+            }
+        }
     }
     
     override func setupKeys() {
@@ -77,31 +104,23 @@ class predictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
     }
     
     override func createBanner() -> ExtraView? {
-        self.banner = predictboardBanner(globalColors: type(of: self).globalColors, darkMode: self.darkMode(), solidColorMode: self.solidColorMode())
+        self.banner = PredictboardBanner(globalColors: type(of: self).globalColors, darkMode: self.darkMode(), solidColorMode: self.solidColorMode())
         self.layout?.darkMode
-
+        self.banner?.isHidden = true
         //set up profile selector
         self.banner?.profileSelector.addTarget(self, action: #selector(showPopover), for: .touchUpInside)
-         self.banner?.profileSelector.setTitle(UserDefaults.standard.string(forKey: "profile")!, for: UIControlState())
+        self.banner?.profileSelector.setTitle(UserDefaults.standard.string(forKey: "profile")!, for: UIControlState())
         
         //setup autocomplete buttons
         for button in (self.banner?.buttons)! {
             button.addTarget(self, action: #selector(autocompleteClicked), for: .touchUpInside)
             //button.addTarget(self, action: #selector(KeyboardViewController.playKeySound), for: .touchDown)
-
+            
         }
-
-        //Create selector pop up
-        /*var tableView = UITableView()
-        tableView = UITableView(frame: UIScreen.main.bounds, style: UITableViewStyle.plain)
-        tableView.delegate      =   self.popUpController
-        tableView.dataSource    =   self.popUpController
-        tableView.register(UITableViewCell.self, forCellReuseIdentifier: "cell")
-        self.view.addSubview(tableView)*/
         
         
         //populate buttons
-        updateButtons(prevWord: "")
+        updateButtons()
         
         return self.banner
     }
@@ -171,25 +190,31 @@ class predictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
             do {
                 let db_path = dbObjects().db_path
                 let db = try Connection("\(db_path)/db.sqlite3")
+
                 let containers = dbObjects.Containers()
                 let currentProfile = UserDefaults.standard.value(forKey: "profile") as! String
                 try db.run(containers.table.filter(containers.ngram == wordToAdd)
-                                     .filter(containers.profile == currentProfile)
-                                     .update(containers.frequency++, containers.lastused <- Date()))
+                    .filter(containers.profile == currentProfile)
+                    .update(containers.frequency++, containers.lastused <- Date()))
             }
             catch {
                 print("Incrementing word frequency failed")
             }
-            updateButtons(prevWord: "")
+            updateButtons()
         }
     }
     
-    func updateButtons(prevWord: String) {
+
+    func updateButtons() {
+        let prevWord = self.getLastWord(delete: false)
         // Get previous words to give to recommendWords()
         // ------------------------
         let context = textDocumentProxy.documentContextBeforeInput
         let components = context?.components(separatedBy: " ")
-        let count = (components?.count)! as Int
+        var count = 0
+        if (components != nil) {
+            count = (components?.count)! as Int
+        }
         var word1 = ""
         var word2 = ""
         if count >= 3 {
@@ -199,6 +224,7 @@ class predictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
         // ------------------------
         let recommendations = Array(recommendationEngine.recommendWords(word1: word1, word2: word2,
                                                                         current_input:prevWord)).sorted()
+        
         var index = 0
         for button in (self.banner?.buttons)! {
             if index < recommendations.count {
@@ -213,27 +239,248 @@ class predictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
         }
     }
     
-        
+    /*func otherUpdate() {
+     let prevWord = self.getLastWord(delete: false)
+     var recommendations = recommendationEngine.recommendWords(input: prevWord)
+     //filter away any blank values, because it causes problems
+     recommendations = recommendations.filter() { $0 != "" }
+     let buttonsPerRow = (banner?.allButtons)! / (banner?.numRows)!
+     let numRows: Int = banner?.numRows
+     for row in stride(from: numRows, to: 0, by: -1) {
+     let constant = row * buttonsPerRow
+     for buttonIndex in 0..<buttonsPerRow {
+     
+     }
+     }
+     }*/
+    
+    
     
     //Pop ups
     @IBAction func showPopover(sender: UIButton) {
         
-        let tableViewController = PopUpTableViewController(selector: sender as UIButton!)
-        tableViewController.modalPresentationStyle = UIModalPresentationStyle.popover
+        let maxHeight = self.forwardingView.frame.maxY - sender.frame.maxY
+        let popUpViewController = PopUpViewController(selector: sender as UIButton!, maxHeight: maxHeight, callBack: updateButtons)
+        popUpViewController.modalPresentationStyle = UIModalPresentationStyle.popover
+        popUpViewController.addButton.addTarget(self, action: #selector(switchToAddProfileMode), for: .touchUpInside)
+        popUpViewController.editButton.addTarget(self, action: #selector(toggleEditProfile), for: .touchUpInside)
         
-        present(tableViewController, animated: true, completion: nil)
+        present(popUpViewController, animated: true, completion: nil)
         
-        let popoverPresentationController = tableViewController.popoverPresentationController
-        popoverPresentationController?.sourceView = sender as? UIView
+        let popoverPresentationController = popUpViewController.popoverPresentationController
+        popoverPresentationController?.sourceView = sender
         let height = Int(sender.frame.height)
         let width = Int(sender.frame.height) / 2
-        //popoverPresentationController?.sourceRect = CGRect(origin: CGPoint(x: 0,y :height), size: CGSize(width: 100, height: 100))//CGRectMake(0, 0, sender.frame.size.width, sender.frame.size.height)
+        
         
         popoverPresentationController?.sourceRect = CGRect(origin: CGPoint(x: 0,y :0), size: CGSize(width: width, height: height))
     }
     
-    func adaptivePresentationStyleForPresentationController(controller: UIPresentationController) -> UIModalPresentationStyle {
-        return .none
+    func switchToAddProfileMode(){
+        self.banner?.selectTextView()
+        self.banner?.textFieldLabel.text = "Profile Name:"
+        self.banner?.saveButton.addTarget(self, action: #selector(saveProfile), for: .touchUpInside)
+        self.banner?.backButton.addTarget(self, action: #selector(completedAddProfileMode), for: .touchUpInside)
+    }
+    
+    //go from internal text input mode to forwarding view
+    func completedAddProfileMode(){
+        
+        self.banner?.saveButton.removeTarget(self, action: #selector(saveProfile), for: .touchUpInside)
+        self.banner?.backButton.removeTarget(self, action: #selector(completedAddProfileMode), for: .touchUpInside)
+        self.banner?.selectDefaultView()
+        //self.banner?.textField.resignFirstResponder()
+        //dismissKeyboard()
+    }
+    
+    
+    //go from internal text input mode to profile view
+    func saveProfile() {
+        self.recommendationEngine.addProfile(profileName: (self.banner?.textField.text)!)
+        completedAddProfileMode()
+        showForwardingView(toShow: false)
+        showBanner(toShow: false)
+        let profile = createProfile() as! Profiles
+        profileView = profile
+        showView(viewToShow: profileView!, toShow: true)
+        profile.NavBar.title = self.banner?.textField.text
+    }
+    
+    func showView(viewToShow: ExtraView, toShow: Bool) {
+        if toShow {
+            viewToShow.darkMode = self.darkMode()
+            viewToShow.isHidden = true
+            self.view.addSubview(viewToShow)
+            
+            viewToShow.translatesAutoresizingMaskIntoConstraints = false
+            
+            let widthConstraint = NSLayoutConstraint(item: viewToShow, attribute: NSLayoutAttribute.width, relatedBy: NSLayoutRelation.equal, toItem: self.view, attribute: NSLayoutAttribute.width, multiplier: 1, constant: 0)
+            let heightConstraint = NSLayoutConstraint(item: viewToShow, attribute: NSLayoutAttribute.height, relatedBy: NSLayoutRelation.equal, toItem: self.view, attribute: NSLayoutAttribute.height, multiplier: 1, constant: 0)
+            let centerXConstraint = NSLayoutConstraint(item: viewToShow, attribute: NSLayoutAttribute.centerX, relatedBy: NSLayoutRelation.equal, toItem: self.view, attribute: NSLayoutAttribute.centerX, multiplier: 1, constant: 0)
+            let centerYConstraint = NSLayoutConstraint(item: viewToShow, attribute: NSLayoutAttribute.centerY, relatedBy: NSLayoutRelation.equal, toItem: self.view, attribute: NSLayoutAttribute.centerY, multiplier: 1, constant: 0)
+            
+            self.view.addConstraint(widthConstraint)
+            self.view.addConstraint(heightConstraint)
+            self.view.addConstraint(centerXConstraint)
+            self.view.addConstraint(centerYConstraint)
+        }
+        viewToShow.isHidden = !toShow
+        viewToShow.isUserInteractionEnabled = toShow
+        
+    }
+    
+    func showBanner(toShow: Bool) {
+        self.banner?.isHidden = !toShow
+        self.banner?.isUserInteractionEnabled = toShow
+    }
+    
+    func showForwardingView(toShow: Bool) {
+        self.forwardingView.isHidden = !toShow
+        self.forwardingView.isUserInteractionEnabled = toShow
+    }
+    
+    func editProfileNameView() {
+        profileTextEntryView(toShow: true)
+        //showForwardingView(toShow: true)
+        //showBanner(toShow: true)
+        //showView(viewToShow: profileView!, toShow: false)
+        //self.banner?.selectTextView()
+        self.banner?.textFieldLabel.text = "Edit Name:"
+        self.banner?.textField.text = (profileView as! Profiles).NavBar.title
+        self.banner?.saveButton.addTarget(self, action: #selector(updateProfileName), for: .touchUpInside)
+        self.banner?.backButton.addTarget(self, action: #selector(exitEditProfileNameView), for: .touchUpInside)
+    }
+    
+    //TODO doesnt work yet
+    func updateProfileName(){
+        saveProfile()
+    }
+    
+    func exitEditProfileNameView() {
+        profileTextEntryView(toShow: false)
+        //showForwardingView(toShow: false)
+        //showBanner(toShow: false)
+        //self.banner?.selectDefaultView()
+        
+        //if you cancel just reopen view.  showView will recreate it, we dont need to do that
+        //profileView?.isHidden = false
+        //profileView?.isUserInteractionEnabled = true
+        self.banner?.saveButton.removeTarget(self, action: #selector(updateProfileName), for: .touchUpInside)
+        self.banner?.backButton.removeTarget(self, action: #selector(exitEditProfileNameView), for: .touchUpInside)
+    }
+    
+    func addDataSourceView() {
+        profileTextEntryView(toShow: true)
+        self.banner?.textFieldLabel.text = "Data Source URL:"
+        self.banner?.textField.text = "www."
+        self.banner?.saveButton.addTarget(self, action: #selector(addDataSource), for: .touchUpInside)
+        self.banner?.backButton.addTarget(self, action: #selector(exitDataSourceView), for: .touchUpInside)
+    }
+    
+    func exitDataSourceView() {
+        profileTextEntryView(toShow: false)
+        self.banner?.saveButton.removeTarget(self, action: #selector(addDataSource), for: .touchUpInside)
+        self.banner?.backButton.removeTarget(self, action: #selector(exitDataSourceView), for: .touchUpInside)
+    }
+    
+    func addDataSource() {
+        saveProfile()
+    }
+    
+    func deleteProfile() {
+        toggleProfile()
+    }
+    
+    func profileTextEntryView(toShow: Bool) {
+        if toShow {
+            showView(viewToShow: profileView!, toShow: false)
+            self.banner?.selectTextView()
+        }
+        else {
+            self.banner?.selectDefaultView()
+            //if you cancel just reopen view.  showView will recreate it, we dont need to do that
+            profileView?.isHidden = false
+            profileView?.isUserInteractionEnabled = true
+        }
+        showForwardingView(toShow: toShow)
+        showBanner(toShow: toShow)
+        
+    }
+    
+    @IBAction func toggleEditProfile() {
+        let toShow = self.forwardingView.isHidden
+        showForwardingView(toShow: toShow)
+        showBanner(toShow: toShow)
+        if (!toShow) {
+            editProfilesView = createEditProfiles()
+        }
+        showView(viewToShow: editProfilesView!, toShow: !toShow)
+        
+    }
+    
+    func toggleProfile() {
+        var toShow = false
+        if (editProfilesView != nil) {
+            toShow = (editProfilesView?.isHidden)!
+        }
+        if toShow || editProfilesView == nil{
+            editProfilesView = createEditProfiles()
+        }
+        else {
+            profileView = createProfile()
+        }
+        showView(viewToShow: editProfilesView!, toShow: toShow)
+        showView(viewToShow: profileView!, toShow: !toShow)
+    }
+    
+    func goToKeyboard() {
+        if (editProfilesView != nil) {
+            showView(viewToShow: editProfilesView!, toShow: false)
+        }
+        if (profileView != nil) {
+            showView(viewToShow: profileView!, toShow: false)
+        }
+        showForwardingView(toShow: true)
+        showBanner(toShow: true)
+    }
+    
+    func createEditProfiles() -> ExtraView? {
+        let editProfile = EditProfiles(globalColors: type(of: self).globalColors, darkMode: false, solidColorMode: self.solidColorMode())
+        
+        editProfile.backButton?.addTarget(self, action: #selector(toggleEditProfile), for: UIControlEvents.touchUpInside)
+        editProfile.callBack = openProfile
+        return editProfile
+    }
+    
+    func createProfile() -> ExtraView? {
+        // note that dark mode is not yet valid here, so we just put false for clarity
+        let profileView = Profiles(globalColors: type(of: self).globalColors, darkMode: false, solidColorMode: self.solidColorMode())
+        //profileView.NavBar.title = title
+        profileView.backButton?.addTarget(self, action: #selector(goToKeyboard), for: UIControlEvents.touchUpInside)
+        profileView.profileViewButton?.addTarget(self, action: #selector(toggleProfile), for: UIControlEvents.touchUpInside)
+        profileView.editName?.action = #selector(editProfileNameView)
+        profileView.editName?.target = self
+        profileView.addButton?.action = #selector(addDataSourceView)
+        profileView.addButton?.target = self
+        profileView.deleteButton.action = #selector(deleteProfile)
+        profileView.deleteButton.target = self
+        return profileView
+    }
+    
+    func openProfile(tableTitle:String) {
+        toggleProfile()
+        let profile = profileView as! Profiles
+        let title = tableTitle.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
+        profile.NavBar.title = title
+        //we dont want you editing the default profile name
+        if title == "Default" {
+            profile.editName.isEnabled = false
+            profile.deleteButton.isEnabled = false
+        }
+        else {
+            profile.editName.isEnabled = true
+            profile.deleteButton.isEnabled = true
+        }
     }
     
 }
