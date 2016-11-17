@@ -177,6 +177,9 @@ class GlobalColors: NSObject {
     class var lightModeBorderColor: UIColor { get { return UIColor(hue: (214/360.0), saturation: 0.04, brightness: 0.65, alpha: 1.0) }}
     class var darkModeBorderColor: UIColor { get { return UIColor.clear }}
     
+    class var lightModeSecondaryTextColor: UIColor { get { return UIColor.gray }}
+    class var darkModeSecondaryTextColor: UIColor { get { return UIColor.gray }}
+    
     class func regularKey(_ darkMode: Bool, solidColorMode: Bool) -> UIColor {
         if darkMode {
             if solidColorMode {
@@ -427,9 +430,12 @@ class KeyboardLayout: NSObject, KeyboardKeyProtocol {
             Key.KeyType.space,
             Key.KeyType.return:
                 key.label.adjustsFontSizeToFitWidth = true
+                key.secondaryLabel.adjustsFontSizeToFitWidth = true
                 key.label.font = key.label.font.withSize(16)
+                key.secondaryLabel.font = key.secondaryLabel.font.withSize(12)
             default:
                 key.label.font = key.label.font.withSize(22)
+                key.secondaryLabel.font = key.secondaryLabel.font.withSize(16)
             }
             
             // label inset
@@ -438,7 +444,7 @@ class KeyboardLayout: NSObject, KeyboardKeyProtocol {
             Key.KeyType.modeChange:
                 key.labelInset = 3
             default:
-                key.labelInset = 0
+                key.labelInset = 3
             }
             
             // shapes
@@ -498,9 +504,21 @@ class KeyboardLayout: NSObject, KeyboardKeyProtocol {
     func updateKeyCapText(_ key: KeyboardKey, model: Key, uppercase: Bool, characterUppercase: Bool) {
         if model.type == .character {
             key.text = model.keyCapForCase(characterUppercase)
+            if model.secondaryOutput != nil {
+                key.secondaryText = model.secondaryOutput!
+            }
+            else {
+                key.secondaryText = ""
+            }
         }
         else {
             key.text = model.keyCapForCase(uppercase)
+            if model.secondaryOutput != nil {
+                key.secondaryText = model.secondaryOutput!
+            }
+            else {
+                key.secondaryText = ""
+            }
         }
     }
     
