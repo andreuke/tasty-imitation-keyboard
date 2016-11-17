@@ -31,12 +31,12 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
         fatalError("init(coder:) has not been implemented")
     }
     
-    override func keyPressed(_ key: Key) {
+    override func keyPressed(_ key: Key, secondaryMode: Bool) {
         
         
         var keyOutput = ""
         if key.type != .backspace {
-            keyOutput = key.outputForCase(self.shiftState.uppercase())
+                keyOutput = key.outputForCase(self.shiftState.uppercase(), secondary: secondaryMode)
         }
         //type in main app
         if UserDefaults.standard.bool(forKey: "keyboardInputToApp") == true
