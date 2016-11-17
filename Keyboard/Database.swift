@@ -394,7 +394,7 @@ class Database: NSObject {
         return resultSet
     }
     
-    func addProfile(profileName:String){
+    func addProfile(profile_name:String){
         do {
             let db_path = dbObjects().db_path
             let db = try Connection("\(db_path)/db.sqlite3")
@@ -402,8 +402,8 @@ class Database: NSObject {
             // Insert the new profile into the database
             let profiles = dbObjects.Profiles()
             
-            if (try db.scalar(profiles.table.filter(profiles.name == profileName).count)) == 0 {
-                let insert = profiles.table.insert(profiles.name <- profileName)
+            if (try db.scalar(profiles.table.filter(profiles.name == profile_name).count)) == 0 {
+                let insert = profiles.table.insert(profiles.name <- profile_name)
                 _ = try? db.run(insert)
             }
             
@@ -412,16 +412,19 @@ class Database: NSObject {
             let containers = dbObjects.Containers()
             
             for row in try db.prepare(ngrams.table) {
-                let insert = containers.table.insert(containers.profile <- profileName,
+                let insert = containers.table.insert(containers.profile <- profile_name,
                                                      containers.ngram <- row[ngrams.gram],
                                                      containers.n <- row[ngrams.n])
                 _ = try? db.run(insert)
             }
             
-        } catch {}
+        } catch {
+            print("Something failed while trying to add new profile")
+        }
     }
     
-    // Delete profile function
+
+    // WARNING: NOT TESTED YET
     func deleteProfile(profile_name: String) {
         do {
             let db_path = dbObjects().db_path
@@ -439,9 +442,12 @@ class Database: NSObject {
             let data_sources = dbObjects.DataSources()
             _ = try db.run(data_sources.table.filter(data_sources.profile == profile_name).delete())
             
-        } catch {}
+        } catch {
+            print("Something failed while trying to delete profile")
+        }
     }
     
+    // WARNING: NOT TESTED YET
     func editProfileName(current_name: String, new_name: String) {
         do {
             let db_path = dbObjects().db_path
@@ -460,31 +466,80 @@ class Database: NSObject {
             _ = try db.run(data_sources.table
                             .filter(data_sources.profile == current_name)
                             .update(data_sources.profile <- new_name))
-        } catch {}
+        } catch {
+            print("Something failed while editing profile name")
+        }
     }
     
-    // Get list of profiles
-    // FIX ME
-    func getProfiles() /*-> [String]*/ {
-        
+    // WARNING: NOT TESTED YET
+    func getProfiles() -> [String] {
+        var profiles_list: [String] = []
+        do {
+            let db_path = dbObjects().db_path
+            let db = try Connection("\(db_path)/db.sqlite3")
+            
+            let profiles = dbObjects.Profiles()
+            
+            for row in try db.prepare(profiles.table) {
+                profiles_list.append(row[profiles.name])
+            }
+        } catch {
+            print("Something failed while getting list of profiles")
+        }
+        return profiles_list
     }
     
-    // Add data source
-    // FIX ME
-    func addDataSource() {
-        
+    // WARNING: NOT TESTED YET
+    func addDataSource(target_profile: String, new_data_source: String, new_title: String) {
+        do {
+            let db_path = dbObjects().db_path
+            let db = try Connection("\(db_path)/db.sqlite3")
+            
+            let data_sources = dbObjects.DataSources()
+            
+            let insert = data_sources.table.insert(data_sources.profile <- target_profile,
+                                                   data_sources.source <- new_data_source,
+                                                   data_sources.title <- new_title)
+            _ = try? db.run(insert)
+        } catch {
+            print("Something failed while trying to insert new data source")
+        }
     }
     
-    // Remove data source
-    // FIX ME
-    func removeDataSource() {
-        
+    // WARNING: NOT TESTED YET
+    // WARNING: only deletes the reference to the data source in the target profile, 
+    //          DOES NOT delete all of the ngrams that were generated from that source
+    func removeDataSource(target_profile: String, data_source: String) {
+        do {
+            let db_path = dbObjects().db_path
+            let db = try Connection("\(db_path)/db.sqlite3")
+            
+            let data_sources = dbObjects.DataSources()
+            
+            _ = try db.run(data_sources.table.filter(data_sources.profile == target_profile)
+                                         .filter(data_sources.source == data_source).delete())
+        } catch {
+            print("Something failed while removing data source")
+        }
     }
     
-    // Get list of data sources, given a profile name
-    // FIX ME
-    func getDataSources() /*-> [String]*/ {
-        
+    // WARNING: NOT TESTED YET
+    func getDataSources(target_profile: String) -> [String] {
+        var data_sources_list: [String] = []
+        do {
+            let db_path = dbObjects().db_path
+            let db = try Connection("\(db_path)/db.sqlite3")
+            
+            let data_sources = dbObjects.DataSources()
+            
+            for row in try db.prepare(data_sources.table
+                .filter(data_sources.profile == target_profile)) {
+                    data_sources_list.append(row[data_sources.source])
+            }
+        } catch {
+            print("Something failed while getting list of data sources")
+        }
+        return data_sources_list
     }
     
 }
