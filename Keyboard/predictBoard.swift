@@ -292,7 +292,7 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
     
     //go from internal text input mode to profile view
     func saveProfile() {
-        self.recommendationEngine.addProfile(profileName: (self.banner?.textField.text)!)
+        self.recommendationEngine.addProfile(profile_name: (self.banner?.textField.text)!)
         completedAddProfileMode()
         showForwardingView(toShow: false)
         showBanner(toShow: false)
