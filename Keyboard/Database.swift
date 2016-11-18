@@ -347,7 +347,19 @@ class Database: NSObject {
             resultSet = recommendationQuery(user_profile: userProfile as! String,
                                 n: 3, pattern: "\(word1) \(word2) \(current_input)%",
                                 words: words, result_set: resultSet)
-            for n in [3,2] {
+            // *******************
+            for n in [2,3] {
+                resultSet = recommendationQuery(user_profile: userProfile as! String,
+                                n: n, pattern: "\(word2) \(current_input)%",
+                                words: words, result_set: resultSet)
+            }
+            for n in [1,2] {
+                resultSet = recommendationQuery(user_profile: userProfile as! String,
+                                n: n, pattern: "\(current_input)%",
+                                words: words, result_set: resultSet)
+            }
+            // *******************
+            /*for n in [3,2] {
                 resultSet = recommendationQuery(user_profile: userProfile as! String,
                                 n: n, pattern: "\(word2) \(current_input)%",
                                 words: words, result_set: resultSet)
@@ -356,10 +368,21 @@ class Database: NSObject {
                 resultSet = recommendationQuery(user_profile: userProfile as! String,
                                 n: n, pattern: "\(current_input)%",
                                 words: words, result_set: resultSet)
-            }
+            }*/
         }
             
         else if word1 == "" && word2 != "" {
+            for n in [2,3] {
+                resultSet = recommendationQuery(user_profile: userProfile as! String,
+                                n: n, pattern: "\(word2) \(current_input)%",
+                                words: words, result_set: resultSet)
+            }
+            for n in [1,2] {
+                resultSet = recommendationQuery(user_profile: userProfile as! String,
+                                n: n, pattern: "\(current_input)%",
+                                words: words, result_set: resultSet)
+            }
+            /*
             for n in [3,2] {
                 resultSet = recommendationQuery(user_profile: userProfile as! String,
                                 n: n, pattern: "\(word2) \(current_input)%",
@@ -369,7 +392,7 @@ class Database: NSObject {
                 resultSet = recommendationQuery(user_profile: userProfile as! String,
                                 n: n, pattern: "\(current_input)%",
                                 words: words, result_set: resultSet)
-            }
+            }*/
         }
             
         else /* word1 and word2 are empty */ {
