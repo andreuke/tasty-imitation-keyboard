@@ -257,9 +257,20 @@ class Database: NSObject {
         } catch {}
     }
     
-    /*func recommendationQuery(user_profile: String, n: Int, pattern: String,
-                             current_input: String, result_set: Set<String>) -> Set<String> {
+    func recommendationQuery(user_profile: String, n: Int, pattern: String,
+                             words: [String], result_set: Set<String>) -> Set<String> {
+        
+        if result_set.count == 14 {
+            return result_set
+        }
+        
+        // Copy result_set into resultSet so we can manipulate resultSet
         var resultSet = result_set
+        
+        let word1 = words[0]
+        let word2 = words[1]
+        let current_input = words[2]
+        
         do {
             let db_path = dbObjects().db_path
             let db = try Connection("\(db_path)/db.sqlite3")
@@ -273,123 +284,98 @@ class Database: NSObject {
                 .filter(containers.n == n)
                 .order(containers.frequency.desc, containers.ngram)
                 .limit(14, offset: 0)) {
-                    // Insert the last word of the 3gram
+                    // This wall have a different number of components for different patterns!
                     let row_components = row[containers.ngram].components(separatedBy: " ")
-                    if row_components[2].hasPrefix(current_input) {
-                        resultSet.insert(row_components[2])
-                    }
-            }
-        } catch {}
-        return resultSet
-    }*/
-    
-    func recommendWords(word1: String = "", word2: String = "", current_input: String)->Set<String>{
-        var resultSet = Set<String>()
-        do {
-            let db_path = dbObjects().db_path
-            let db = try Connection("\(db_path)/db.sqlite3")
-            
-            let containers = dbObjects.Containers()
-            
-            let userProfile = UserDefaults.standard.value(forKey: "profile")
-            
-            // If any previous words are available, use those
-            
-            // If 2 previous words are available...
-            if word1 != "" && word2 != "" {
-                // Get recommendations from 3grams where word1 and 
-                // word2 are the first two words of the 3gram
-                for row in try db.prepare(containers.table
-                    .filter(containers.profile == userProfile as! String)
-                    .filter(containers.ngram.like("\(word1) \(word2) \(current_input)%"))
-                    .filter(containers.ngram != current_input)
-                    .filter(containers.ngram != "")
-                    .filter(containers.n == 3)
-                    .order(containers.frequency.desc, containers.ngram)
-                    .limit(14, offset: 0)) {
-                        // Insert the last word of the 3gram
-                        let row_components = row[containers.ngram].components(separatedBy: " ")
-                        if row_components[2].hasPrefix(current_input) {
-                            resultSet.insert(row_components[2])
-                        }
-                }
-                
-                // Get recommendations from 2grams where 
-                // word2 is the first word in the 2gram
-                for row in try db.prepare(containers.table
-                    .filter(containers.profile == userProfile as! String)
-                    .filter(containers.ngram.like("\(word2) \(current_input)%"))
-                    .filter(containers.ngram != current_input)
-                    .filter(containers.ngram != "")
-                    .filter(containers.n == 2)
-                    .order(containers.frequency.desc, containers.ngram)
-                    .limit(14, offset: 0)) {
-                        // Insert the last word of the 2gram
-                        let row_components = row[containers.ngram].components(separatedBy: " ")
-                        if row_components[1].hasPrefix(current_input) && resultSet.count < 14 {
-                            resultSet.insert(row_components[1])
-                        }
-                }
-                
-                // Get recommendations from 1grams
-                for row in try db.prepare(containers.table
-                    .filter(containers.profile == userProfile as! String)
-                    .filter(containers.ngram.like("\(current_input)%"))
-                    .filter(containers.ngram != current_input)
-                    .filter(containers.ngram != "")
-                    .filter(containers.n == 1)
-                    .order(containers.frequency.desc, containers.ngram)
-                    .limit(14, offset: 0)) {
-                        // Insert word
-                        if resultSet.count < 14 {
-                            resultSet.insert(row[containers.ngram])
-                        }
-                }
-            }
-            
-            
-            else if word1 == "" && word2 != "" {
-                for row in try db.prepare(containers.table
-                    .filter(containers.profile == userProfile as! String)
-                    .filter(containers.ngram.like("% \(word2) \(current_input)%"))
-                    .filter(containers.ngram != current_input)
-                    .filter(containers.ngram != "")
-                    .filter(containers.n == 3)
-                    .order(containers.frequency.desc, containers.ngram)
-                    .limit(14, offset: 0)) {
-                        // Find which word to insert
-                        let row_components = row[containers.ngram].components(separatedBy: " ")
-                        if row_components[2].hasPrefix(current_input) {
+                    
+                    // POSSIBLE PATTERNS
+                    // 3:      "\(word1) \(word2) \(current_input)%"
+                    // 3:      "% \(word2) \(current_input)%"
+                    // 3 & 2:  "\(word2) \(current_input)%"
+                    // 2 & 1:  "\(current_input)%"
+                    
+                    if n == 3 {
+                        if pattern == "\(word1) \(word2) \(current_input)%" {
                             if resultSet.count < 14 {
                                 resultSet.insert(row_components[2])
                             }
                         }
-                        else {
+                        else if pattern == "\(word2) \(current_input)%" {
                             if resultSet.count < 14 {
                                 resultSet.insert(row_components[1]+" "+row_components[2])
                             }
                         }
-                }
-            }
-            
-            // If not, just use the current input...
-            // Get recommendations where input is the beginning of the ngram
-            // Prioritize 2grams for better specificity
-            for row in try db.prepare(containers.table
-                .filter(containers.profile == userProfile as! String)
-                .filter(containers.ngram.like("\(current_input)%"))
-                .filter(containers.ngram != current_input)
-                .filter(containers.ngram != "")
-                .order(containers.n, containers.frequency.desc, containers.ngram)
-                .limit(14, offset: 0)) {
-                    if resultSet.count < 14 {
-                        resultSet.insert(row[containers.ngram])
                     }
+                    else if n == 2 {
+                        if pattern == "\(word2) \(current_input)%" {
+                            if resultSet.count < 14 {
+                                resultSet.insert(row_components[1])
+                            }
+                        }
+                        else if pattern == "\(current_input)%" {
+                            if resultSet.count < 14 {
+                                resultSet.insert(row_components[0]+" "+row_components[1])
+                            }
+                        }
+                    }
+                    else /* n == 1 */ {
+                        if resultSet.count < 14 {
+                            resultSet.insert(row[containers.ngram])
+                        }
+                    }
+                    
             }
-    
+        } catch {
+            print("Something went wrong when fetching \(n)grams for input '\(current_input)' in \(user_profile)")
         }
-        catch {
-            print("There was an error while fetching recommendations")
+        return resultSet
+    }
+    
+    func recommendWords(word1: String = "", word2: String = "", current_input: String)->Set<String>{
+        // *********** NEW METHOD *****************
+        
+        // POSSIBLE PATTERNS
+        // 3:      "\(word1) \(word2) \(current_input)%"
+        // 3:      "% \(word2) \(current_input)%" ********* <--- maybe not
+        // 3 & 2:  "\(word2) \(current_input)%"
+        // 2 & 1:  "\(current_input)%"
+        
+        var resultSet = Set<String>()
+        let userProfile = UserDefaults.standard.value(forKey: "profile")
+        let words = [word1, word2, current_input]
+        
+        if word1 != "" && word2 != "" {
+            resultSet = recommendationQuery(user_profile: userProfile as! String,
+                                n: 3, pattern: "\(word1) \(word2) \(current_input)%",
+                                words: words, result_set: resultSet)
+            for n in [3,2] {
+                resultSet = recommendationQuery(user_profile: userProfile as! String,
+                                n: n, pattern: "\(word2) \(current_input)%",
+                                words: words, result_set: resultSet)
+            }
+            for n in [2,1] {
+                resultSet = recommendationQuery(user_profile: userProfile as! String,
+                                n: n, pattern: "\(current_input)%",
+                                words: words, result_set: resultSet)
+            }
+        }
+            
+        else if word1 == "" && word2 != "" {
+            for n in [3,2] {
+                resultSet = recommendationQuery(user_profile: userProfile as! String,
+                                n: n, pattern: "\(word2) \(current_input)%",
+                                words: words, result_set: resultSet)
+            }
+            for n in [2,1] {
+                resultSet = recommendationQuery(user_profile: userProfile as! String,
+                                n: n, pattern: "\(current_input)%",
+                                words: words, result_set: resultSet)
+            }
+        }
+            
+        else /* word1 and word2 are empty */ {
+            resultSet = recommendationQuery(user_profile: userProfile as! String,
+                                n: 1, pattern: "\(current_input)%",
+                                words: words, result_set: resultSet)
         }
         return resultSet
     }
