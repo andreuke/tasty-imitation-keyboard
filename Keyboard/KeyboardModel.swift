@@ -114,6 +114,7 @@ class Key: Hashable {
     var lowercaseKeyCap: String?
     var uppercaseOutput: String?
     var lowercaseOutput: String?
+    var secondaryOutput: String?
     var toMode: Int? //if the key is a mode button, this indicates which page it links to
     var size: Double? //relative size of key compared to the others
     
@@ -186,8 +187,19 @@ class Key: Hashable {
         self.uppercaseKeyCap = self.uppercaseOutput
     }
     
-    func outputForCase(_ uppercase: Bool) -> String {
-        if uppercase {
+    func setLetter(_ letter: String, secondaryLetter: String) {
+        self.lowercaseOutput = (letter as NSString).lowercased
+        self.uppercaseOutput = (letter as NSString).uppercased
+        self.lowercaseKeyCap = self.lowercaseOutput
+        self.uppercaseKeyCap = self.uppercaseOutput
+        self.secondaryOutput = secondaryLetter
+    }
+    
+    func outputForCase(_ uppercase: Bool, secondary: Bool) -> String {
+        if secondary && (self.secondaryOutput != nil){
+            return self.secondaryOutput!
+        }
+        else if uppercase {
             if self.uppercaseOutput != nil {
                 return self.uppercaseOutput!
             }

@@ -59,19 +59,8 @@ class EditProfiles: ExtraView, UITableViewDataSource, UITableViewDelegate {
         super.init(globalColors: globalColors, darkMode: darkMode, solidColorMode: solidColorMode)
         self.loadNib()
         
-        var profiles: [String] = []
-        let db_path = NSSearchPathForDirectoriesInDomains(
-            .documentDirectory, .userDomainMask, true).first!
-        do {
-            let db = try Connection("\(db_path)/db.sqlite3")
-            for profile in try db.prepare(Table("Profiles")) {
-                profiles.append(profile[Expression<String>("name")])
-                print(profile[Expression<String>("name")])
-            }
-        }
-        catch {
-            print("Database connection failed")
-        }
+        var profiles: [String] = Database().getProfiles()
+
         self.settingsList = [("Profiles", profiles)]
     }
     

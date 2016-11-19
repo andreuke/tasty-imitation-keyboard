@@ -31,12 +31,12 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
         fatalError("init(coder:) has not been implemented")
     }
     
-    override func keyPressed(_ key: Key) {
+    override func keyPressed(_ key: Key, secondaryMode: Bool) {
         
         
         var keyOutput = ""
         if key.type != .backspace {
-            keyOutput = key.outputForCase(self.shiftState.uppercase())
+                keyOutput = key.outputForCase(self.shiftState.uppercase(), secondary: secondaryMode)
         }
         //type in main app
         if UserDefaults.standard.bool(forKey: "keyboardInputToApp") == true
@@ -264,7 +264,7 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
         let popUpViewController = PopUpViewController(selector: sender as UIButton!, maxHeight: maxHeight, callBack: updateButtons)
         popUpViewController.modalPresentationStyle = UIModalPresentationStyle.popover
         popUpViewController.addButton.addTarget(self, action: #selector(switchToAddProfileMode), for: .touchUpInside)
-        popUpViewController.editButton.addTarget(self, action: #selector(toggleEditProfile), for: .touchUpInside)
+        popUpViewController.editButton.addTarget(self, action: #selector(toggleEditProfiles), for: .touchUpInside)
         
         present(popUpViewController, animated: true, completion: nil)
         
@@ -301,10 +301,10 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
         completedAddProfileMode()
         showForwardingView(toShow: false)
         showBanner(toShow: false)
-        let profile = createProfile() as! Profiles
+        let profile = createProfile(profileName:(self.banner?.textField.text)!) as! Profiles
         profileView = profile
         showView(viewToShow: profileView!, toShow: true)
-        profile.NavBar.title = self.banner?.textField.text
+
     }
     
     func showView(viewToShow: ExtraView, toShow: Bool) {
@@ -340,7 +340,7 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
         self.forwardingView.isUserInteractionEnabled = toShow
     }
     
-    func editProfileNameView() {
+    func editProfilesNameView() {
         profileTextEntryView(toShow: true)
         //showForwardingView(toShow: true)
         //showBanner(toShow: true)
@@ -349,7 +349,7 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
         self.banner?.textFieldLabel.text = "Edit Name:"
         self.banner?.textField.text = (profileView as! Profiles).NavBar.title
         self.banner?.saveButton.addTarget(self, action: #selector(updateProfileName), for: .touchUpInside)
-        self.banner?.backButton.addTarget(self, action: #selector(exitEditProfileNameView), for: .touchUpInside)
+        self.banner?.backButton.addTarget(self, action: #selector(exiteditProfilesNameView), for: .touchUpInside)
     }
     
     //TODO doesnt work yet
@@ -357,7 +357,7 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
         saveProfile()
     }
     
-    func exitEditProfileNameView() {
+    func exiteditProfilesNameView() {
         profileTextEntryView(toShow: false)
         //showForwardingView(toShow: false)
         //showBanner(toShow: false)
@@ -367,7 +367,7 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
         //profileView?.isHidden = false
         //profileView?.isUserInteractionEnabled = true
         self.banner?.saveButton.removeTarget(self, action: #selector(updateProfileName), for: .touchUpInside)
-        self.banner?.backButton.removeTarget(self, action: #selector(exitEditProfileNameView), for: .touchUpInside)
+        self.banner?.backButton.removeTarget(self, action: #selector(exiteditProfilesNameView), for: .touchUpInside)
     }
     
     func addDataSourceView() {
@@ -389,7 +389,9 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
     }
     
     func deleteProfile() {
-        toggleProfile()
+        let profileName = (profileView as! Profiles).profileName!
+        recommendationEngine.deleteProfile(profile_name: profileName)
+        profileToEditProfiles()
     }
     
     func profileTextEntryView(toShow: Bool) {
@@ -408,7 +410,7 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
         
     }
     
-    @IBAction func toggleEditProfile() {
+    @IBAction func toggleEditProfiles() {
         let toShow = self.forwardingView.isHidden
         showForwardingView(toShow: toShow)
         showBanner(toShow: toShow)
@@ -419,7 +421,7 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
         
     }
     
-    func toggleProfile() {
+    /*func toggleProfile(profileName: String = "") {
         var toShow = false
         if (editProfilesView != nil) {
             toShow = (editProfilesView?.isHidden)!
@@ -432,7 +434,25 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
         }
         showView(viewToShow: editProfilesView!, toShow: toShow)
         showView(viewToShow: profileView!, toShow: !toShow)
+    }*/
+    
+    func openProfile(profileName: String) {
+        profileView = createProfile(profileName: profileName)
+        if (editProfilesView != nil) {
+            showView(viewToShow: editProfilesView!, toShow: false)
+        }
+        showView(viewToShow: profileView!, toShow: true)
+        
     }
+    
+    func profileToEditProfiles() {
+        if (editProfilesView == nil) {
+            editProfilesView = createEditProfiles()
+        }
+        showView(viewToShow: editProfilesView!, toShow: true)
+        showView(viewToShow: profileView!, toShow: false)
+    }
+    
     
     func goToKeyboard() {
         if (editProfilesView != nil) {
@@ -446,32 +466,33 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
     }
     
     func createEditProfiles() -> ExtraView? {
-        let editProfile = EditProfiles(globalColors: type(of: self).globalColors, darkMode: false, solidColorMode: self.solidColorMode())
+        let editProfiles = EditProfiles(globalColors: type(of: self).globalColors, darkMode: false, solidColorMode: self.solidColorMode())
         
-        editProfile.backButton?.addTarget(self, action: #selector(toggleEditProfile), for: UIControlEvents.touchUpInside)
-        editProfile.callBack = openProfile
-        return editProfile
+        editProfiles.backButton?.addTarget(self, action: #selector(toggleEditProfiles), for: UIControlEvents.touchUpInside)
+        editProfiles.callBack = openProfileCallback
+        return editProfiles
     }
     
-    func createProfile() -> ExtraView? {
+    func createProfile(profileName:String) -> ExtraView? {
         // note that dark mode is not yet valid here, so we just put false for clarity
-        let profileView = Profiles(globalColors: type(of: self).globalColors, darkMode: false, solidColorMode: self.solidColorMode())
+        let profileView = Profiles(profileName: profileName, globalColors: type(of: self).globalColors, darkMode: false, solidColorMode: self.solidColorMode())
         //profileView.NavBar.title = title
         profileView.backButton?.addTarget(self, action: #selector(goToKeyboard), for: UIControlEvents.touchUpInside)
-        profileView.profileViewButton?.addTarget(self, action: #selector(toggleProfile), for: UIControlEvents.touchUpInside)
-        profileView.editName?.action = #selector(editProfileNameView)
+        profileView.profileViewButton?.addTarget(self, action: #selector(profileToEditProfiles), for: UIControlEvents.touchUpInside)
+        profileView.editName?.action = #selector(editProfilesNameView)
         profileView.editName?.target = self
         profileView.addButton?.action = #selector(addDataSourceView)
         profileView.addButton?.target = self
         profileView.deleteButton.action = #selector(deleteProfile)
+
         profileView.deleteButton.target = self
         return profileView
     }
     
-    func openProfile(tableTitle:String) {
-        toggleProfile()
-        let profile = profileView as! Profiles
+    func openProfileCallback(tableTitle:String) {
         let title = tableTitle.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
+        openProfile(profileName: tableTitle)
+        let profile = profileView as! Profiles
         profile.NavBar.title = title
         //we dont want you editing the default profile name
         if title == "Default" {

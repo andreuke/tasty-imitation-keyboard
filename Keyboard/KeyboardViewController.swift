@@ -25,6 +25,8 @@ class KeyboardViewController: UIInputViewController {
     let backspaceDelay: TimeInterval = 0.5
     let backspaceRepeat: TimeInterval = 0.07
     
+    let secondaryTextDelay: TimeInterval = 0.5
+    
     var keyboard: Keyboard!
     var forwardingView: ForwardingView!
     var layout: KeyboardLayout?
@@ -49,6 +51,9 @@ class KeyboardViewController: UIInputViewController {
     }
     var backspaceDelayTimer: Timer?
     var backspaceRepeatTimer: Timer?
+    
+    var secondaryTextTimer: Timer?
+    var secondaryTextMode: Bool = false
     
     enum AutoPeriodState {
         case noSpace
@@ -125,7 +130,7 @@ class KeyboardViewController: UIInputViewController {
     deinit {
         backspaceDelayTimer?.invalidate()
         backspaceRepeatTimer?.invalidate()
-        
+        secondaryTextTimer?.invalidate()
         NotificationCenter.default.removeObserver(self)
     }
     
@@ -336,6 +341,10 @@ class KeyboardViewController: UIInputViewController {
                         
                         if key.hasOutput {
                             keyView.addTarget(self, action: "keyPressedHelper:", for: .touchUpInside)
+                            if key.secondaryOutput != nil {
+                                keyView.addTarget(self, action: "keyDown:", for: .touchDown)
+                                keyView.addTarget(self, action: "cancelSecondaryTextTimer", for: [.touchUpInside, .touchUpOutside, .touchDragOutside, .touchDragExit, .touchCancel])
+                            }
                         }
                         
                         if key.type != Key.KeyType.shift && key.type != Key.KeyType.modeChange {
@@ -441,7 +450,7 @@ class KeyboardViewController: UIInputViewController {
     
     func keyPressedHelper(_ sender: KeyboardKey) {
         if let model = self.layout?.keyForView(sender) {
-            self.keyPressed(model)
+            self.keyPressed(model, secondaryMode: self.secondaryTextMode)
 
             // auto exit from special char subkeyboard
             if model.type == Key.KeyType.space || model.type == Key.KeyType.return {
@@ -528,8 +537,7 @@ class KeyboardViewController: UIInputViewController {
     
     func backspaceDown(_ sender: KeyboardKey) {
         self.cancelBackspaceTimers()
-        self.keyPressed(Key(.backspace))
-        //self.textDocumentProxy.deleteBackward()
+        self.keyPressed(Key(.backspace), secondaryMode: false)
         self.setCapsIfNeeded()
         
         // trigger for subsequent deletes
@@ -548,9 +556,28 @@ class KeyboardViewController: UIInputViewController {
     
     func backspaceRepeatCallback() {
         self.playKeySound()
-        self.keyPressed(Key(.backspace))
+        self.keyPressed(Key(.backspace), secondaryMode: false)
         //self.textDocumentProxy.deleteBackward()
         self.setCapsIfNeeded()
+    }
+    
+    func cancelSecondaryTextTimer() {
+        self.secondaryTextMode = false
+        self.secondaryTextTimer?.invalidate()
+        self.secondaryTextTimer = nil
+    }
+    
+    func keyDown(_ sender: KeyboardKey) {
+        self.cancelSecondaryTextTimer()
+        // trigger for subsequent deletes
+        self.secondaryTextTimer = Timer.scheduledTimer(timeInterval: secondaryTextDelay, target: self, selector: #selector(KeyboardViewController.setSecondaryTextMode), userInfo: nil, repeats: false)
+    }
+    
+    func setSecondaryTextMode() {
+        if self.secondaryTextTimer != nil {
+            playSecondaryKeySound()
+        }
+        self.secondaryTextMode = true
     }
     
     func shiftDown(_ sender: KeyboardKey) {
@@ -844,6 +871,16 @@ class KeyboardViewController: UIInputViewController {
         })
     }
     
+    func playSecondaryKeySound() {
+        if !UserDefaults.standard.bool(forKey: kKeyboardClicks) {
+            return
+        }
+        
+        DispatchQueue.global(priority: DispatchQueue.GlobalQueuePriority.default).async(execute: {
+            AudioServicesPlaySystemSound(1103)
+        })
+    }
+    
     //////////////////////////////////////
     // MOST COMMONLY EXTENDABLE METHODS //
     //////////////////////////////////////
@@ -852,8 +889,8 @@ class KeyboardViewController: UIInputViewController {
     class var layoutConstants: LayoutConstants.Type { get { return LayoutConstants.self }}
     class var globalColors: GlobalColors.Type { get { return GlobalColors.self }}
     
-    func keyPressed(_ key: Key) {
-        self.textDocumentProxy.insertText(key.outputForCase(self.shiftState.uppercase()))
+    func keyPressed(_ key: Key, secondaryMode: Bool) {
+        self.textDocumentProxy.insertText(key.outputForCase(self.shiftState.uppercase(), secondary: secondaryMode))
     }
     
     // a banner that sits in the empty space on top of the keyboard

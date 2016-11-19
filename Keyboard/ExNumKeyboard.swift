@@ -12,22 +12,16 @@ func exNumKeyboard() -> Keyboard {
     let shift = Key(.shift)
     let backspace = Key(.backspace)
     let offset = 0
-    
-    /*
-    for key in ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"] {
-        let keyModel = Key(.specialCharacter)
-        keyModel.setLetter(key)
-        exNumKeyboard.addKey(keyModel, row: 0, page: 0)
-    }
-    for key in ["-", "+", "="] {
-        let keyModel = Key(.specialCharacter)
-        keyModel.setLetter(key)
-        exNumKeyboard.addKey(keyModel, row: 0, page: 0)
-    }*/
 
-    for key in [":", "Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P", "(", ")", "/"] {
+    for key in [":~", "Q1", "W2", "E3", "R4", "T5", "Y6", "U7", "I8", "O9", "P0", "({", ")}", "/\\"] {
         let keyModel = Key(.character)
-        keyModel.setLetter(key)
+        if key.characters.count == 1 {
+            keyModel.setLetter(key)
+        }
+        else {
+            let secondLetterIndex = key.index(key.startIndex, offsetBy: 1)
+            keyModel.setLetter(String(key[key.startIndex]), secondaryLetter: String(key[secondLetterIndex]))
+        }
         exNumKeyboard.addKey(keyModel, row: 0 + offset, page: 0)
     }
 
@@ -37,9 +31,15 @@ func exNumKeyboard() -> Keyboard {
     tabKey.lowercaseOutput = "\t"
     tabKey.size = 1
     exNumKeyboard.addKey(tabKey, row: 1 + offset, page: 0)
-    for key in ["A", "S", "D", "F", "G", "H", "J", "K", "L", "!", "\"", "'"] {
+    for key in ["A#", "S$", "D%", "F+", "G-", "H=", "J*", "K^", "L&", "!;", "\"<", "'>"] {
         let keyModel = Key(.character)
-        keyModel.setLetter(key)
+        if key.characters.count == 1 {
+            keyModel.setLetter(key)
+        }
+        else {
+            let secondLetterIndex = key.index(key.startIndex, offsetBy: 1)
+            keyModel.setLetter(String(key[key.startIndex]), secondaryLetter: String(key[secondLetterIndex]))
+        }
         exNumKeyboard.addKey(keyModel, row: 1 + offset, page: 0)
     }
     let tab2 = Key(.tab)
@@ -53,7 +53,13 @@ func exNumKeyboard() -> Keyboard {
     
     for key in ["Z", "X", "C", "V", "B", "N", "M", ",", ".", "?"] {
         let keyModel = Key(.character)
-        keyModel.setLetter(key)
+        if key.characters.count == 1 {
+            keyModel.setLetter(key)
+        }
+        else {
+            let secondLetterIndex = key.index(key.startIndex, offsetBy: 1)
+            keyModel.setLetter(String(key[key.startIndex]), secondaryLetter: String(key[secondLetterIndex]))
+        }
         exNumKeyboard.addKey(keyModel, row: 2 + offset, page: 0)
     }
     
