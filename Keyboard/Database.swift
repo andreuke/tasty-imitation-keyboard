@@ -69,6 +69,8 @@ class Database: NSObject {
             let phrases = dbObjects.Phrases()
             let data_sources = dbObjects.DataSources()
             
+            //try? db.run(profiles.table.drop(ifExists: true))
+            
             // Create Ngrams table
             try? db.run(ngrams.table.create(ifNotExists: true) { t in
                 t.column(ngrams.gram, primaryKey: true)
@@ -82,7 +84,6 @@ class Database: NSObject {
                 t.column(profiles.linksTo, defaultValue: 0)
             })
             
-            //try? db.run(profiles.delete())
             
             // Insert the Default profile into the Profiles table if it doesn't exist
             

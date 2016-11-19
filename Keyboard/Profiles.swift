@@ -37,7 +37,7 @@ class Profiles: ExtraView, UITableViewDataSource, UITableViewDelegate {
     let cellLabelColorLight = UIColor.black
     let cellLongLabelColorDark = UIColor.lightGray
     let cellLongLabelColorLight = UIColor.gray
-    
+    var profileName:String?
     // TODO: these probably don't belong here, and also need to be localized
     var settingsList: [(String, [String])]?
     
@@ -60,24 +60,13 @@ class Profiles: ExtraView, UITableViewDataSource, UITableViewDelegate {
         }
     }
     
-    required init(globalColors: GlobalColors.Type?, darkMode: Bool, solidColorMode: Bool) {
+    required init(profileName: String, globalColors: GlobalColors.Type?, darkMode: Bool, solidColorMode: Bool) {
         //self.callBack = tempCallBack
         super.init(globalColors: globalColors, darkMode: darkMode, solidColorMode: solidColorMode)
         self.loadNib()
-        
-        var profiles: [String] = []
-        let db_path = NSSearchPathForDirectoriesInDomains(
-            .documentDirectory, .userDomainMask, true).first!
-        do {
-            let db = try Connection("\(db_path)/db.sqlite3")
-            for profile in try db.prepare(Table("Profiles")) {
-                profiles.append(profile[Expression<String>("name")])
-                print(profile[Expression<String>("name")])
-            }
-        }
-        catch {
-            print("Database connection failed")
-        }
+        self.profileName = profileName
+        var profiles: [String] = Database().getDataSources(target_profile: profileName)
+        self.NavBar.title = profileName
         self.settingsList = [("Data Sources", profiles)]
         print("Got here")
     }
@@ -88,6 +77,10 @@ class Profiles: ExtraView, UITableViewDataSource, UITableViewDelegate {
     
     required init(globalColors: GlobalColors.Type?, darkMode: Bool, solidColorMode: Bool, outputFunc: () -> Void) {
         fatalError("init(globalColors:darkMode:solidColorMode:outputFunc:) has not been implemented")
+    }
+    
+    required init(globalColors: GlobalColors.Type?, darkMode: Bool, solidColorMode: Bool) {
+        fatalError("init(globalColors:darkMode:solidColorMode:) has not been implemented")
     }
     
     func loadNib() {

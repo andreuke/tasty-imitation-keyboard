@@ -36,18 +36,7 @@ class PopUpViewController:  UIViewController,UITableViewDelegate, UITableViewDat
     override func viewDidLoad() {
         super.viewDidLoad()
         // Add all Profiles to items
-        let db_path = NSSearchPathForDirectoriesInDomains(
-            .documentDirectory, .userDomainMask, true).first!
-        do {
-            let db = try Connection("\(db_path)/db.sqlite3")
-            for profile in try db.prepare(Table("Profiles")) {
-                self.items.append(profile[Expression<String>("name")])
-                print(profile[Expression<String>("name")])
-            }
-        }
-        catch {
-            print("Database connection failed")
-        }
+        items = Database().getProfiles()
         
         // Do any additional setup after loading the view, typically from a nib.
         tableView.rowHeight = 40
