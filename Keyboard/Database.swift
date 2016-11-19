@@ -15,6 +15,7 @@ class dbObjects {
     
     let db_path = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true).first!
     
+    
     struct Ngrams {
         let table = Table("Ngrams")
         let gram = Expression<String>("gram")
@@ -62,12 +63,14 @@ class Database: NSObject {
             let db_path = dbObjects().db_path
             let db = try Connection("\(db_path)/db.sqlite3")
             
+
             // Database object references
             let ngrams = dbObjects.Ngrams()
             let profiles = dbObjects.Profiles()
             let containers = dbObjects.Containers()
             let phrases = dbObjects.Phrases()
             let data_sources = dbObjects.DataSources()
+            
             
             // Create Ngrams table
             try? db.run(ngrams.table.create(ifNotExists: true) { t in
