@@ -22,10 +22,13 @@ class PredictboardBanner: ExtraView {
     let profileSelector = BannerButton()
     let defaultView = PassThroughView()
     let textInputView = PassThroughView()
+    let loadingView = PassThroughView()
     let textField = UITextField()
     let textFieldLabel = UILabel()
     let backButton = UIButton()
     let saveButton = UIButton()
+    let loadingLabel = UILabel()
+    
     
     required init(globalColors: GlobalColors.Type?, darkMode: Bool, solidColorMode: Bool) {
 
@@ -34,10 +37,15 @@ class PredictboardBanner: ExtraView {
         
         defaultView.frame = CGRect(x: self.getMinX(), y: self.getMinY(), width: self.frame.width, height: self.frame.height)
         self.addSubview(defaultView)
+        defaultView.isHidden = true
         
         textInputView.frame = CGRect(x: self.getMinX(), y: self.getMinY(), width: self.frame.width, height: self.frame.height)
         self.addSubview(textInputView)
         textInputView.isHidden = true
+        
+        loadingView.frame = CGRect(x: self.getMinX(), y: self.getMinY(), width: self.frame.width, height: self.frame.height)
+        self.addSubview(loadingView)
+        loadingView.isHidden = false
         
         //if textField is selected, we cant type on the main app anymore
         self.textField.isUserInteractionEnabled = false
@@ -86,7 +94,7 @@ class PredictboardBanner: ExtraView {
         self.textFieldLabel.font = UIFont.systemFont(ofSize: fontSize)
         self.textInputView.addSubview(self.textFieldLabel)
         
-        self.backButton.setTitle("Back", for: UIControlState())
+        self.backButton.setTitle("Cancel", for: UIControlState())
         self.backButton.layer.cornerRadius = 5
         self.backButton.titleLabel?.font = UIFont.systemFont(ofSize: fontSize)
         self.textInputView.addSubview(self.backButton)
@@ -96,6 +104,11 @@ class PredictboardBanner: ExtraView {
         self.saveButton.layer.cornerRadius = 5
         self.saveButton.titleLabel?.font = UIFont.systemFont(ofSize: fontSize)
         self.textInputView.addSubview(self.saveButton)
+        
+        self.loadingLabel.text = "Loading Predictions (may take several minutes)"
+        self.loadingLabel.textAlignment = .center
+        self.loadingLabel.font = UIFont.systemFont(ofSize: fontSize)
+        self.loadingView.addSubview(self.loadingLabel)
         
         updateAppearance()
         
@@ -116,7 +129,7 @@ class PredictboardBanner: ExtraView {
     override func layoutSubviews() {
         super.layoutSubviews()
         
-        switchView()
+        
         
         let widthBut = (self.getMaxX() - self.getMinX()) / CGFloat(self.allButtons) * CGFloat(self.numRows)
         let heightBut = (self.getMaxY() - self.getMinY()) / CGFloat(self.numRows)
@@ -151,9 +164,15 @@ class PredictboardBanner: ExtraView {
         let labelWidth:CGFloat = 150
         let buttonSpacing:CGFloat = 8
         self.textFieldLabel.frame = CGRect(x: self.textField.frame.origin.x - labelWidth - buttonSpacing, y:self.textField.frame.origin.y, width: labelWidth, height: textHeight)
+        
+        let butWidth:CGFloat = 75
+        let backButtonX = (self.textFieldLabel.frame.origin.x - butWidth) / 2
+        let saveButtonX = (self.getMaxX() - self.textField.frame.maxX - butWidth) / 2 + self.textField.frame.maxX
+        self.backButton.frame = CGRect(x: backButtonX, y: self.textField.frame.origin.y, width: butWidth, height: 40)
+        self.saveButton.frame = CGRect(x: saveButtonX , y: self.textField.frame.origin.y, width: butWidth, height: 40)
+        
 
-        self.backButton.frame = CGRect(x: 0, y: self.textField.frame.origin.y, width: 60, height: 40)
-        self.saveButton.frame = CGRect(x: self.getMaxX() - 60, y: self.textField.frame.origin.y, width: 60, height: 40)
+        self.loadingLabel.frame = CGRect(x: self.getMidX() - textWidth, y: self.getMidY() - textHeight / CGFloat(2), width: 2 * textWidth, height: textHeight)
         
     }
     
@@ -176,6 +195,7 @@ class PredictboardBanner: ExtraView {
         self.profileSelector.setTitleColor(self.globalColors?.darkModeTextColor, for: UIControlState.highlighted)
         
         self.textFieldLabel.textColor = (darkMode ? self.globalColors?.darkModeTextColor : self.globalColors?.lightModeTextColor)
+        self.loadingLabel.textColor = (darkMode ? self.globalColors?.darkModeTextColor : self.globalColors?.lightModeTextColor)
     }
     
     func buttonClicked(_ sender:BannerButton){
@@ -205,6 +225,12 @@ class PredictboardBanner: ExtraView {
         self.textField.text = ""
         UserDefaults.standard.register(defaults: ["keyboardInputToApp": false])
         switchView()
+    }
+    
+    func showLoadingScreen(toShow: Bool) {
+        self.loadingView.isHidden = !toShow
+        self.defaultView.isHidden = toShow
+        self.defaultView.isUserInteractionEnabled = !toShow
     }
     
     

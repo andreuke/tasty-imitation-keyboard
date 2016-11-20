@@ -59,7 +59,7 @@ class EditProfiles: ExtraView, UITableViewDataSource, UITableViewDelegate {
         super.init(globalColors: globalColors, darkMode: darkMode, solidColorMode: solidColorMode)
         self.loadNib()
         
-        var profiles: [String] = Database().getProfiles()
+        let profiles: [String] = Database().getProfiles()
 
         self.settingsList = [("Profiles", profiles)]
     }

@@ -68,7 +68,6 @@ class Profiles: ExtraView, UITableViewDataSource, UITableViewDelegate {
         var profiles: [String] = Database().getDataSources(target_profile: profileName)
         self.NavBar.title = profileName
         self.settingsList = [("Data Sources", profiles)]
-        print("Got here")
     }
     
     required init?(coder aDecoder: NSCoder) {
@@ -212,12 +211,19 @@ class Profiles: ExtraView, UITableViewDataSource, UITableViewDelegate {
     
     func tableView(_ tableView: UITableView, editActionsForRowAt indexPath: IndexPath) -> [UITableViewRowAction]? {
         let delete = UITableViewRowAction(style: .destructive, title: "Delete") { (action, indexPath) in
-            self.settingsList![0].1.remove(at: indexPath.row)
-            tableView.reloadData()
+            //self.settingsList![0].1.remove(at: indexPath.row)
+            Database().removeDataSource(target_profile: self.profileName!, data_source: (self.settingsList?[(indexPath as NSIndexPath).section].1[(indexPath as NSIndexPath).row])!)
+            self.reloadData()
         }
 
         
         return [delete]
+    }
+    
+    func reloadData() {
+        let profiles: [String] = Database().getDataSources(target_profile: self.profileName!)
+        self.settingsList = [("Data Sources", profiles)]
+        tableView?.reloadData()
     }
     
 }

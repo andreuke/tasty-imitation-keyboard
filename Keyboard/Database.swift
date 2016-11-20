@@ -56,7 +56,8 @@ class dbObjects {
 class Database: NSObject {
     
     override init() {
-        
+        super.init()
+        //self.resetDatabase()
         do {
             
             let db_path = dbObjects().db_path
@@ -87,7 +88,7 @@ class Database: NSObject {
             
             // Insert the Default profile into the Profiles table if it doesn't exist
             
-            if (try db.scalar(profiles.table.filter(profiles.profileId == 0).count)) == 0 {
+            if (try db.scalar(profiles.table.filter(profiles.name == "Default").count)) == 0 {
                 let insert = profiles.table.insert(profiles.name <- "Default")
                 _ = try? db.run(insert)
             }
@@ -550,6 +551,26 @@ class Database: NSObject {
             print("Something failed while getting list of data sources")
         }
         return data_sources_list
+    }
+    
+    func resetDatabase() {
+        let ngrams = dbObjects.Ngrams()
+        let profiles = dbObjects.Profiles()
+        let containers = dbObjects.Containers()
+        let phrases = dbObjects.Phrases()
+        let data_sources = dbObjects.DataSources()
+        do {
+            let db_path = dbObjects().db_path
+            let db = try Connection("\(db_path)/db.sqlite3")
+            
+            try? db.run(ngrams.table.drop(ifExists: true))
+            try? db.run(profiles.table.drop(ifExists: true))
+            try? db.run(containers.table.drop(ifExists: true))
+            try? db.run(phrases.table.drop(ifExists: true))
+            try? db.run(data_sources.table.drop(ifExists: true))
+        } catch {
+            print("reset failed")
+        }
     }
     
 }

@@ -8,23 +8,39 @@
 
 import UIKit
 import SQLite
-
 /*
  This is the demo keyboard. If you're implementing your own keyboard, simply follow the example here and then
  set the name of your KeyboardViewController subclass in the Info.plist file.
  */
 
+
+
+
 class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDelegate {
     
     var banner: PredictboardBanner? = nil
-    let recommendationEngine = Database()
+    var recommendationEngine: Database? = nil //= Database()
+    var reccommendationEngineLoaded = false
     var editProfilesView: ExtraView?
-    var profileView: ExtraView?
-
+    var profileView: Profiles?
+    
     override init(nibName nibNameOrNil: String?, bundle nibBundleOrNil: Bundle?) {
+
         UserDefaults.standard.register(defaults: ["profile": "Default"])
         super.init(nibName: nibNameOrNil, bundle: nibBundleOrNil)
         
+        let globalQueue = DispatchQueue.global(qos: .userInitiated)
+        
+        globalQueue.async {
+            // Background thread
+            self.recommendationEngine = Database()
+            self.reccommendationEngineLoaded = true
+            DispatchQueue.main.async {
+                // UI Updates
+                self.banner?.showLoadingScreen(toShow: false)
+                self.updateButtons()
+            }
+        }
     }
     
     required init?(coder: NSCoder) {
@@ -116,7 +132,7 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
         
         
         //populate buttons
-        updateButtons()
+        //updateButtons()
         
         return self.banner
     }
@@ -204,39 +220,42 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
     func updateButtons() {
         // Get previous words to give to recommendWords()
         // ------------------------
-        let context = textDocumentProxy.documentContextBeforeInput
-        let components = context?.components(separatedBy: " ")
-        var count = 0
-        if (components != nil) {
-            count = (components?.count)! as Int
-        }
-        var word1 = ""
-        var word2 = ""
-        var current_input = ""
-        if count >= 3 {
-            word1 = (components?[count-3])! as String
-        }
-        if count >= 2 {
-            word2 = (components?[count-2])! as String
-        }
-        if count >= 1 {
-            current_input = (components?[count-1])! as String
-        }
-        // ------------------------
-        let recommendations = Array(recommendationEngine.recommendWords(word1: word1, word2: word2,
-                                                         current_input: current_input)).sorted()
-        
-        var index = 0
-        for button in (self.banner?.buttons)! {
-            if index < recommendations.count {
-                button.setTitle(recommendations[index], for: UIControlState())
-                button.addTarget(self, action: #selector(KeyboardViewController.playKeySound), for: .touchDown)
+        if self.reccommendationEngineLoaded {
+            let context = textDocumentProxy.documentContextBeforeInput
+            let components = context?.components(separatedBy: " ")
+            var count = 0
+            if (components != nil) {
+                count = (components?.count)! as Int
             }
-            else {
-                button.setTitle(" ", for: UIControlState())
-                button.removeTarget(self, action: #selector(KeyboardViewController.playKeySound), for: .touchDown)
+            var word1 = ""
+            var word2 = ""
+            var current_input = ""
+            if count >= 3 {
+                word1 = (components?[count-3])! as String
             }
-            index += 1
+            if count >= 2 {
+                word2 = (components?[count-2])! as String
+            }
+            if count >= 1 {
+                current_input = (components?[count-1])! as String
+            }
+            // ------------------------
+            let recEngine = recommendationEngine!
+            let recommendations = Array(recEngine.recommendWords(word1: word1, word2: word2,
+                                                             current_input: current_input)).sorted()
+            
+            var index = 0
+            for button in (self.banner?.buttons)! {
+                if index < recommendations.count {
+                    button.setTitle(recommendations[index], for: UIControlState())
+                    button.addTarget(self, action: #selector(KeyboardViewController.playKeySound), for: .touchDown)
+                }
+                else {
+                    button.setTitle(" ", for: UIControlState())
+                    button.removeTarget(self, action: #selector(KeyboardViewController.playKeySound), for: .touchDown)
+                }
+                index += 1
+            }
         }
     }
     
@@ -297,13 +316,26 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
     
     //go from internal text input mode to profile view
     func saveProfile() {
-        self.recommendationEngine.addProfile(profile_name: (self.banner?.textField.text)!)
+        let globalQueue = DispatchQueue.global(qos: .userInitiated)
+        globalQueue.async {
+            // Background thread
+            self.recommendationEngine?.addProfile(profile_name: (self.banner?.textField.text)!)
+            DispatchQueue.main.async {
+                // UI Updates
+                self.banner?.showLoadingScreen(toShow: false)
+                self.showForwardingView(toShow: false)
+                self.showBanner(toShow: false)
+                self.profileView = self.createProfile(profileName:(self.banner?.textField.text)!)
+                self.showView(viewToShow: self.profileView!, toShow: true)
+                self.reccommendationEngineLoaded = true
+            }
+        }
+        self.reccommendationEngineLoaded = false
         completedAddProfileMode()
-        showForwardingView(toShow: false)
-        showBanner(toShow: false)
-        let profile = createProfile(profileName:(self.banner?.textField.text)!) as! Profiles
-        profileView = profile
-        showView(viewToShow: profileView!, toShow: true)
+        self.banner?.loadingLabel.text = "Creating new Profile (this may take several minutes)"
+        self.banner?.showLoadingScreen(toShow: true)
+
+        
 
     }
     
@@ -342,30 +374,24 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
     
     func editProfilesNameView() {
         profileTextEntryView(toShow: true)
-        //showForwardingView(toShow: true)
-        //showBanner(toShow: true)
-        //showView(viewToShow: profileView!, toShow: false)
-        //self.banner?.selectTextView()
         self.banner?.textFieldLabel.text = "Edit Name:"
-        self.banner?.textField.text = (profileView as! Profiles).NavBar.title
+        self.banner?.textField.text = profileView?.profileName!//(profileView as! Profiles).profileName!
         self.banner?.saveButton.addTarget(self, action: #selector(updateProfileName), for: .touchUpInside)
         self.banner?.backButton.addTarget(self, action: #selector(exiteditProfilesNameView), for: .touchUpInside)
     }
     
     //TODO doesnt work yet
     func updateProfileName(){
-        saveProfile()
+        //var profile = (profileView as! Profiles)
+        let newName = (self.banner?.textField.text)!
+        profileView?.NavBar.title = newName
+        recommendationEngine?.editProfileName(current_name: (profileView?.profileName!)!, new_name: newName)
+        profileView?.profileName = newName
+        exiteditProfilesNameView()
     }
     
     func exiteditProfilesNameView() {
         profileTextEntryView(toShow: false)
-        //showForwardingView(toShow: false)
-        //showBanner(toShow: false)
-        //self.banner?.selectDefaultView()
-        
-        //if you cancel just reopen view.  showView will recreate it, we dont need to do that
-        //profileView?.isHidden = false
-        //profileView?.isUserInteractionEnabled = true
         self.banner?.saveButton.removeTarget(self, action: #selector(updateProfileName), for: .touchUpInside)
         self.banner?.backButton.removeTarget(self, action: #selector(exiteditProfilesNameView), for: .touchUpInside)
     }
@@ -385,12 +411,26 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
     }
     
     func addDataSource() {
-        saveProfile()
+        
+        //For now data source title and data source name are the same
+        let globalQueue = DispatchQueue.global(qos: .userInitiated)
+        
+        globalQueue.async {
+            // Background thread
+            self.recommendationEngine?.addDataSource(target_profile: (self.profileView?.profileName)!, new_data_source: (self.banner?.textField.text)!, new_title: (self.banner?.textField.text)!)
+            DispatchQueue.main.async {
+                // UI Updates
+                self.profileView?.reloadData()
+            }
+        }
+
+        exitDataSourceView()
+        
     }
     
     func deleteProfile() {
-        let profileName = (profileView as! Profiles).profileName!
-        recommendationEngine.deleteProfile(profile_name: profileName)
+        let profileName = profileView?.profileName!
+        recommendationEngine?.deleteProfile(profile_name: profileName!)
         profileToEditProfiles()
     }
     
@@ -421,21 +461,6 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
         
     }
     
-    /*func toggleProfile(profileName: String = "") {
-        var toShow = false
-        if (editProfilesView != nil) {
-            toShow = (editProfilesView?.isHidden)!
-        }
-        if toShow || editProfilesView == nil{
-            editProfilesView = createEditProfiles()
-        }
-        else {
-            profileView = createProfile()
-        }
-        showView(viewToShow: editProfilesView!, toShow: toShow)
-        showView(viewToShow: profileView!, toShow: !toShow)
-    }*/
-    
     func openProfile(profileName: String) {
         profileView = createProfile(profileName: profileName)
         if (editProfilesView != nil) {
@@ -446,9 +471,7 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
     }
     
     func profileToEditProfiles() {
-        if (editProfilesView == nil) {
-            editProfilesView = createEditProfiles()
-        }
+        editProfilesView = createEditProfiles()
         showView(viewToShow: editProfilesView!, toShow: true)
         showView(viewToShow: profileView!, toShow: false)
     }
@@ -473,7 +496,7 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
         return editProfiles
     }
     
-    func createProfile(profileName:String) -> ExtraView? {
+    func createProfile(profileName:String) -> Profiles? {
         // note that dark mode is not yet valid here, so we just put false for clarity
         let profileView = Profiles(profileName: profileName, globalColors: type(of: self).globalColors, darkMode: false, solidColorMode: self.solidColorMode())
         //profileView.NavBar.title = title
@@ -491,17 +514,17 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
     
     func openProfileCallback(tableTitle:String) {
         let title = tableTitle.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
-        openProfile(profileName: tableTitle)
-        let profile = profileView as! Profiles
-        profile.NavBar.title = title
+        openProfile(profileName: title)
+        //let profile = profileView as! Profiles
+        profileView?.NavBar.title = title
         //we dont want you editing the default profile name
         if title == "Default" {
-            profile.editName.isEnabled = false
-            profile.deleteButton.isEnabled = false
+            profileView?.editName.isEnabled = false
+            profileView?.deleteButton.isEnabled = false
         }
         else {
-            profile.editName.isEnabled = true
-            profile.deleteButton.isEnabled = true
+            profileView?.editName.isEnabled = true
+            profileView?.deleteButton.isEnabled = true
         }
     }
     
