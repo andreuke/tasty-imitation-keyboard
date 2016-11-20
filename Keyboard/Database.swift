@@ -55,6 +55,18 @@ class dbObjects {
 
 class Database: NSObject {
     
+    var progressBar:UIProgressView? = nil
+    
+    var counter:Int = 0 {
+        didSet {
+            let progress = Float(counter) / 30000.0
+            let animated = counter != 0
+            if self.progressBar != nil {
+                self.progressBar?.setProgress(progress, animated: animated)
+            }
+        }
+    }
+    
     override init() {
         super.init()
         //self.resetDatabase()
@@ -134,6 +146,8 @@ class Database: NSObject {
             // The format of the items in allThreeGrams is: <freq>\t<word1>\t<word2>\t<word3>
             let allThreeGrams = threeGramsContent.components(separatedBy: "\r\n")
             
+            self.counter = 0
+            
             // Check to make sure Database has been created
             // If not, then insert the missing words
             if (try db.scalar(containers.table.filter(containers.profile == "Default").count) < 20000) {
@@ -158,6 +172,10 @@ class Database: NSObject {
                                                              containers.ngram <- word,
                                                              containers.n <- 1)
                         _ = try? db.run(insert)
+                    }
+                    DispatchQueue.main.async {
+                        self.counter += 1
+                        return
                     }
                 }
                 
@@ -195,6 +213,10 @@ class Database: NSObject {
                                                              containers.ngram <- insertNgram,
                                                              containers.n <- insert_n)
                         _ = try? db.run(insert)
+                    }
+                    DispatchQueue.main.async {
+                        self.counter += 1
+                        return
                     }
                 }
                 
@@ -240,6 +262,10 @@ class Database: NSObject {
                                                              containers.ngram <- insertNgram,
                                                              containers.n <- insert_n)
                         _ = try? db.run(insert)
+                    }
+                    DispatchQueue.main.async {
+                        self.counter += 1
+                        return
                     }
                 }
             }
@@ -398,11 +424,17 @@ class Database: NSObject {
             let ngrams = dbObjects.Ngrams()
             let containers = dbObjects.Containers()
             
+            self.counter = 0
+            
             for row in try db.prepare(ngrams.table) {
                 let insert = containers.table.insert(containers.profile <- profile_name,
                                                      containers.ngram <- row[ngrams.gram],
                                                      containers.n <- row[ngrams.n])
                 _ = try? db.run(insert)
+                DispatchQueue.main.async {
+                    self.counter += 1
+                    return
+                }
             }
             
         } catch {
