@@ -6,12 +6,13 @@
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
-        <placeholder placeholderIdentifier="IBFilesOwner" id="-1" userLabel="File's Owner" customClass="DefaultSettings" customModule="Keyboard" customModuleProvider="target">
+        <placeholder placeholderIdentifier="IBFilesOwner" id="-1" userLabel="File's Owner" customClass="Phrases" customModule="Keyboard" customModuleProvider="target">
             <connections>
+                <outlet property="NavBar" destination="lTV-rN-yPI" id="r3i-NZ-BDy"/>
+                <outlet property="addButton" destination="QkP-7k-FA8" id="iIB-28-qz2"/>
                 <outlet property="backButton" destination="x35-jI-wEW" id="8Jf-cz-Pfk"/>
                 <outlet property="effectsView" destination="p1b-aL-nFG" id="qVH-MN-nbd"/>
                 <outlet property="pixelLine" destination="ooR-t1-RO3" id="RNZ-JA-0tO"/>
-                <outlet property="settingsLabel" destination="YuR-yT-g8t" id="Zwy-Pa-l78"/>
                 <outlet property="tableView" destination="PIq-gg-rs6" id="rBh-eg-uhG"/>
             </connections>
         </placeholder>
@@ -29,11 +30,34 @@
                                 <outlet property="delegate" destination="-1" id="6Mw-Uw-d7I"/>
                             </connections>
                         </tableView>
+                        <navigationBar contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="VAq-uI-Z58">
+                            <items>
+                                <navigationItem title="Title" id="lTV-rN-yPI">
+                                    <barButtonItem key="leftBarButtonItem" style="plain" id="gUz-K8-lGM">
+                                        <button key="customView" opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" id="x35-jI-wEW">
+                                            <rect key="frame" x="20" y="7" width="106" height="30"/>
+                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                            <state key="normal" title="〈 Keyboard">
+                                                <color key="titleColor" red="0.0" green="0.47843137254901963" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                                                <color key="titleShadowColor" red="0.5" green="0.5" blue="0.5" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                                            </state>
+                                        </button>
+                                    </barButtonItem>
+                                    <barButtonItem key="rightBarButtonItem" systemItem="add" id="QkP-7k-FA8"/>
+                                </navigationItem>
+                            </items>
+                            <connections>
+                                <outlet property="delegate" destination="-1" id="OEn-m6-lHg"/>
+                            </connections>
+                        </navigationBar>
                     </subviews>
                     <constraints>
-                        <constraint firstItem="PIq-gg-rs6" firstAttribute="top" secondItem="Ibn-Pg-NVs" secondAttribute="top" id="5T4-Et-0qD"/>
+                        <constraint firstItem="VAq-uI-Z58" firstAttribute="top" secondItem="Ibn-Pg-NVs" secondAttribute="top" id="66B-se-213"/>
                         <constraint firstAttribute="bottom" secondItem="PIq-gg-rs6" secondAttribute="bottom" id="EIH-QE-G7s"/>
+                        <constraint firstItem="VAq-uI-Z58" firstAttribute="leading" secondItem="Ibn-Pg-NVs" secondAttribute="leading" id="HxP-HF-rH1"/>
                         <constraint firstAttribute="trailing" secondItem="PIq-gg-rs6" secondAttribute="trailing" id="JoT-Qt-6kS"/>
+                        <constraint firstAttribute="trailing" secondItem="VAq-uI-Z58" secondAttribute="trailing" id="OXN-uw-sxO"/>
+                        <constraint firstItem="PIq-gg-rs6" firstAttribute="top" secondItem="VAq-uI-Z58" secondAttribute="bottom" id="THm-kt-YDz"/>
                         <constraint firstItem="PIq-gg-rs6" firstAttribute="leading" secondItem="Ibn-Pg-NVs" secondAttribute="leading" id="ol6-uh-Kgp"/>
                     </constraints>
                 </view>
@@ -42,33 +66,16 @@
                         <frame key="frameInset"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
-                            <button opaque="NO" contentMode="scaleToFill" misplaced="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="x35-jI-wEW">
-                                <frame key="frameInset" minY="5" width="55" height="30"/>
-                                <state key="normal" title="〈 Back">
-                                    <color key="titleColor" red="0.0" green="0.47843137254901963" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
-                                    <color key="titleShadowColor" red="0.5" green="0.5" blue="0.5" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
-                                </state>
-                            </button>
                             <view alpha="0.5" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="ooR-t1-RO3">
                                 <color key="backgroundColor" red="0.66666666666666663" green="0.66666666666666663" blue="0.66666666666666663" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                                 <constraints>
                                     <constraint firstAttribute="height" constant="1" id="8r2-39-dpi"/>
                                 </constraints>
                             </view>
-                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" misplaced="YES" text="Edit Profiles" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="YuR-yT-g8t">
-                                <frame key="frameInset" minX="284" minY="5" width="111" height="26"/>
-                                <fontDescription key="fontDescription" type="system" pointSize="21"/>
-                                <color key="textColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
-                                <nil key="highlightedColor"/>
-                            </label>
                         </subviews>
                         <constraints>
-                            <constraint firstAttribute="centerY" secondItem="x35-jI-wEW" secondAttribute="centerY" id="CWy-gZ-H4o"/>
                             <constraint firstAttribute="trailing" secondItem="ooR-t1-RO3" secondAttribute="trailing" id="GSc-2I-KFc"/>
-                            <constraint firstItem="x35-jI-wEW" firstAttribute="leading" secondItem="EjZ-Jw-9eM" secondAttribute="leading" id="JnW-Dq-l8s"/>
-                            <constraint firstAttribute="centerX" secondItem="YuR-yT-g8t" secondAttribute="centerX" id="LCD-5y-VTJ"/>
                             <constraint firstItem="ooR-t1-RO3" firstAttribute="leading" secondItem="EjZ-Jw-9eM" secondAttribute="leading" id="O6G-ec-UA4"/>
-                            <constraint firstAttribute="centerY" secondItem="YuR-yT-g8t" secondAttribute="centerY" id="UL6-HN-Y6O"/>
                             <constraint firstItem="ooR-t1-RO3" firstAttribute="top" secondItem="EjZ-Jw-9eM" secondAttribute="top" id="twN-4I-7ty"/>
                         </constraints>
                     </view>

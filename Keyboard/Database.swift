@@ -69,6 +69,11 @@ class Database: NSObject {
     
     override init() {
         super.init()
+    }
+    
+    init(progressView:UIProgressView) {
+        super.init()
+        self.progressBar = progressView
         //self.resetDatabase()
         do {
             

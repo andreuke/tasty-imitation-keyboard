@@ -33,26 +33,8 @@ class EditProfiles: ExtraView, UITableViewDataSource, UITableViewDelegate {
     let cellLongLabelColorLight = UIColor.gray
     
     // TODO: these probably don't belong here, and also need to be localized
-    var settingsList: [(String, [String])]?
+    var profilesList: [(String, [String])]?
     
-    var settingsNames: [String:String] {
-        get {
-            return [
-                kAutoCapitalization: "Auto-Capitalization",
-                kPeriodShortcut:  "“.” Shortcut",
-                kKeyboardClicks: "Keyboard Clicks",
-                kSmallLowercase: "Allow Lowercase Key Caps"
-            ]
-        }
-    }
-    var settingsNotes: [String: String] {
-        get {
-            return [
-                kKeyboardClicks: "Please note that keyboard clicks will work only if “Allow Full Access” is enabled in the keyboard settings. Unfortunately, this is a limitation of the operating system.",
-                kSmallLowercase: "Changes your key caps to lowercase when Shift is off, making it easier to tell what mode you are in."
-            ]
-        }
-    }
     
     required init(globalColors: GlobalColors.Type?, darkMode: Bool, solidColorMode: Bool) {
         self.callBack = tempCallBack
@@ -61,7 +43,7 @@ class EditProfiles: ExtraView, UITableViewDataSource, UITableViewDelegate {
         
         let profiles: [String] = Database().getProfiles()
 
-        self.settingsList = [("Profiles", profiles)]
+        self.profilesList = [("Profiles", profiles)]
     }
     
     required init?(coder aDecoder: NSCoder) {
@@ -103,11 +85,11 @@ class EditProfiles: ExtraView, UITableViewDataSource, UITableViewDelegate {
     }
     
     func numberOfSections(in tableView: UITableView) -> Int {
-        return self.settingsList!.count
+        return self.profilesList!.count
     }
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return self.settingsList![section].1.count
+        return self.profilesList![section].1.count
     }
     
     func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
@@ -115,7 +97,7 @@ class EditProfiles: ExtraView, UITableViewDataSource, UITableViewDelegate {
     }
     
     func tableView(_ tableView: UITableView, heightForFooterInSection section: Int) -> CGFloat {
-        if section == (self.settingsList?.count)! - 1 {
+        if section == (self.profilesList?.count)! - 1 {
             return 50
         }
         else {
@@ -124,12 +106,12 @@ class EditProfiles: ExtraView, UITableViewDataSource, UITableViewDelegate {
     }
     
     func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
-        return self.settingsList?[section].0
+        return self.profilesList?[section].0
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         if let cell = tableView.dequeueReusableCell(withIdentifier: "cell") as? EditProfileTableViewCell {
-            let key = self.settingsList?[(indexPath as NSIndexPath).section].1[(indexPath as NSIndexPath).row]
+            let key = self.profilesList?[(indexPath as NSIndexPath).section].1[(indexPath as NSIndexPath).row]
             
             if cell.sw.allTargets.count == 0 {
                 cell.sw.addTarget(self, action: #selector(EditProfiles.toggleSetting(_:)), for: UIControlEvents.valueChanged)
@@ -142,7 +124,7 @@ class EditProfiles: ExtraView, UITableViewDataSource, UITableViewDelegate {
             //cell.sw.isOn = UserDefaults.standard.bool(forKey: title)
             cell.label.setTitle(title, for: UIControlState.normal)
             cell.label.addTarget(self, action: #selector(printHere), for: .touchUpInside)
-            cell.longLabel.text = self.settingsNotes[key!]
+            //cell.longLabel.text = self.settingsNotes[key!]
             
             cell.backgroundColor = (self.darkMode ? cellBackgroundColorDark : cellBackgroundColorLight)
             cell.label.setTitleColor((self.darkMode ? cellLabelColorDark : cellLabelColorLight), for: UIControlState.normal)
@@ -198,7 +180,7 @@ class EditProfiles: ExtraView, UITableViewDataSource, UITableViewDelegate {
     func toggleSetting(_ sender: UISwitch) {
         if let cell = sender.superview as? UITableViewCell {
             if let indexPath = self.tableView?.indexPath(for: cell) {
-                let key = self.settingsList?[(indexPath as NSIndexPath).section].1[(indexPath as NSIndexPath).row]
+                let key = self.profilesList?[(indexPath as NSIndexPath).section].1[(indexPath as NSIndexPath).row]
                 UserDefaults.standard.set(sender.isOn, forKey: key!)
             }
         }
