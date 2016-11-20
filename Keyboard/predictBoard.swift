@@ -49,65 +49,7 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
             if key.type != .backspace {
                 textDocumentProxy.insertText(keyOutput)
                 if key.type == .space {
-                    do {
-                        let context = textDocumentProxy.documentContextBeforeInput
-                        let components = context?.components(separatedBy: " ")
-                        let count = (components?.count)! as Int
-                        var word1 = ""
-                        var word2 = ""
-                        var word3 = ""
-                        if count >= 4 {
-                            word1 = (components?[count-4])! as String
-                        }
-                        if count >= 3 {
-                            word2 = (components?[count-3])! as String
-                        }
-                        word3 = (components?[count-2])! as String
-                        
-                        // Create possible ngrams
-                        let one_gram = (gram: word3, n: 1)
-                        let two_gram = (gram: word2+" "+word3, n: 2)
-                        let three_gram = (gram: word1+" "+word2+" "+word3, n: 3)
-                        
-                        let db_path = dbObjects().db_path
-                        let db = try Connection("\(db_path)/db.sqlite3")
-                        let containers = dbObjects.Containers()
-                        let currentProfile = UserDefaults.standard.value(forKey: "profile") as! String
-                        
-                        // Insert ngrams into database and increment their frequencies
-                        for ngram in [one_gram, two_gram, three_gram] {
-                            // if word notExists in database
-                            let exists_in_profile = try db.scalar(containers.table
-                                                    .filter(containers.ngram == ngram.gram)
-                                                    .filter(containers.profile == currentProfile)
-                                                    .count) > 0
-                            let exists_in_default = try db.scalar(containers.table
-                                                    .filter(containers.ngram == ngram.gram)
-                                                    .filter(containers.profile == "Default")
-                                                    .count) > 0
-                            if (!exists_in_profile) {
-                                // insert ngram into profile
-                                let insert = containers.table.insert(containers.ngram <- ngram.gram,
-                                                                containers.profile <- currentProfile,
-                                                                containers.n <- ngram.n)
-                                _ = try? db.run(insert)
-                            }
-                            if (!exists_in_default) {
-                                // insert ngram into Default
-                                let insert = containers.table.insert(containers.ngram <- ngram.gram,
-                                                                containers.profile <- "Default",
-                                                                containers.n <- ngram.n)
-                                _ = try? db.run(insert)
-                            }
-                            // increment ngram in current_profile and default cases
-                            _ = try db.run(containers.table.filter(containers.ngram == ngram.gram)
-                                .filter(containers.profile == currentProfile)
-                                .update(containers.frequency++, containers.lastused <- Date()))
-                            _ = try db.run(containers.table.filter(containers.ngram == ngram.gram)
-                                .filter(containers.profile == "Default")
-                                .update(containers.frequency++, containers.lastused <- Date()))
-                        }
-                    } catch {}
+                    self.incrementNgrams()
                 }
             }
             else {
@@ -157,7 +99,7 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
         globalQueue.async {
             // Background thread
             self.recommendationEngine = Database()
-            self.recommendationEngine.progressBar = self.banner?.progressBar
+            self.recommendationEngine?.progressBar = self.banner?.progressBar
             self.reccommendationEngineLoaded = true
             DispatchQueue.main.async {
                 // UI Updates
@@ -231,24 +173,75 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
         if wordToAdd != " "
         {
             self.autoComplete(wordToAdd)
-            // increment frequency of word in database
-            do {
-                let db_path = dbObjects().db_path
-                let db = try Connection("\(db_path)/db.sqlite3")
-
-                let containers = dbObjects.Containers()
-                let currentProfile = UserDefaults.standard.value(forKey: "profile") as! String
-                try db.run(containers.table.filter(containers.ngram == wordToAdd)
-                    .filter(containers.profile == currentProfile)
-                    .update(containers.frequency++, containers.lastused <- Date()))
-            }
-            catch {
-                print("Incrementing word frequency failed")
-            }
+            self.incrementNgrams()
             updateButtons()
         }
     }
     
+    func incrementNgrams() {
+        do {
+            let context = textDocumentProxy.documentContextBeforeInput
+            let components = context?.components(separatedBy: " ")
+            let count = (components?.count)! as Int
+            var word1 = ""
+            var word2 = ""
+            var word3 = ""
+            if count >= 4 {
+                word1 = (components?[count-4])! as String
+            }
+            if count >= 3 {
+                word2 = (components?[count-3])! as String
+            }
+            word3 = (components?[count-2])! as String
+            
+            // Create possible ngrams
+            let one_gram = (gram: word3, n: 1)
+            let two_gram = (gram: word2+" "+word3, n: 2)
+            let three_gram = (gram: word1+" "+word2+" "+word3, n: 3)
+            
+            let db_path = dbObjects().db_path
+            let db = try Connection("\(db_path)/db.sqlite3")
+            let containers = dbObjects.Containers()
+            let currentProfile = UserDefaults.standard.value(forKey: "profile") as! String
+            
+            // Insert ngrams into database and increment their frequencies
+            for ngram in [one_gram, two_gram, three_gram] {
+                // if word notExists in database
+                let exists_in_profile = try db.scalar(containers.table
+                    .filter(containers.ngram == ngram.gram)
+                    .filter(containers.profile == currentProfile)
+                    .count) > 0
+                let exists_in_default = try db.scalar(containers.table
+                    .filter(containers.ngram == ngram.gram)
+                    .filter(containers.profile == "Default")
+                    .count) > 0
+                if (!exists_in_profile) {
+                    // insert ngram into profile
+                    let insert = containers.table.insert(containers.ngram <- ngram.gram,
+                                                         containers.profile <- currentProfile,
+                                                         containers.n <- ngram.n)
+                    _ = try? db.run(insert)
+                }
+                if (!exists_in_default) {
+                    // insert ngram into Default
+                    let insert = containers.table.insert(containers.ngram <- ngram.gram,
+                                                         containers.profile <- "Default",
+                                                         containers.n <- ngram.n)
+                    _ = try? db.run(insert)
+                }
+                // increment ngram in current_profile and default cases
+                _ = try db.run(containers.table.filter(containers.ngram == ngram.gram)
+                    .filter(containers.profile == currentProfile)
+                    .update(containers.frequency++, containers.lastused <- Date()))
+                _ = try db.run(containers.table.filter(containers.ngram == ngram.gram)
+                    .filter(containers.profile == "Default")
+                    .update(containers.frequency++, containers.lastused <- Date()))
+            }
+        }
+        catch {
+            print("Something failed while trying to increment ngram frequency")
+        }
+    }
 
     func updateButtons() {
         // Get previous words to give to recommendWords()

@@ -19,6 +19,7 @@ class dbObjects {
         let table = Table("Ngrams")
         let gram = Expression<String>("gram")
         let n = Expression<Int>("n")
+        let frequency = Expression<Int64>("frequency")
     }
     
     struct Profiles {
@@ -69,7 +70,7 @@ class Database: NSObject {
     
     override init() {
         super.init()
-        //self.resetDatabase()
+        self.resetDatabase()
         do {
             
             let db_path = dbObjects().db_path
@@ -152,11 +153,13 @@ class Database: NSObject {
             // If not, then insert the missing words
             if (try db.scalar(containers.table.filter(containers.profile == "Default").count) < 20000) {
                 // Populate the Ngrams table and Container table with words
+                var frequency:Int64 = 10000
                 for word in allWords {
                     // check if word is in Ngrams, and insert it if it's not
                     let result = try? db.scalar(ngrams.table.filter(ngrams.gram == word).count)
                     if result! == 0 {
-                        let insert = ngrams.table.insert(ngrams.gram <- word, ngrams.n <- 1)
+                        let insert = ngrams.table.insert(ngrams.gram <- word, ngrams.n <- 1,
+                                                         ngrams.frequency <- frequency)
                         _ = try? db.run(insert)
                     }
                     else if result! > 1{
@@ -170,9 +173,13 @@ class Database: NSObject {
                     if containerResult == 0 {
                         let insert = containers.table.insert(containers.profile <- "Default",
                                                              containers.ngram <- word,
-                                                             containers.n <- 1)
+                                                             containers.n <- 1,
+                                                             containers.frequency <- frequency)
                         _ = try? db.run(insert)
                     }
+                    
+                    frequency -= 1
+                    
                     DispatchQueue.main.async {
                         self.counter += 1
                         return
@@ -186,12 +193,13 @@ class Database: NSObject {
                     let twoGramComponents = twoGram.components(separatedBy: "\t")
                     var insertNgram = ""
                     var insert_n = Int()
+                    let freq = twoGramComponents[0] as! Int64
                     // if the word2 is "n't" then combine word1 and word2 and insert with n=1
                     if twoGramComponents[2] == "n't" {
                         insertNgram = twoGramComponents[1]+twoGramComponents[2]
                         insert_n = 1
                     }
-                        // else insert with n=2
+                    // else insert with n=2
                     else {
                         insertNgram = twoGramComponents[1]+" "+twoGramComponents[2]
                         insert_n = 2
@@ -199,7 +207,8 @@ class Database: NSObject {
                     let result = try? db.scalar(ngrams.table.filter(ngrams.gram == insertNgram).count)
                     if result! == 0 {
                         let insert = ngrams.table.insert(ngrams.gram <- insertNgram,
-                                                         ngrams.n <- insert_n)
+                                                         ngrams.n <- insert_n,
+                                                         ngrams.frequency <- freq)
                         _ = try? db.run(insert)
                     }
                     
@@ -211,7 +220,8 @@ class Database: NSObject {
                     if (containerResult == 0) && (insertNgram != "") {
                         let insert = containers.table.insert(containers.profile <- "Default",
                                                              containers.ngram <- insertNgram,
-                                                             containers.n <- insert_n)
+                                                             containers.n <- insert_n,
+                                                             containers.frequency <- freq)
                         _ = try? db.run(insert)
                     }
                     DispatchQueue.main.async {
@@ -230,6 +240,7 @@ class Database: NSObject {
                     let word3 = threeGramComponents[3]
                     var insertNgram = ""
                     var insert_n = Int()
+                    let freq = threeGramComponents[0] as! Int64
                     // handle different cases of 3grams like we did with 2grams
                     if word1 == "n't" {
                         word1 = "not"
@@ -249,7 +260,8 @@ class Database: NSObject {
                     let result = try? db.scalar(ngrams.table.filter(ngrams.gram == insertNgram).count)
                     if result! == 0 {
                         let insert = ngrams.table.insert(ngrams.gram <- insertNgram,
-                                                         ngrams.n <- insert_n)
+                                                         ngrams.n <- insert_n,
+                                                         ngrams.frequency <- freq)
                         _ = try? db.run(insert)
                     }
                     
@@ -260,7 +272,8 @@ class Database: NSObject {
                     if (containerResult == 0) && (insertNgram != "") {
                         let insert = containers.table.insert(containers.profile <- "Default",
                                                              containers.ngram <- insertNgram,
-                                                             containers.n <- insert_n)
+                                                             containers.n <- insert_n,
+                                                             containers.frequency <- freq)
                         _ = try? db.run(insert)
                     }
                     DispatchQueue.main.async {
@@ -429,7 +442,8 @@ class Database: NSObject {
             for row in try db.prepare(ngrams.table) {
                 let insert = containers.table.insert(containers.profile <- profile_name,
                                                      containers.ngram <- row[ngrams.gram],
-                                                     containers.n <- row[ngrams.n])
+                                                     containers.n <- row[ngrams.n],
+                                                     containers.frequency <- row[ngrams.frequency])
                 _ = try? db.run(insert)
                 DispatchQueue.main.async {
                     self.counter += 1
@@ -578,6 +592,50 @@ class Database: NSObject {
             try? db.run(data_sources.table.drop(ifExists: true))
         } catch {
             print("reset failed")
+        }
+    }
+    
+    func addPhrase(phrase: String) {
+        do {
+            let db_path = dbObjects().db_path
+            let db = try Connection("\(db_path)/db.sqlite3")
+            
+            let phrases = dbObjects.Phrases()
+            
+            let insert = phrases.table.insert(phrases.phrase <- phrase)
+            _ = try? db.run(insert)
+        }
+        catch {
+            print("Inserting a new phrase failed")
+        }
+    }
+    
+    func editPhrase(old_phrase: String, new_phrase: String) {
+        do {
+            let db_path = dbObjects().db_path
+            let db = try Connection("\(db_path)/db.sqlite3")
+            
+            let phrases = dbObjects.Phrases()
+            
+            _ = try db.run(phrases.table.filter(phrases.phrase == old_phrase)
+                                        .update(phrases.phrase <- new_phrase))
+        }
+        catch {
+            print("Editing a phrase failed")
+        }
+    }
+    
+    func deletePhrase(phrase: String) {
+        do {
+            let db_path = dbObjects().db_path
+            let db = try Connection("\(db_path)/db.sqlite3")
+            
+            let phrases = dbObjects.Phrases()
+            
+            _ = try db.run(phrases.table.filter(phrases.phrase == phrase).delete())
+        }
+        catch {
+            print("Deleting a phrase failed")
         }
     }
     
