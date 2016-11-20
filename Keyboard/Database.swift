@@ -55,6 +55,18 @@ class dbObjects {
 
 class Database: NSObject {
     
+    var progressBar:UIProgressView? = nil
+    
+    var counter:Int = 0 {
+        didSet {
+            let progress = Float(counter) / 30000.0
+            let animated = counter != 0
+            if self.progressBar != nil {
+                self.progressBar?.setProgress(progress, animated: animated)
+            }
+        }
+    }
+    
     override init() {
         super.init()
         //self.resetDatabase()
@@ -78,13 +90,14 @@ class Database: NSObject {
                 t.column(ngrams.n)
             })
             
+            //_ = try? db.run(profiles.table.drop(ifExists: true))
+            
             // Create Profiles table
             try? db.run(profiles.table.create(ifNotExists: true) { t in
                 t.column(profiles.profileId, primaryKey: .autoincrement)
                 t.column(profiles.name)
                 t.column(profiles.linksTo, defaultValue: 0)
             })
-            
             
             // Insert the Default profile into the Profiles table if it doesn't exist
             
@@ -133,6 +146,8 @@ class Database: NSObject {
             // The format of the items in allThreeGrams is: <freq>\t<word1>\t<word2>\t<word3>
             let allThreeGrams = threeGramsContent.components(separatedBy: "\r\n")
             
+            self.counter = 0
+            
             // Check to make sure Database has been created
             // If not, then insert the missing words
             if (try db.scalar(containers.table.filter(containers.profile == "Default").count) < 20000) {
@@ -157,6 +172,10 @@ class Database: NSObject {
                                                              containers.ngram <- word,
                                                              containers.n <- 1)
                         _ = try? db.run(insert)
+                    }
+                    DispatchQueue.main.async {
+                        self.counter += 1
+                        return
                     }
                 }
                 
@@ -194,6 +213,10 @@ class Database: NSObject {
                                                              containers.ngram <- insertNgram,
                                                              containers.n <- insert_n)
                         _ = try? db.run(insert)
+                    }
+                    DispatchQueue.main.async {
+                        self.counter += 1
+                        return
                     }
                 }
                 
@@ -239,6 +262,10 @@ class Database: NSObject {
                                                              containers.ngram <- insertNgram,
                                                              containers.n <- insert_n)
                         _ = try? db.run(insert)
+                    }
+                    DispatchQueue.main.async {
+                        self.counter += 1
+                        return
                     }
                 }
             }
@@ -333,8 +360,6 @@ class Database: NSObject {
     }
     
     func recommendWords(word1: String = "", word2: String = "", current_input: String)->Set<String>{
-        // *********** NEW METHOD *****************
-        
         // POSSIBLE PATTERNS
         // 3:      "\(word1) \(word2) \(current_input)%"
         // 3:      "% \(word2) \(current_input)%" ********* <--- maybe not
@@ -349,7 +374,6 @@ class Database: NSObject {
             resultSet = recommendationQuery(user_profile: userProfile as! String,
                                 n: 3, pattern: "\(word1) \(word2) \(current_input)%",
                                 words: words, result_set: resultSet)
-            // *******************
             for n in [2,3] {
                 resultSet = recommendationQuery(user_profile: userProfile as! String,
                                 n: n, pattern: "\(word2) \(current_input)%",
@@ -360,17 +384,6 @@ class Database: NSObject {
                                 n: n, pattern: "\(current_input)%",
                                 words: words, result_set: resultSet)
             }
-            // *******************
-            /*for n in [3,2] {
-                resultSet = recommendationQuery(user_profile: userProfile as! String,
-                                n: n, pattern: "\(word2) \(current_input)%",
-                                words: words, result_set: resultSet)
-            }
-            for n in [2,1] {
-                resultSet = recommendationQuery(user_profile: userProfile as! String,
-                                n: n, pattern: "\(current_input)%",
-                                words: words, result_set: resultSet)
-            }*/
         }
             
         else if word1 == "" && word2 != "" {
@@ -384,17 +397,6 @@ class Database: NSObject {
                                 n: n, pattern: "\(current_input)%",
                                 words: words, result_set: resultSet)
             }
-            /*
-            for n in [3,2] {
-                resultSet = recommendationQuery(user_profile: userProfile as! String,
-                                n: n, pattern: "\(word2) \(current_input)%",
-                                words: words, result_set: resultSet)
-            }
-            for n in [2,1] {
-                resultSet = recommendationQuery(user_profile: userProfile as! String,
-                                n: n, pattern: "\(current_input)%",
-                                words: words, result_set: resultSet)
-            }*/
         }
             
         else /* word1 and word2 are empty */ {
@@ -422,11 +424,17 @@ class Database: NSObject {
             let ngrams = dbObjects.Ngrams()
             let containers = dbObjects.Containers()
             
+            self.counter = 0
+            
             for row in try db.prepare(ngrams.table) {
                 let insert = containers.table.insert(containers.profile <- profile_name,
                                                      containers.ngram <- row[ngrams.gram],
                                                      containers.n <- row[ngrams.n])
                 _ = try? db.run(insert)
+                DispatchQueue.main.async {
+                    self.counter += 1
+                    return
+                }
             }
             
         } catch {
