@@ -88,7 +88,7 @@ class Database: NSObject {
             
             // Insert the Default profile into the Profiles table if it doesn't exist
             
-            if (try db.scalar(profiles.table.filter(profiles.profileId == 0).count)) == 0 {
+            if (try db.scalar(profiles.table.filter(profiles.name == "Default").count)) == 0 {
                 let insert = profiles.table.insert(profiles.name <- "Default")
                 _ = try? db.run(insert)
             }
