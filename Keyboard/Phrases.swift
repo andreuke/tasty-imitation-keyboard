@@ -1,5 +1,5 @@
 //
-//  Profile.swift
+//  Phrase.swift
 //  TastyImitationKeyboard
 //
 //  Created by Alexei Baboulevitch on 11/2/14.
@@ -9,7 +9,7 @@
 import UIKit
 import SQLite
 
-class Profiles: ExtraView, UITableViewDataSource, UITableViewDelegate {
+class Phrases: ExtraView, UITableViewDataSource, UITableViewDelegate {
     
     @IBOutlet weak var NavBar: UINavigationItem!
     
@@ -23,7 +23,6 @@ class Profiles: ExtraView, UITableViewDataSource, UITableViewDelegate {
     
     @IBOutlet weak var editName: UIBarButtonItem!
     //var callBack: () -> ()
-    @IBOutlet weak var profileViewButton: UIButton!
     
     override var darkMode: Bool {
         didSet {
@@ -37,18 +36,16 @@ class Profiles: ExtraView, UITableViewDataSource, UITableViewDelegate {
     let cellLabelColorLight = UIColor.black
     let cellLongLabelColorDark = UIColor.lightGray
     let cellLongLabelColorLight = UIColor.gray
-    var profileName:String?
     // TODO: these probably don't belong here, and also need to be localized
     var dataSourcesList: [(String, [String])]?
     
-    required init(profileName: String, globalColors: GlobalColors.Type?, darkMode: Bool, solidColorMode: Bool) {
+    required init(globalColors: GlobalColors.Type?, darkMode: Bool, solidColorMode: Bool) {
         //self.callBack = tempCallBack
         super.init(globalColors: globalColors, darkMode: darkMode, solidColorMode: solidColorMode)
         self.loadNib()
-        self.profileName = profileName
-        var profiles: [String] = Database().getDataSources(target_profile: profileName)
-        self.NavBar.title = profileName
-        self.dataSourcesList = [("Data Sources", profiles)]
+        var phrases: [String] = Database().getDataSources(target_profile: "Default")
+        self.NavBar.title = "Saved Phrases"
+        self.dataSourcesList = [("Phrases", phrases)]
     }
     
     required init?(coder aDecoder: NSCoder) {
@@ -58,13 +55,10 @@ class Profiles: ExtraView, UITableViewDataSource, UITableViewDelegate {
     required init(globalColors: GlobalColors.Type?, darkMode: Bool, solidColorMode: Bool, outputFunc: () -> Void) {
         fatalError("init(globalColors:darkMode:solidColorMode:outputFunc:) has not been implemented")
     }
-    
-    required init(globalColors: GlobalColors.Type?, darkMode: Bool, solidColorMode: Bool) {
-        fatalError("init(globalColors:darkMode:solidColorMode:) has not been implemented")
-    }
+
     
     func loadNib() {
-        let assets = Bundle(for: type(of: self)).loadNibNamed("Profile", owner: self, options: nil)
+        let assets = Bundle(for: type(of: self)).loadNibNamed("Phrases", owner: self, options: nil)
         
         if (assets?.count)! > 0 {
             if let rootView = assets?.first as? UIView {
@@ -122,7 +116,7 @@ class Profiles: ExtraView, UITableViewDataSource, UITableViewDelegate {
             let key = self.dataSourcesList?[(indexPath as NSIndexPath).section].1[(indexPath as NSIndexPath).row]
             
             if cell.sw.allTargets.count == 0 {
-                cell.sw.addTarget(self, action: #selector(Profiles.toggleSetting(_:)), for: UIControlEvents.valueChanged)
+                cell.sw.addTarget(self, action: #selector(Phrases.toggleSetting(_:)), for: UIControlEvents.valueChanged)
             }
             
             //cell.sw.isOn = UserDefaults.standard.bool(forKey: key!)
@@ -193,23 +187,26 @@ class Profiles: ExtraView, UITableViewDataSource, UITableViewDelegate {
     func tableView(_ tableView: UITableView, editActionsForRowAt indexPath: IndexPath) -> [UITableViewRowAction]? {
         let delete = UITableViewRowAction(style: .destructive, title: "Delete") { (action, indexPath) in
             //self.dataSourcesList![0].1.remove(at: indexPath.row)
-            Database().removeDataSource(target_profile: self.profileName!, data_source: (self.dataSourcesList?[(indexPath as NSIndexPath).section].1[(indexPath as NSIndexPath).row])!)
+            Database().removeDataSource(target_profile: "Default", data_source: (self.dataSourcesList?[(indexPath as NSIndexPath).section].1[(indexPath as NSIndexPath).row])!)
             self.reloadData()
+        }
+        let edit = UITableViewRowAction(style: .default, title: "Edit") { (action, indexPath) in
+            //self.dataSourcesList![0].1.remove(at: indexPath.row)
         }
 
         
-        return [delete]
+        return [delete, edit]
     }
     
     func reloadData() {
-        let profiles: [String] = Database().getDataSources(target_profile: self.profileName!)
-        self.dataSourcesList = [("Data Sources", profiles)]
+        let phrases: [String] = Database().getDataSources(target_profile: "Default")
+        self.dataSourcesList = [("Data Sources", phrases)]
         tableView?.reloadData()
     }
     
 }
 
-class ProfileTableViewCell: UITableViewCell {
+class PhraseTableViewCell: UITableViewCell {
     
     var sw: UIButton
     var label: UILabel

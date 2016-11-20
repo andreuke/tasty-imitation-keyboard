@@ -70,7 +70,12 @@ class Database: NSObject {
     
     override init() {
         super.init()
-        self.resetDatabase()
+    }
+    
+    init(progressView:UIProgressView) {
+        super.init()
+        self.progressBar = progressView
+        //self.resetDatabase()
         do {
             
             let db_path = dbObjects().db_path

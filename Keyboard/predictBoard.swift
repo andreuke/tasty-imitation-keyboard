@@ -23,6 +23,7 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
     var reccommendationEngineLoaded = false
     var editProfilesView: ExtraView?
     var profileView: Profiles?
+    var phrasesView: Phrases?
     
     override init(nibName nibNameOrNil: String?, bundle nibBundleOrNil: Bundle?) {
 
@@ -86,11 +87,11 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
         //set up profile selector
         self.banner?.profileSelector.addTarget(self, action: #selector(showPopover), for: .touchUpInside)
         self.banner?.profileSelector.setTitle(UserDefaults.standard.string(forKey: "profile")!, for: UIControlState())
+        self.banner?.phraseSelector.addTarget(self, action: #selector(switchToPhraseMode), for: .touchUpInside)
         
         //setup autocomplete buttons
         for button in (self.banner?.buttons)! {
             button.addTarget(self, action: #selector(autocompleteClicked), for: .touchUpInside)
-            //button.addTarget(self, action: #selector(KeyboardViewController.playKeySound), for: .touchDown)
             
         }
         
@@ -98,8 +99,7 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
         
         globalQueue.async {
             // Background thread
-            self.recommendationEngine = Database()
-            self.recommendationEngine?.progressBar = self.banner?.progressBar
+            self.recommendationEngine = Database(progressView: (self.banner?.progressBar)!)
             self.reccommendationEngineLoaded = true
             DispatchQueue.main.async {
                 // UI Updates
@@ -360,9 +360,6 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
         completedAddProfileMode()
         self.banner?.loadingLabel.text = "Creating new Profile (this may take several minutes)"
         self.banner?.showLoadingScreen(toShow: true)
-
-        
-
     }
     
     func showView(viewToShow: ExtraView, toShow: Bool) {
@@ -406,7 +403,7 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
         self.banner?.backButton.addTarget(self, action: #selector(exiteditProfilesNameView), for: .touchUpInside)
     }
     
-    //TODO doesnt work yet
+
     func updateProfileName(){
         //var profile = (profileView as! Profiles)
         let newName = (self.banner?.textField.text)!
@@ -510,8 +507,18 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
         if (profileView != nil) {
             showView(viewToShow: profileView!, toShow: false)
         }
+        if phrasesView != nil {
+            showView(viewToShow: phrasesView!, toShow: false)
+        }
         showForwardingView(toShow: true)
         showBanner(toShow: true)
+    }
+    
+    func switchToPhraseMode() {
+        phrasesView = createPhrases()
+        showView(viewToShow: phrasesView!, toShow: true)
+        showForwardingView(toShow: false)
+        showBanner(toShow: false)
     }
     
     func createEditProfiles() -> ExtraView? {
@@ -552,6 +559,18 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
             profileView?.editName.isEnabled = true
             profileView?.deleteButton.isEnabled = true
         }
+    }
+    
+    func createPhrases() -> Phrases? {
+        // note that dark mode is not yet valid here, so we just put false for clarity
+        let phrasesView = Phrases(globalColors: type(of: self).globalColors, darkMode: false, solidColorMode: self.solidColorMode())
+        //profileView.NavBar.title = title
+        phrasesView.backButton?.addTarget(self, action: #selector(goToKeyboard), for: UIControlEvents.touchUpInside)
+
+        phrasesView.addButton?.action = #selector(addDataSourceView)
+        phrasesView.addButton?.target = self
+
+        return phrasesView
     }
     
 }
