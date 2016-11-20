@@ -29,6 +29,15 @@ class PredictboardBanner: ExtraView {
     let saveButton = UIButton()
     let loadingLabel = UILabel()
     
+    let progressBar = UIProgressView()
+    var counter:Int = 0 {
+        didSet {
+            let fractionalProgress = Float(counter) / 100.0
+            let animated = counter != 0
+            
+            self.progressBar.setProgress(fractionalProgress, animated: animated)
+        }
+    }
     
     required init(globalColors: GlobalColors.Type?, darkMode: Bool, solidColorMode: Bool) {
 
@@ -110,6 +119,8 @@ class PredictboardBanner: ExtraView {
         self.loadingLabel.font = UIFont.systemFont(ofSize: fontSize)
         self.loadingView.addSubview(self.loadingLabel)
         
+        self.loadingView.addSubview(progressBar)
+        
         updateAppearance()
         
         UserDefaults.standard.register(defaults: ["keyboardInputToApp": true])
@@ -174,6 +185,9 @@ class PredictboardBanner: ExtraView {
 
         self.loadingLabel.frame = CGRect(x: self.getMidX() - textWidth, y: self.getMidY() - textHeight / CGFloat(2), width: 2 * textWidth, height: textHeight)
         
+        self.progressBar.setProgress(0, animated: true)
+        self.progressBar.frame = CGRect(x: self.getMidX() - textWidth, y: self.getMidY() + CGFloat(2.5) * textHeight / CGFloat(2), width: 2 * textWidth, height: textHeight)
+
     }
     
     override func updateAppearance()
@@ -251,7 +265,23 @@ class PredictboardBanner: ExtraView {
         }
     }
     
-
+    /*func startCount() {
+        self.counter = 0
+        
+        
+        let queue = DispatchQueue.global(qos: .utility)
+        for _ in 0..<100 {
+            queue.async {
+                // Background thread
+                sleep(1)
+                DispatchQueue.main.async {
+                    // UI Updates
+                    self.counter += 1
+                    return
+                }
+            }
+        }
+    }*/
 }
 
 

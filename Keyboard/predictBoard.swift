@@ -29,18 +29,6 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
         UserDefaults.standard.register(defaults: ["profile": "Default"])
         super.init(nibName: nibNameOrNil, bundle: nibBundleOrNil)
         
-        let globalQueue = DispatchQueue.global(qos: .userInitiated)
-        
-        globalQueue.async {
-            // Background thread
-            self.recommendationEngine = Database()
-            self.reccommendationEngineLoaded = true
-            DispatchQueue.main.async {
-                // UI Updates
-                self.banner?.showLoadingScreen(toShow: false)
-                self.updateButtons()
-            }
-        }
     }
     
     required init?(coder: NSCoder) {
@@ -130,9 +118,20 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
             
         }
         
+        let globalQueue = DispatchQueue.global(qos: .userInitiated)
         
-        //populate buttons
-        //updateButtons()
+        globalQueue.async {
+            // Background thread
+            self.recommendationEngine = Database()
+            self.recommendationEngine.progressBar = self.banner?.progressBar
+            self.reccommendationEngineLoaded = true
+            DispatchQueue.main.async {
+                // UI Updates
+                self.banner?.showLoadingScreen(toShow: false)
+                self.updateButtons()
+            }
+        }
+
         
         return self.banner
     }
