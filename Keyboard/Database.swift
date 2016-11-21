@@ -75,7 +75,7 @@ class Database: NSObject {
     init(progressView:UIProgressView) {
         super.init()
         self.progressBar = progressView
-        // self.resetDatabase()
+        self.resetDatabase()
         do {
             
             let db_path = dbObjects().db_path
@@ -94,6 +94,7 @@ class Database: NSObject {
             try? db.run(ngrams.table.create(ifNotExists: true) { t in
                 t.column(ngrams.gram, primaryKey: true)
                 t.column(ngrams.n)
+                t.column(ngrams.frequency)
             })
             
             //_ = try? db.run(profiles.table.drop(ifExists: true))

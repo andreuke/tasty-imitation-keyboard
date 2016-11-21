@@ -608,6 +608,8 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
             let containers = dbObjects.Containers()
             let currentProfile = UserDefaults.standard.value(forKey: "profile") as! String
             
+            let totalSize = unigrams.count + bigrams.count + trigrams.count
+            
             for unigram in unigrams {
                 insertAndIncrement(ngram: unigram.key, n: 1, new_freq: Float64(unigram.value))
             }
