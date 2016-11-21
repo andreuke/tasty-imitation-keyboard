@@ -22,8 +22,9 @@ class Phrases: ExtraView, UITableViewDataSource, UITableViewDelegate {
     @IBOutlet var pixelLine: UIView?
     
     @IBOutlet weak var editName: UIBarButtonItem!
-    //var callBack: () -> ()
-    
+    var editPhraseCallBack: (String) -> ()
+    var onClickCallBack: (String) -> ()
+    var oldEditPhrase:String = "" //used for editing purposes
     override var darkMode: Bool {
         didSet {
             self.updateAppearance(darkMode)
@@ -37,15 +38,16 @@ class Phrases: ExtraView, UITableViewDataSource, UITableViewDelegate {
     let cellLongLabelColorDark = UIColor.lightGray
     let cellLongLabelColorLight = UIColor.gray
     // TODO: these probably don't belong here, and also need to be localized
-    var dataSourcesList: [(String, [String])]?
+    var phrasesList: [(String, [String])]?
     
-    required init(globalColors: GlobalColors.Type?, darkMode: Bool, solidColorMode: Bool) {
-        //self.callBack = tempCallBack
+    required init(onClickCallBack: @escaping (String)->(), editCallback:@escaping (String)->(), globalColors: GlobalColors.Type?, darkMode: Bool, solidColorMode: Bool) {
+        self.editPhraseCallBack = editCallback
+        self.onClickCallBack = onClickCallBack
         super.init(globalColors: globalColors, darkMode: darkMode, solidColorMode: solidColorMode)
         self.loadNib()
         let phrases: [String] = Database().getPhrases()
         self.NavBar.title = "Saved Phrases"
-        self.dataSourcesList = [("Phrases", phrases)]
+        self.phrasesList = [("Phrases", phrases)]
     }
     
     required init?(coder aDecoder: NSCoder) {
@@ -54,6 +56,10 @@ class Phrases: ExtraView, UITableViewDataSource, UITableViewDelegate {
     
     required init(globalColors: GlobalColors.Type?, darkMode: Bool, solidColorMode: Bool, outputFunc: () -> Void) {
         fatalError("init(globalColors:darkMode:solidColorMode:outputFunc:) has not been implemented")
+    }
+    
+    required init(globalColors: GlobalColors.Type?, darkMode: Bool, solidColorMode: Bool) {
+        fatalError("init(globalColors:darkMode:solidColorMode:) has not been implemented")
     }
 
     
@@ -76,7 +82,7 @@ class Phrases: ExtraView, UITableViewDataSource, UITableViewDelegate {
                 self.addConstraint(bottom)
             }
         }
-        self.tableView?.register(ProfileTableViewCell.self, forCellReuseIdentifier: "cell")
+        self.tableView?.register(PhraseTableViewCell.self, forCellReuseIdentifier: "cell")
         self.tableView?.estimatedRowHeight = 44;
         self.tableView?.rowHeight = UITableViewAutomaticDimension;
         
@@ -87,11 +93,11 @@ class Phrases: ExtraView, UITableViewDataSource, UITableViewDelegate {
     }
     
     func numberOfSections(in tableView: UITableView) -> Int {
-        return self.dataSourcesList!.count
+        return self.phrasesList!.count
     }
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return self.dataSourcesList![section].1.count
+        return self.phrasesList![section].1.count
     }
     
     func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
@@ -99,7 +105,7 @@ class Phrases: ExtraView, UITableViewDataSource, UITableViewDelegate {
     }
     
     func tableView(_ tableView: UITableView, heightForFooterInSection section: Int) -> CGFloat {
-        if section == (self.dataSourcesList?.count)! - 1 {
+        if section == (self.phrasesList?.count)! - 1 {
             return 50
         }
         else {
@@ -108,25 +114,25 @@ class Phrases: ExtraView, UITableViewDataSource, UITableViewDelegate {
     }
     
     func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
-        return self.dataSourcesList?[section].0
+        return self.phrasesList?[section].0
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        if let cell = tableView.dequeueReusableCell(withIdentifier: "cell") as? ProfileTableViewCell {
-            let key = self.dataSourcesList?[(indexPath as NSIndexPath).section].1[(indexPath as NSIndexPath).row]
+        if let cell = tableView.dequeueReusableCell(withIdentifier: "cell") as? PhraseTableViewCell {
+            let key = self.phrasesList?[(indexPath as NSIndexPath).section].1[(indexPath as NSIndexPath).row]
             
             if cell.sw.allTargets.count == 0 {
                 cell.sw.addTarget(self, action: #selector(Phrases.toggleSetting(_:)), for: UIControlEvents.valueChanged)
             }
             
-            //cell.sw.isOn = UserDefaults.standard.bool(forKey: key!)
-            //cell.sw.setTitle(title:", for: <#T##UIControlState#>)
-            cell.label.text = key!
+
+            cell.label.setTitle(key!, for: .normal)
+            cell.label.addTarget(self, action: #selector(clickCallback(_:)), for: .touchUpInside)
             cell.longLabel.text = nil
             
             cell.backgroundColor = (self.darkMode ? cellBackgroundColorDark : cellBackgroundColorLight)
-            //cell.label.setTitleColor((self.darkMode ? cellLabelColorDark : cellLabelColorLight), for: UIControlState.normal)
-            cell.label.textColor = (self.darkMode ? cellLabelColorDark : cellLabelColorLight)
+            cell.label.setTitleColor((self.darkMode ? cellLabelColorDark : cellLabelColorLight), for: UIControlState.normal)
+            //cell.label.textColor = (self.darkMode ? cellLabelColorDark : cellLabelColorLight)
             cell.longLabel.textColor = (self.darkMode ? cellLongLabelColorDark : cellLongLabelColorLight)
             //cell.editingStyle = .delete
             cell.changeConstraints()
@@ -146,7 +152,6 @@ class Phrases: ExtraView, UITableViewDataSource, UITableViewDelegate {
             self.pixelLine?.backgroundColor = blueColor.withAlphaComponent(CGFloat(0.5))
             self.backButton?.setTitleColor(blueColor, for: UIControlState())
             self.settingsLabel?.textColor = UIColor.white
-            
             if let visibleCells = self.tableView?.visibleCells {
                 for cell in visibleCells {
                     cell.backgroundColor = cellBackgroundColorDark
@@ -178,7 +183,7 @@ class Phrases: ExtraView, UITableViewDataSource, UITableViewDelegate {
     func toggleSetting(_ sender: UISwitch) {
         if let cell = sender.superview as? UITableViewCell {
             if let indexPath = self.tableView?.indexPath(for: cell) {
-                let key = self.dataSourcesList?[(indexPath as NSIndexPath).section].1[(indexPath as NSIndexPath).row]
+                let key = self.phrasesList?[(indexPath as NSIndexPath).section].1[(indexPath as NSIndexPath).row]
                 UserDefaults.standard.set(sender.isOn, forKey: key!)
             }
         }
@@ -186,12 +191,14 @@ class Phrases: ExtraView, UITableViewDataSource, UITableViewDelegate {
     
     func tableView(_ tableView: UITableView, editActionsForRowAt indexPath: IndexPath) -> [UITableViewRowAction]? {
         let delete = UITableViewRowAction(style: .destructive, title: "Delete") { (action, indexPath) in
-            //self.dataSourcesList![0].1.remove(at: indexPath.row)
-            Database().removeDataSource(target_profile: "Default", data_source: (self.dataSourcesList?[(indexPath as NSIndexPath).section].1[(indexPath as NSIndexPath).row])!)
+            //self.phrasesList![0].1.remove(at: indexPath.row)
+            //Database().removephrase(target_profile: "Default", data_source: (self.phrasesList?[(indexPath as NSIndexPath).section].1[(indexPath as NSIndexPath).row])!)
+            Database().deletePhrase(phrase: (self.phrasesList?[(indexPath as NSIndexPath).section].1[(indexPath as NSIndexPath).row])!)
+            
             self.reloadData()
         }
         let edit = UITableViewRowAction(style: .normal, title: "Edit") { (action, indexPath) in
-            //self.dataSourcesList![0].1.remove(at: indexPath.row)
+            self.editPhraseCallBack((self.phrasesList?[(indexPath as NSIndexPath).section].1[(indexPath as NSIndexPath).row])!)
         }
 
         
@@ -199,9 +206,14 @@ class Phrases: ExtraView, UITableViewDataSource, UITableViewDelegate {
     }
     
     func reloadData() {
-        let phrases: [String] = Database().getDataSources(target_profile: "Default")
-        self.dataSourcesList = [("Data Sources", phrases)]
+        let phrases: [String] = Database().getPhrases()
+        self.phrasesList = [("Data Sources", phrases)]
         tableView?.reloadData()
+    }
+    
+    func clickCallback(_ sender:UIButton) {
+        print("i was clicked")
+        self.onClickCallBack(sender.titleLabel!.text!)
     }
     
 }
@@ -209,14 +221,14 @@ class Phrases: ExtraView, UITableViewDataSource, UITableViewDelegate {
 class PhraseTableViewCell: UITableViewCell {
     
     var sw: UIButton
-    var label: UILabel
+    var label: UIButton
     var longLabel: UITextView
     var constraintsSetForLongLabel: Bool
     var cellConstraints: [NSLayoutConstraint]
     
     override init(style: UITableViewCellStyle, reuseIdentifier: String?) {
         self.sw = UIButton()
-        self.label = UILabel()
+        self.label = UIButton()
         self.longLabel = UITextView()
         self.cellConstraints = []
         
@@ -307,15 +319,4 @@ class PhraseTableViewCell: UITableViewCell {
         }
     }
     
-    /*func tableView(_ tableView: UITableView, canEditRowAt indexPath: IndexPath) -> Bool {
-        return true
-    }
-    
-    func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCellEditingStyle, forRowAt indexPath: IndexPath) {
-        if (editingStyle == UITableViewCellEditingStyle.delete) {
-            // delete data and row
-            dataList.remove(at: indexPath.row)
-            tableView.deleteRows(at: [indexPath], with: .fade)
-        }
-    }*/
 }

@@ -537,23 +537,30 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
     
     func addPhrase() {
         self.recommendationEngine?.addPhrase(phrase: (self.banner?.textField.text!)!)
+        self.phrasesView?.reloadData()
         exitAddPhraseView()
     }
     
-    func removePhrase() {
-        
-    }
-    
-    func editPhraseView() {
-        
+    func editPhraseView(phrase:String) {
+        textEntryView(toShow: true, view: phrasesView!)
+        phrasesView?.oldEditPhrase = phrase
+        self.banner?.textFieldLabel.text = "Edit Phrase:"
+        self.banner?.textField.text = phrase
+        self.banner?.saveButton.addTarget(self, action: #selector(editPhrase), for: .touchUpInside)
+        self.banner?.backButton.addTarget(self, action: #selector(exitEditPhraseView), for: .touchUpInside)
     }
     
     func editPhrase() {
-        
+        let newPhrase = self.banner?.textField.text
+        recommendationEngine?.editPhrase(old_phrase: (phrasesView?.oldEditPhrase)!, new_phrase: newPhrase!)
+        phrasesView?.reloadData()
+        exitAddPhraseView()
     }
     
     func exitEditPhraseView() {
-        
+        textEntryView(toShow: false, view: phrasesView!)
+        self.banner?.saveButton.removeTarget(self, action: #selector(editPhrase), for: .touchUpInside)
+        self.banner?.backButton.removeTarget(self, action: #selector(exitEditPhraseView), for: .touchUpInside)
     }
     
     func createEditProfiles() -> ExtraView? {
@@ -598,7 +605,7 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
     
     func createPhrases() -> Phrases? {
         // note that dark mode is not yet valid here, so we just put false for clarity
-        let phrasesView = Phrases(globalColors: type(of: self).globalColors, darkMode: false, solidColorMode: self.solidColorMode())
+        let phrasesView = Phrases(onClickCallBack: temp, editCallback: editPhraseView, globalColors: type(of: self).globalColors, darkMode: false, solidColorMode: self.solidColorMode())
         phrasesView.backButton?.addTarget(self, action: #selector(goToKeyboard), for: UIControlEvents.touchUpInside)
         
         phrasesView.addButton?.action = #selector(addPhraseView)
@@ -607,6 +614,14 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
         return phrasesView
     }
     
+    func temp(_ sentence: String) {
+        print(sentence)
+        let textDocumentProxy = self.textDocumentProxy
+        
+        let insertionSentence = sentence + " "
+        // update database with insertion word
+        textDocumentProxy.insertText(insertionSentence)
+    }
 }
 
 
