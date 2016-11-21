@@ -611,19 +611,35 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
                 let currentProfile = UserDefaults.standard.value(forKey: "profile") as! String
                 
                 self.recommendationEngine?.numElements = Int(unigrams.count + bigrams.count + trigrams.count)
-                self.recommendationEngine?.counter = 0
+                DispatchQueue.main.async {
+                    self.recommendationEngine?.counter = 0
+                    return
+                }
                 
                 for unigram in unigrams {
                     self.insertAndIncrement(ngram: unigram.key, n: 1, new_freq: Float64(unigram.value))
-                    self.recommendationEngine?.counter += 1
+                    
+                    DispatchQueue.main.async {
+                        self.recommendationEngine?.counter += 1
+                        return
+                    }
                 }
                 for bigram in bigrams {
                     self.insertAndIncrement(ngram: bigram.key, n: 2, new_freq: Float64(bigram.value))
-                    self.recommendationEngine?.counter += 1
+                    DispatchQueue.main.async {
+                        self.recommendationEngine?.counter += 1
+                        return
+                    }
                 }
                 for trigram in trigrams {
                     self.insertAndIncrement(ngram: trigram.key, n: 3, new_freq: Float64(trigram.value))
-                    self.recommendationEngine?.counter += 1
+                    DispatchQueue.main.async {
+                        DispatchQueue.main.async {
+                            self.recommendationEngine?.counter += 1
+                            return
+                        }
+                        return
+                    }
                 }
             }
             catch {
