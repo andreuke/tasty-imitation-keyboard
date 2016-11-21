@@ -60,10 +60,8 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
-    
+
     override func keyPressed(_ key: Key, secondaryMode: Bool) {
-        
-        
         var keyOutput = ""
         if key.type != .backspace {
                 keyOutput = key.outputForCase(self.shiftState.uppercase(), secondary: secondaryMode)
@@ -72,17 +70,34 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
         if UserDefaults.standard.bool(forKey: "keyboardInputToApp") == true
         {
             let textDocumentProxy = self.textDocumentProxy
-            if key.type != .backspace {
+            
+            //check if it is a backspace
+            if key.type == .backspace {
+                textDocumentProxy.deleteBackward()
+            }
+            else {
+                //if they do a space then a period, put the period next to the last word
+                let punctuation = [".", ",", ";", "!", "?", "\'", ":", "\"", "-"]
+                if punctuation.contains(key.lowercaseOutput!){
+                    if let preContext = textDocumentProxy.documentContextBeforeInput {
+                        let endIndex = preContext.endIndex
+                        let preIndex = preContext.index(before: endIndex)
+                        let twoBeforeIndex = preContext.index(before: preIndex)
+                        if (preContext[preIndex] == " ") && (preContext[twoBeforeIndex] != " ") {
+                            textDocumentProxy.deleteBackward()
+                            keyOutput += " "
+                        }
+                    }
+                }
                 textDocumentProxy.insertText(keyOutput)
                 if key.type == .space {
                     self.incrementNgrams()
                 }
             }
-            else {
-                textDocumentProxy.deleteBackward()
-            }
             //let lastWord = getLastWord(delete: false)
             self.updateButtons()
+            
+            
         }
             //type in in-keyboard textbox
         else {
