@@ -109,6 +109,7 @@ class PredictboardBanner: ExtraView {
         self.textField.returnKeyType = UIReturnKeyType.done
         self.textField.clearButtonMode = UITextFieldViewMode.whileEditing;
         self.textField.contentVerticalAlignment = UIControlContentVerticalAlignment.center
+        self.textField.adjustsFontSizeToFitWidth = true
         self.textInputView.addSubview(self.textField)
         
         //self.textFieldLabel.text = "Profile Name:"

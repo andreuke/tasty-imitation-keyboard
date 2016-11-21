@@ -644,4 +644,21 @@ class Database: NSObject {
         }
     }
     
+    func getPhrases() -> [String] {
+        var phrase_list: [String] = []
+        do {
+            let db_path = dbObjects().db_path
+            let db = try Connection("\(db_path)/db.sqlite3")
+            
+            let phrases = dbObjects.Phrases()
+            
+            for row in try db.prepare(phrases.table) {
+                phrase_list.append(row[phrases.phrase])
+            }
+        } catch {
+            print("Something failed while getting list of profiles")
+        }
+        return phrase_list
+    }
+    
 }

@@ -43,7 +43,7 @@ class Phrases: ExtraView, UITableViewDataSource, UITableViewDelegate {
         //self.callBack = tempCallBack
         super.init(globalColors: globalColors, darkMode: darkMode, solidColorMode: solidColorMode)
         self.loadNib()
-        var phrases: [String] = Database().getDataSources(target_profile: "Default")
+        let phrases: [String] = Database().getPhrases()
         self.NavBar.title = "Saved Phrases"
         self.dataSourcesList = [("Phrases", phrases)]
     }
@@ -190,7 +190,7 @@ class Phrases: ExtraView, UITableViewDataSource, UITableViewDelegate {
             Database().removeDataSource(target_profile: "Default", data_source: (self.dataSourcesList?[(indexPath as NSIndexPath).section].1[(indexPath as NSIndexPath).row])!)
             self.reloadData()
         }
-        let edit = UITableViewRowAction(style: .default, title: "Edit") { (action, indexPath) in
+        let edit = UITableViewRowAction(style: .normal, title: "Edit") { (action, indexPath) in
             //self.dataSourcesList![0].1.remove(at: indexPath.row)
         }
 
