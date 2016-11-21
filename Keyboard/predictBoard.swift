@@ -235,40 +235,67 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
             
             // Insert ngrams into database and increment their frequencies
             for ngram in [one_gram, two_gram, three_gram] {
-                // if word notExists in database
-                let exists_in_profile = try db.scalar(containers.table
-                    .filter(containers.ngram == ngram.gram)
-                    .filter(containers.profile == currentProfile)
-                    .count) > 0
-                let exists_in_default = try db.scalar(containers.table
-                    .filter(containers.ngram == ngram.gram)
-                    .filter(containers.profile == "Default")
-                    .count) > 0
-                if (!exists_in_profile) {
-                    // insert ngram into profile
-                    let insert = containers.table.insert(containers.ngram <- ngram.gram,
-                                                         containers.profile <- currentProfile,
-                                                         containers.n <- ngram.n)
-                    _ = try? db.run(insert)
-                }
-                if (!exists_in_default) {
-                    // insert ngram into Default
-                    let insert = containers.table.insert(containers.ngram <- ngram.gram,
-                                                         containers.profile <- "Default",
-                                                         containers.n <- ngram.n)
-                    _ = try? db.run(insert)
-                }
-                // increment ngram in current_profile and default cases
-                _ = try db.run(containers.table.filter(containers.ngram == ngram.gram)
-                    .filter(containers.profile == currentProfile)
-                    .update(containers.frequency += 1.0, containers.lastused <- Date()))
-                _ = try db.run(containers.table.filter(containers.ngram == ngram.gram)
-                    .filter(containers.profile == "Default")
-                    .update(containers.frequency += 1.0, containers.lastused <- Date()))
+                insertAndIncrement(ngram: ngram.gram, n: ngram.n)
             }
         }
         catch {
             print("Something failed while trying to increment ngram frequency")
+        }
+    }
+    
+    func insertAndIncrement(ngram: String, n: Int, new_freq: Float64 = -1.0) {
+        do {
+            let db_path = dbObjects().db_path
+            let db = try Connection("\(db_path)/db.sqlite3")
+            let containers = dbObjects.Containers()
+            let currentProfile = UserDefaults.standard.value(forKey: "profile") as! String
+            
+            // if word notExists in database
+            let exists_in_profile = try db.scalar(containers.table
+                .filter(containers.ngram == ngram)
+                .filter(containers.profile == currentProfile)
+                .count) > 0
+            let exists_in_default = try db.scalar(containers.table
+                .filter(containers.ngram == ngram)
+                .filter(containers.profile == "Default")
+                .count) > 0
+            if (!exists_in_profile) {
+                // insert ngram into profile
+                let insert = containers.table.insert(containers.ngram <- ngram,
+                                                     containers.profile <- currentProfile,
+                                                     containers.n <- n)
+                _ = try? db.run(insert)
+            }
+            if (!exists_in_default) {
+                // insert ngram into Default
+                let insert = containers.table.insert(containers.ngram <- ngram,
+                                                     containers.profile <- "Default",
+                                                     containers.n <- n)
+                _ = try? db.run(insert)
+            }
+            
+            if new_freq == -1 {
+                // increment ngram in current_profile and default cases
+                _ = try db.run(containers.table.filter(containers.ngram == ngram)
+                    .filter(containers.profile == currentProfile)
+                    .update(containers.frequency += 1.0, containers.lastused <- Date()))
+                _ = try db.run(containers.table.filter(containers.ngram == ngram)
+                    .filter(containers.profile == "Default")
+                    .update(containers.frequency += 1.0, containers.lastused <- Date()))
+            }
+            else {
+                // set the frequency to the one provided
+                _ = try db.run(containers.table.filter(containers.ngram == ngram)
+                    .filter(containers.profile == currentProfile)
+                    .update(containers.frequency += new_freq, containers.lastused <- Date()))
+                _ = try db.run(containers.table.filter(containers.ngram == ngram)
+                    .filter(containers.profile == "Default")
+                    .update(containers.frequency += new_freq, containers.lastused <- Date()))
+            }
+            
+        }
+        catch {
+            print("Something failed in insertAndIncrement()")
         }
     }
 
@@ -552,17 +579,34 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
             i += 1
         }
         
+        /*
         print("\n---Unigrams---\n")
         print(unigrams.valueKeySorted)
         print("\n---Bigrams---\n")
         print(bigrams.valueKeySorted)
         print("\n---Trigrams---\n")
         print(trigrams.valueKeySorted)
-        
+        */
+        do {
+            let db_path = dbObjects().db_path
+            let db = try Connection("\(db_path)/db.sqlite3")
+            let containers = dbObjects.Containers()
+            let currentProfile = UserDefaults.standard.value(forKey: "profile") as! String
+            
+            for unigram in unigrams {
+                insertAndIncrement(ngram: unigram.key, n: 1, new_freq: Float64(unigram.value))
+            }
+            for bigram in bigrams {
+                insertAndIncrement(ngram: bigram.key, n: 2, new_freq: Float64(bigram.value))
+            }
+            for trigram in trigrams {
+                insertAndIncrement(ngram: trigram.key, n: 3, new_freq: Float64(trigram.value))
+            }
+        }
+        catch {
+            print("Adding data source ngrams failed")
+        }
         // temp HTML parse code :: END
-        
-        
-        
         
         globalQueue.async {
             // Background thread
