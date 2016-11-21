@@ -57,10 +57,10 @@ class dbObjects {
 class Database: NSObject {
     
     var progressBar:UIProgressView? = nil
-    
+    var numElements = 100
     var counter:Int = 0 {
         didSet {
-            let progress = Float(counter) / 30000.0
+            let progress = Float(counter) / Float(self.numElements)
             let animated = counter != 0
             if self.progressBar != nil {
                 self.progressBar?.setProgress(progress, animated: animated)
@@ -72,10 +72,11 @@ class Database: NSObject {
         super.init()
     }
     
-    init(progressView:UIProgressView) {
+    init(progressView:UIProgressView, numElements:Int) {
         super.init()
+        self.numElements = numElements
         self.progressBar = progressView
-        self.resetDatabase()
+        //self.resetDatabase()
         do {
             
             let db_path = dbObjects().db_path
@@ -693,5 +694,6 @@ class Database: NSObject {
         }
         return phrase_list
     }
+    
     
 }

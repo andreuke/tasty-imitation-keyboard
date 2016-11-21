@@ -44,12 +44,12 @@ extension Dictionary where Value: Comparable {
 class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDelegate {
     
     var banner: PredictboardBanner? = nil
-    var recommendationEngine: Database? = nil //= Database()
+    var recommendationEngine: Database? = nil
     var reccommendationEngineLoaded = false
     var editProfilesView: ExtraView?
     var profileView: Profiles?
     var phrasesView: Phrases?
-    
+    var total = 100
     override init(nibName nibNameOrNil: String?, bundle nibBundleOrNil: Bundle?) {
 
         UserDefaults.standard.register(defaults: ["profile": "Default"])
@@ -143,7 +143,7 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
         
         globalQueue.async {
             // Background thread
-            self.recommendationEngine = Database(progressView: (self.banner?.progressBar)!)
+            self.recommendationEngine = Database(progressView: (self.banner?.progressBar)!, numElements: 30000)
             self.reccommendationEngineLoaded = true
             DispatchQueue.main.async {
                 // UI Updates
@@ -417,6 +417,7 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
         let globalQueue = DispatchQueue.global(qos: .userInitiated)
         globalQueue.async {
             // Background thread
+            self.recommendationEngine?.numElements = 30000
             self.recommendationEngine?.addProfile(profile_name: (self.banner?.textField.text)!)
             DispatchQueue.main.async {
                 // UI Updates
@@ -602,41 +603,45 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
         print("\n---Trigrams---\n")
         print(trigrams.valueKeySorted)
         */
-        do {
-            let db_path = dbObjects().db_path
-            let db = try Connection("\(db_path)/db.sqlite3")
-            let containers = dbObjects.Containers()
-            let currentProfile = UserDefaults.standard.value(forKey: "profile") as! String
-            
-            let totalSize = unigrams.count + bigrams.count + trigrams.count
-            
-            for unigram in unigrams {
-                insertAndIncrement(ngram: unigram.key, n: 1, new_freq: Float64(unigram.value))
-            }
-            for bigram in bigrams {
-                insertAndIncrement(ngram: bigram.key, n: 2, new_freq: Float64(bigram.value))
-            }
-            for trigram in trigrams {
-                insertAndIncrement(ngram: trigram.key, n: 3, new_freq: Float64(trigram.value))
-            }
-        }
-        catch {
-            print("Adding data source ngrams failed")
-        }
         // temp HTML parse code :: END
-        
         globalQueue.async {
             // Background thread
             self.recommendationEngine?.addDataSource(target_profile: (self.profileView?.profileName)!, new_data_source: (self.banner?.textField.text)!, new_title: (self.banner?.textField.text)!)
-            // self.banner?.textField.text == the URL
+            do {
+                let currentProfile = UserDefaults.standard.value(forKey: "profile") as! String
+                
+                self.recommendationEngine?.numElements = Int(unigrams.count + bigrams.count + trigrams.count)
+                self.recommendationEngine?.counter = 0
+                
+                for unigram in unigrams {
+                    self.insertAndIncrement(ngram: unigram.key, n: 1, new_freq: Float64(unigram.value))
+                    self.recommendationEngine?.counter += 1
+                }
+                for bigram in bigrams {
+                    self.insertAndIncrement(ngram: bigram.key, n: 2, new_freq: Float64(bigram.value))
+                    self.recommendationEngine?.counter += 1
+                }
+                for trigram in trigrams {
+                    self.insertAndIncrement(ngram: trigram.key, n: 3, new_freq: Float64(trigram.value))
+                    self.recommendationEngine?.counter += 1
+                }
+            }
+            catch {
+                print("Adding data source ngrams failed")
+            }
             DispatchQueue.main.async {
                 // UI Updates
+                self.banner?.showLoadingScreen(toShow: false)
+                self.showForwardingView(toShow: false)
+                self.showBanner(toShow: false)
                 self.profileView?.reloadData()
+                self.showView(viewToShow: self.profileView!, toShow: true)
             }
         }
 
         exitDataSourceView()
-        
+        self.goToKeyboard()
+        self.banner?.showLoadingScreen(toShow: true)
     }
     
     func deleteProfile() {
