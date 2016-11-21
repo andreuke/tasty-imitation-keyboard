@@ -66,6 +66,10 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
         if key.type != .backspace {
                 keyOutput = key.outputForCase(self.shiftState.uppercase(), secondary: secondaryMode)
         }
+        if key.type == .shift {
+            updateButtons()
+            return
+        }
         //type in main app
         if UserDefaults.standard.bool(forKey: "keyboardInputToApp") == true
         {
@@ -308,7 +312,8 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
             // ------------------------
             let recEngine = recommendationEngine!
             let recommendations = Array(recEngine.recommendWords(word1: word1, word2: word2,
-                                                             current_input: current_input)).sorted()
+                                                                 current_input: current_input,
+                                                                 shift_state: self.shiftState)).sorted()
             
             var index = 0
             for button in (self.banner?.buttons)! {
@@ -751,6 +756,10 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
         return phrasesView
     }
     
+    override func shiftPressed() {
+        updateButtons()
+    }
+
     func temp(_ sentence: String) {
         print(sentence)
         let textDocumentProxy = self.textDocumentProxy

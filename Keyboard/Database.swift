@@ -75,7 +75,7 @@ class Database: NSObject {
     init(progressView:UIProgressView) {
         super.init()
         self.progressBar = progressView
-        self.resetDatabase()
+        // self.resetDatabase()
         do {
             
             let db_path = dbObjects().db_path
@@ -380,7 +380,16 @@ class Database: NSObject {
         return resultSet
     }
     
-    func recommendWords(word1: String = "", word2: String = "", current_input: String)->Set<String>{
+    /*
+     enum ShiftState {
+         case disabled
+         case enabled
+         case locked
+     }
+    */
+ 
+    func recommendWords(word1: String = "", word2: String = "", current_input: String,
+                        shift_state: ShiftState = ShiftState.disabled)->Set<String>{
         // POSSIBLE PATTERNS
         // 3:      "\(word1) \(word2) \(current_input)%"
         // 3:      "% \(word2) \(current_input)%" ********* <--- maybe not
@@ -425,6 +434,26 @@ class Database: NSObject {
                                 n: 1, pattern: "\(current_input)%",
                                 words: words, result_set: resultSet)
         }
+        // Fix resultSet based on the ShiftState
+        //  disabled: do nothing
+        //  enabled: capitalize the first letter
+        //  locked: make everything CAPS
+        for word in resultSet {
+            if shift_state == ShiftState.disabled {
+                break
+            }
+            else if shift_state == ShiftState.enabled {
+                let placeholder = word.capitalized
+                resultSet.remove(word)
+                resultSet.insert(placeholder)
+            }
+            else {
+                let placeholder = word.uppercased()
+                resultSet.remove(word)
+                resultSet.insert(placeholder)
+            }
+        }
+        
         return resultSet
     }
     
