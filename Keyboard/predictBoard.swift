@@ -396,7 +396,7 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
     }
     
     func editProfilesNameView() {
-        profileTextEntryView(toShow: true)
+        textEntryView(toShow: true, view:profileView!)
         self.banner?.textFieldLabel.text = "Edit Name:"
         self.banner?.textField.text = profileView?.profileName!//(profileView as! Profiles).profileName!
         self.banner?.saveButton.addTarget(self, action: #selector(updateProfileName), for: .touchUpInside)
@@ -414,13 +414,13 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
     }
     
     func exiteditProfilesNameView() {
-        profileTextEntryView(toShow: false)
+        textEntryView(toShow: false, view: profileView!)
         self.banner?.saveButton.removeTarget(self, action: #selector(updateProfileName), for: .touchUpInside)
         self.banner?.backButton.removeTarget(self, action: #selector(exiteditProfilesNameView), for: .touchUpInside)
     }
     
     func addDataSourceView() {
-        profileTextEntryView(toShow: true)
+        textEntryView(toShow: true, view: profileView!)
         self.banner?.textFieldLabel.text = "Data Source URL:"
         self.banner?.textField.text = "www."
         self.banner?.saveButton.addTarget(self, action: #selector(addDataSource), for: .touchUpInside)
@@ -428,7 +428,7 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
     }
     
     func exitDataSourceView() {
-        profileTextEntryView(toShow: false)
+        textEntryView(toShow: false, view: phrasesView!)
         self.banner?.saveButton.removeTarget(self, action: #selector(addDataSource), for: .touchUpInside)
         self.banner?.backButton.removeTarget(self, action: #selector(exitDataSourceView), for: .touchUpInside)
     }
@@ -457,9 +457,9 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
         profileToEditProfiles()
     }
     
-    func profileTextEntryView(toShow: Bool) {
+    func textEntryView(toShow: Bool, view:ExtraView) {
         if toShow {
-            showView(viewToShow: profileView!, toShow: false)
+            showView(viewToShow: view, toShow: false)
             self.banner?.selectTextView()
         }
         else {
@@ -521,6 +521,41 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
         showBanner(toShow: false)
     }
     
+    func addPhraseView() {
+        textEntryView(toShow: true, view: phrasesView!)
+        self.banner?.textFieldLabel.text = "Add Phrase:"
+        self.banner?.saveButton.addTarget(self, action: #selector(addPhrase), for: .touchUpInside)
+        self.banner?.backButton.addTarget(self, action: #selector(exitAddPhraseView), for: .touchUpInside)
+    }
+    
+    func exitAddPhraseView() {
+        textEntryView(toShow: false, view: phrasesView!)
+        showView(viewToShow: phrasesView!, toShow: true)
+        self.banner?.saveButton.removeTarget(self, action: #selector(addPhrase), for: .touchUpInside)
+        self.banner?.backButton.removeTarget(self, action: #selector(exitAddPhraseView), for: .touchUpInside)
+    }
+    
+    func addPhrase() {
+        self.recommendationEngine?.addPhrase(phrase: (self.banner?.textField.text!)!)
+        exitAddPhraseView()
+    }
+    
+    func removePhrase() {
+        
+    }
+    
+    func editPhraseView() {
+        
+    }
+    
+    func editPhrase() {
+        
+    }
+    
+    func exitEditPhraseView() {
+        
+    }
+    
     func createEditProfiles() -> ExtraView? {
         let editProfiles = EditProfiles(globalColors: type(of: self).globalColors, darkMode: false, solidColorMode: self.solidColorMode())
         
@@ -564,10 +599,9 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
     func createPhrases() -> Phrases? {
         // note that dark mode is not yet valid here, so we just put false for clarity
         let phrasesView = Phrases(globalColors: type(of: self).globalColors, darkMode: false, solidColorMode: self.solidColorMode())
-        //profileView.NavBar.title = title
         phrasesView.backButton?.addTarget(self, action: #selector(goToKeyboard), for: UIControlEvents.touchUpInside)
-
-        phrasesView.addButton?.action = #selector(addDataSourceView)
+        
+        phrasesView.addButton?.action = #selector(addPhraseView)
         phrasesView.addButton?.target = self
 
         return phrasesView
