@@ -453,7 +453,7 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
     }
     
     func exitDataSourceView() {
-        textEntryView(toShow: false, view: phrasesView!)
+        textEntryView(toShow: false, view: profileView!)
         self.banner?.saveButton.removeTarget(self, action: #selector(addDataSource), for: .touchUpInside)
         self.banner?.backButton.removeTarget(self, action: #selector(exitDataSourceView), for: .touchUpInside)
     }
