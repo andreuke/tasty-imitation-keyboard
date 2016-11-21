@@ -14,6 +14,31 @@ import SQLite
  */
 
 
+// temp parse thing :: START
+
+extension String {
+    var html2AttributedString: NSAttributedString? {
+        guard let data = data(using: .utf8) else { return nil }
+        do {
+            return try NSAttributedString(data: data, options: [NSDocumentTypeDocumentAttribute: NSHTMLTextDocumentType, NSCharacterEncodingDocumentAttribute: String.Encoding.utf8.rawValue], documentAttributes: nil)
+        } catch let error as NSError {
+            print(error.localizedDescription)
+            return  nil
+        }
+    }
+    var html2String: String {
+        return html2AttributedString?.string ?? ""
+    }
+}
+
+extension Dictionary where Value: Comparable {
+    var valueKeySorted: [(Key, Value)] {
+        return sorted{ if $0.value != $1.value { return $0.value > $1.value } else { return String(describing: $0.key) < String(describing: $1.key) } }
+    }
+}
+
+// temp parse thing :: END
+
 
 
 class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDelegate {
@@ -446,12 +471,109 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
     
     func addDataSource() {
         
+        var HTMLArray = [" "]
+        
         //For now data source title and data source name are the same
         let globalQueue = DispatchQueue.global(qos: .userInitiated)
+        
+        // temp HTML parse code :: START
+        // source: http://stackoverflow.com/questions/26134884/how-to-get-html-source-from-url-with-swift
+        
+        //let myURLString = self.banner?.textField.text
+        let myURLString = "https://en.wikipedia.org/wiki/Control_engineering"
+        guard let myURL = URL(string: myURLString) else { // include ! after myURLString for first opt, exclude for second opt
+            print("Error: \(myURLString) doesn't seem to be a valid URL")
+            return
+        }
+        
+        do {
+            //let myHTMLString = try String(contentsOf: myURL, encoding: .utf8) // select only p
+            let myHTMLString = try String(contentsOf: myURL, encoding: .utf8).html2String
+            var modString = (myHTMLString as NSString).replacingOccurrences(of: "\n", with: "   ")
+            modString = modString.lowercased()
+            let characterset = CharacterSet(charactersIn: "abcdefghijklmnopqrstuvwxyz0123456789- ")
+            modString = modString.components(separatedBy: characterset.inverted).joined(separator: "")
+            HTMLArray = modString.components(separatedBy: " ")
+        } catch let error {
+            print("Error: \(error)")
+        }
+        
+     
+        // gen n-grams
+        
+        var unigrams = [String: Int]()
+        var bigrams = [String: Int]()
+        var trigrams = [String: Int]()
+        
+        var i = 0
+        
+        
+        let len = HTMLArray.count
+        print(HTMLArray)
+        while(i < len){
+            // update unigrams
+            let curUnigram = HTMLArray[i]
+            if curUnigram == ""{
+                i += 1
+                continue
+            }
+            if (unigrams[curUnigram] != nil){
+                unigrams[curUnigram] = unigrams[curUnigram]! + 1
+            }
+            else{
+                unigrams[curUnigram] = 1
+            }
+            
+            // update bigrams
+            if i < len - 1{
+                if HTMLArray[i+1]==""{
+                  i += 1
+                  continue
+                }
+                let curBigram = String(describing: HTMLArray[i]) + " " + String(describing: HTMLArray[i+1])
+                if bigrams[curBigram] != nil{
+                    bigrams[curBigram] = bigrams[curBigram]! + 1
+                }
+                else{
+                    bigrams[curBigram] = 1
+                }
+            }
+            
+            // update trigrams
+            if i < len - 2{
+                if HTMLArray[i+1]=="" || HTMLArray[i+2]==""{
+                    i += 1
+                    continue
+                }
+                let curTrigram = String(describing: HTMLArray[i]) + " " + String(describing: HTMLArray[i+1]) + " " + String(describing: HTMLArray[i+2])
+                if trigrams[curTrigram] != nil{
+                    trigrams[curTrigram] = trigrams[curTrigram]! + 1
+                }
+                else{
+                    trigrams[curTrigram] = 1
+                }
+            }
+            
+            // increment
+            i += 1
+        }
+        
+        print("\n---Unigrams---\n")
+        print(unigrams.valueKeySorted)
+        print("\n---Bigrams---\n")
+        print(bigrams.valueKeySorted)
+        print("\n---Trigrams---\n")
+        print(trigrams.valueKeySorted)
+        
+        // temp HTML parse code :: END
+        
+        
+        
         
         globalQueue.async {
             // Background thread
             self.recommendationEngine?.addDataSource(target_profile: (self.profileView?.profileName)!, new_data_source: (self.banner?.textField.text)!, new_title: (self.banner?.textField.text)!)
+            // self.banner?.textField.text == the URL
             DispatchQueue.main.async {
                 // UI Updates
                 self.profileView?.reloadData()
