@@ -106,7 +106,7 @@ class KeyboardViewController: UIInputViewController {
             kKeyboardClicks: true,
             kSmallLowercase: true,
             "numberACSrows": 3,
-            "numberACSbuttons": 14
+            "numberACSbuttons": 13
         ])
     
         
@@ -905,6 +905,7 @@ class KeyboardViewController: UIInputViewController {
         // note that dark mode is not yet valid here, so we just put false for clarity
         let settingsView = DefaultSettings(globalColors: type(of: self).globalColors, darkMode: false, solidColorMode: self.solidColorMode())
         settingsView.backButton?.addTarget(self, action: #selector(KeyboardViewController.toggleSettings), for: UIControlEvents.touchUpInside)
+        settingsView.tableView?.reloadData()
         return settingsView
     }
     

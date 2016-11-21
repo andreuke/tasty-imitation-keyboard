@@ -16,10 +16,11 @@ import UIKit
 class PredictboardBanner: ExtraView {
     
     let numButtons = UserDefaults.standard.integer(forKey: "numberACSbuttons")
-    let allButtons = UserDefaults.standard.integer(forKey: "numberACSbuttons") + 1
+    let allButtons = UserDefaults.standard.integer(forKey: "numberACSbuttons") + 2
     let numRows = UserDefaults.standard.integer(forKey: "numberACSrows")
     var buttons = [BannerButton]()
     let profileSelector = BannerButton()
+    let phraseSelector = BannerButton()
     let defaultView = PassThroughView()
     let textInputView = PassThroughView()
     let loadingView = PassThroughView()
@@ -29,6 +30,15 @@ class PredictboardBanner: ExtraView {
     let saveButton = UIButton()
     let loadingLabel = UILabel()
     
+    let progressBar = UIProgressView()
+    var counter:Int = 0 {
+        didSet {
+            let fractionalProgress = Float(counter) / 100.0
+            let animated = counter != 0
+            
+            self.progressBar.setProgress(fractionalProgress, animated: animated)
+        }
+    }
     
     required init(globalColors: GlobalColors.Type?, darkMode: Bool, solidColorMode: Bool) {
 
@@ -79,6 +89,18 @@ class PredictboardBanner: ExtraView {
         self.profileSelector.addTarget(self, action: #selector(buttonUnclicked), for: .touchDragExit)
         self.profileSelector.addTarget(self, action: #selector(buttonUnclicked), for: .touchUpInside)
         
+        self.phraseSelector.type = "SelectorButton"
+        defaultView.addSubview(self.phraseSelector)
+        self.phraseSelector.titleLabel?.adjustsFontSizeToFitWidth = true
+        self.phraseSelector.layer.borderWidth = 1
+        self.phraseSelector.layer.cornerRadius = 5
+        self.phraseSelector.layer.borderColor = UIColor.clear.cgColor
+        self.phraseSelector.titleLabel?.font = UIFont.systemFont(ofSize: fontSize)
+        self.phraseSelector.addTarget(self, action: #selector(buttonClicked), for: .touchDown)
+        self.phraseSelector.addTarget(self, action: #selector(buttonClicked), for: .touchDragEnter)
+        self.phraseSelector.addTarget(self, action: #selector(buttonUnclicked), for: .touchDragExit)
+        self.phraseSelector.addTarget(self, action: #selector(buttonUnclicked), for: .touchUpInside)
+        self.phraseSelector.setTitle("Phrases", for: .normal)
         
         self.textField.placeholder = "Just Start Typing"
         self.textField.font = UIFont.systemFont(ofSize: fontSize)
@@ -87,6 +109,7 @@ class PredictboardBanner: ExtraView {
         self.textField.returnKeyType = UIReturnKeyType.done
         self.textField.clearButtonMode = UITextFieldViewMode.whileEditing;
         self.textField.contentVerticalAlignment = UIControlContentVerticalAlignment.center
+        self.textField.adjustsFontSizeToFitWidth = true
         self.textInputView.addSubview(self.textField)
         
         //self.textFieldLabel.text = "Profile Name:"
@@ -109,6 +132,8 @@ class PredictboardBanner: ExtraView {
         self.loadingLabel.textAlignment = .center
         self.loadingLabel.font = UIFont.systemFont(ofSize: fontSize)
         self.loadingView.addSubview(self.loadingLabel)
+        
+        self.loadingView.addSubview(progressBar)
         
         updateAppearance()
         
@@ -143,6 +168,9 @@ class PredictboardBanner: ExtraView {
             if row == 0 && index + 1 == self.allButtons / self.numRows {
                 self.profileSelector.frame = CGRect(x: (self.getMinX() + x_offset), y: self.getMinY() + y_offset, width: widthBut - 1, height: heightBut - 1)
             }
+            else if row == 0 && index == 0 {
+                self.phraseSelector.frame = CGRect(x: (self.getMinX() + x_offset), y: self.getMinY() + y_offset, width: widthBut - 1, height: heightBut - 1)
+            }
             else{
                 buttons[buttonIndex].frame = CGRect(x: (self.getMinX() + x_offset), y: self.getMinY() + y_offset, width: widthBut - 1, height: heightBut - 1)
                 buttonIndex += 1
@@ -154,7 +182,6 @@ class PredictboardBanner: ExtraView {
                 row += 1
             }
         }
-        //self.profileSelector.frame = CGRect(x: (self.getMinX() + x_offset), y: self.getMinY() + y_offset, width: widthBut - 1, height: heightBut - 1)
         
         let textWidth:CGFloat = 300
         let textHeight:CGFloat = 40
@@ -174,6 +201,9 @@ class PredictboardBanner: ExtraView {
 
         self.loadingLabel.frame = CGRect(x: self.getMidX() - textWidth, y: self.getMidY() - textHeight / CGFloat(2), width: 2 * textWidth, height: textHeight)
         
+        self.progressBar.setProgress(0, animated: true)
+        self.progressBar.frame = CGRect(x: self.getMidX() - textWidth, y: self.getMidY() + CGFloat(2.5) * textHeight / CGFloat(2), width: 2 * textWidth, height: textHeight)
+
     }
     
     override func updateAppearance()
@@ -190,9 +220,12 @@ class PredictboardBanner: ExtraView {
         self.textField.keyboardAppearance = (darkMode ? .dark : .light)
         
         self.profileSelector.backgroundColor = globalColors?.regularKey(darkMode, solidColorMode: solidColorMode)
-        //self.profileSelector.titleLabel?.textColor = self.globalColors?.lightModeTextColor
         self.profileSelector.setTitleColor((darkMode ? self.globalColors?.darkModeTextColor : self.globalColors?.lightModeTextColor), for: UIControlState.normal)
         self.profileSelector.setTitleColor(self.globalColors?.darkModeTextColor, for: UIControlState.highlighted)
+        
+        self.phraseSelector.backgroundColor = globalColors?.regularKey(darkMode, solidColorMode: solidColorMode)
+        self.phraseSelector.setTitleColor((darkMode ? self.globalColors?.darkModeTextColor : self.globalColors?.lightModeTextColor), for: UIControlState.normal)
+        self.phraseSelector.setTitleColor(self.globalColors?.darkModeTextColor, for: UIControlState.highlighted)
         
         self.textFieldLabel.textColor = (darkMode ? self.globalColors?.darkModeTextColor : self.globalColors?.lightModeTextColor)
         self.loadingLabel.textColor = (darkMode ? self.globalColors?.darkModeTextColor : self.globalColors?.lightModeTextColor)
@@ -251,7 +284,23 @@ class PredictboardBanner: ExtraView {
         }
     }
     
-
+    /*func startCount() {
+        self.counter = 0
+        
+        
+        let queue = DispatchQueue.global(qos: .utility)
+        for _ in 0..<100 {
+            queue.async {
+                // Background thread
+                sleep(1)
+                DispatchQueue.main.async {
+                    // UI Updates
+                    self.counter += 1
+                    return
+                }
+            }
+        }
+    }*/
 }
 
 

@@ -75,8 +75,8 @@ func exNumKeyboard() -> Keyboard {
     let keyboardChange = Key(.keyboardChange)
     exNumKeyboard.addKey(keyboardChange, row: 3 + offset, page: 0)
     
-    let settings = Key(.settings)
-    exNumKeyboard.addKey(settings, row: 3 + offset, page: 0)
+    //let settings = Key(.settings)
+    //exNumKeyboard.addKey(settings, row: 3 + offset, page: 0)
     
     let space = Key(.space)
     space.uppercaseKeyCap = "space"
@@ -95,9 +95,9 @@ func exNumKeyboard() -> Keyboard {
     exNumKeyboard.addKey(returnKey, row: 3 + offset, page: 0)
     
     let atSize = 1 / exNumKeyboard.pages[0].maxRowSize()
-    let spaceBarSize = 0.5 - atSize
+    let spaceBarSize = 0.6 - atSize
     
-    exNumKeyboard.pages[0].setRelativeSizes(percentArray: [0.1, 0.1, 0.1, spaceBarSize, atSize, 0.2], rowNum: 3 + offset)
+    exNumKeyboard.pages[0].setRelativeSizes(percentArray: [0.1, 0.1, spaceBarSize, atSize, 0.2], rowNum: 3 + offset)
     
     for key in ["#", "$", "&", ":", "-", "7", "8", "9", "/", "°"] {
         let keyModel = Key(.specialCharacter)
@@ -131,7 +131,7 @@ func exNumKeyboard() -> Keyboard {
     
     exNumKeyboard.addKey(Key(keyboardChange), row: 3, page: 1)
     
-    exNumKeyboard.addKey(Key(settings), row: 3, page: 1)
+    //exNumKeyboard.addKey(Key(settings), row: 3, page: 1)
     
     exNumKeyboard.addKey(Key(space), row: 3, page: 1)
     
@@ -142,7 +142,7 @@ func exNumKeyboard() -> Keyboard {
     }
     
     exNumKeyboard.addKey(Key(returnKey), row: 3, page: 1)
-    exNumKeyboard.pages[1].setRelativeSizes(percentArray: [0.1, 0.1, 0.1, 0.2, 0.1, 0.1, 0.1, 0.2], rowNum: 3 + offset)
+    exNumKeyboard.pages[1].setRelativeSizes(percentArray: [0.1, 0.1, 0.3, 0.1, 0.1, 0.1, 0.2], rowNum: 3 + offset)
     
     for key in ["£", "€", "¥", "₵", "©", "®", "™", "~", "¿", "≈"] {
         let keyModel = Key(.specialCharacter)
@@ -170,12 +170,12 @@ func exNumKeyboard() -> Keyboard {
     
     exNumKeyboard.addKey(Key(keyboardChange), row: 3, page: 2)
     
-    exNumKeyboard.addKey(Key(settings), row: 3, page: 2)
+    //exNumKeyboard.addKey(Key(settings), row: 3, page: 2)
     
     exNumKeyboard.addKey(Key(space), row: 3, page: 2)
     
     exNumKeyboard.addKey(Key(returnKey), row: 3, page: 2)
-    exNumKeyboard.pages[2].setRelativeSizes(percentArray: [0.1, 0.1, 0.1, 0.5, 0.2], rowNum: 3 + offset)
+    exNumKeyboard.pages[2].setRelativeSizes(percentArray: [0.1, 0.1, 0.6, 0.2], rowNum: 3 + offset)
     
     return exNumKeyboard
 }

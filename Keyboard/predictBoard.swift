@@ -48,24 +48,13 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
     var reccommendationEngineLoaded = false
     var editProfilesView: ExtraView?
     var profileView: Profiles?
+    var phrasesView: Phrases?
     
     override init(nibName nibNameOrNil: String?, bundle nibBundleOrNil: Bundle?) {
 
         UserDefaults.standard.register(defaults: ["profile": "Default"])
         super.init(nibName: nibNameOrNil, bundle: nibBundleOrNil)
         
-        let globalQueue = DispatchQueue.global(qos: .userInitiated)
-        
-        globalQueue.async {
-            // Background thread
-            self.recommendationEngine = Database()
-            self.reccommendationEngineLoaded = true
-            DispatchQueue.main.async {
-                // UI Updates
-                self.banner?.showLoadingScreen(toShow: false)
-                self.updateButtons()
-            }
-        }
     }
     
     required init?(coder: NSCoder) {
@@ -86,65 +75,7 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
             if key.type != .backspace {
                 textDocumentProxy.insertText(keyOutput)
                 if key.type == .space {
-                    do {
-                        let context = textDocumentProxy.documentContextBeforeInput
-                        let components = context?.components(separatedBy: " ")
-                        let count = (components?.count)! as Int
-                        var word1 = ""
-                        var word2 = ""
-                        var word3 = ""
-                        if count >= 4 {
-                            word1 = (components?[count-4])! as String
-                        }
-                        if count >= 3 {
-                            word2 = (components?[count-3])! as String
-                        }
-                        word3 = (components?[count-2])! as String
-                        
-                        // Create possible ngrams
-                        let one_gram = (gram: word3, n: 1)
-                        let two_gram = (gram: word2+" "+word3, n: 2)
-                        let three_gram = (gram: word1+" "+word2+" "+word3, n: 3)
-                        
-                        let db_path = dbObjects().db_path
-                        let db = try Connection("\(db_path)/db.sqlite3")
-                        let containers = dbObjects.Containers()
-                        let currentProfile = UserDefaults.standard.value(forKey: "profile") as! String
-                        
-                        // Insert ngrams into database and increment their frequencies
-                        for ngram in [one_gram, two_gram, three_gram] {
-                            // if word notExists in database
-                            let exists_in_profile = try db.scalar(containers.table
-                                                    .filter(containers.ngram == ngram.gram)
-                                                    .filter(containers.profile == currentProfile)
-                                                    .count) > 0
-                            let exists_in_default = try db.scalar(containers.table
-                                                    .filter(containers.ngram == ngram.gram)
-                                                    .filter(containers.profile == "Default")
-                                                    .count) > 0
-                            if (!exists_in_profile) {
-                                // insert ngram into profile
-                                let insert = containers.table.insert(containers.ngram <- ngram.gram,
-                                                                containers.profile <- currentProfile,
-                                                                containers.n <- ngram.n)
-                                _ = try? db.run(insert)
-                            }
-                            if (!exists_in_default) {
-                                // insert ngram into Default
-                                let insert = containers.table.insert(containers.ngram <- ngram.gram,
-                                                                containers.profile <- "Default",
-                                                                containers.n <- ngram.n)
-                                _ = try? db.run(insert)
-                            }
-                            // increment ngram in current_profile and default cases
-                            _ = try db.run(containers.table.filter(containers.ngram == ngram.gram)
-                                .filter(containers.profile == currentProfile)
-                                .update(containers.frequency++, containers.lastused <- Date()))
-                            _ = try db.run(containers.table.filter(containers.ngram == ngram.gram)
-                                .filter(containers.profile == "Default")
-                                .update(containers.frequency++, containers.lastused <- Date()))
-                        }
-                    } catch {}
+                    self.incrementNgrams()
                 }
             }
             else {
@@ -181,17 +112,27 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
         //set up profile selector
         self.banner?.profileSelector.addTarget(self, action: #selector(showPopover), for: .touchUpInside)
         self.banner?.profileSelector.setTitle(UserDefaults.standard.string(forKey: "profile")!, for: UIControlState())
+        self.banner?.phraseSelector.addTarget(self, action: #selector(switchToPhraseMode), for: .touchUpInside)
         
         //setup autocomplete buttons
         for button in (self.banner?.buttons)! {
             button.addTarget(self, action: #selector(autocompleteClicked), for: .touchUpInside)
-            //button.addTarget(self, action: #selector(KeyboardViewController.playKeySound), for: .touchDown)
             
         }
         
+        let globalQueue = DispatchQueue.global(qos: .userInitiated)
         
-        //populate buttons
-        //updateButtons()
+        globalQueue.async {
+            // Background thread
+            self.recommendationEngine = Database(progressView: (self.banner?.progressBar)!)
+            self.reccommendationEngineLoaded = true
+            DispatchQueue.main.async {
+                // UI Updates
+                self.banner?.showLoadingScreen(toShow: false)
+                self.updateButtons()
+            }
+        }
+
         
         return self.banner
     }
@@ -257,24 +198,75 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
         if wordToAdd != " "
         {
             self.autoComplete(wordToAdd)
-            // increment frequency of word in database
-            do {
-                let db_path = dbObjects().db_path
-                let db = try Connection("\(db_path)/db.sqlite3")
-
-                let containers = dbObjects.Containers()
-                let currentProfile = UserDefaults.standard.value(forKey: "profile") as! String
-                try db.run(containers.table.filter(containers.ngram == wordToAdd)
-                    .filter(containers.profile == currentProfile)
-                    .update(containers.frequency++, containers.lastused <- Date()))
-            }
-            catch {
-                print("Incrementing word frequency failed")
-            }
+            self.incrementNgrams()
             updateButtons()
         }
     }
     
+    func incrementNgrams() {
+        do {
+            let context = textDocumentProxy.documentContextBeforeInput
+            let components = context?.components(separatedBy: " ")
+            let count = (components?.count)! as Int
+            var word1 = ""
+            var word2 = ""
+            var word3 = ""
+            if count >= 4 {
+                word1 = (components?[count-4])! as String
+            }
+            if count >= 3 {
+                word2 = (components?[count-3])! as String
+            }
+            word3 = (components?[count-2])! as String
+            
+            // Create possible ngrams
+            let one_gram = (gram: word3, n: 1)
+            let two_gram = (gram: word2+" "+word3, n: 2)
+            let three_gram = (gram: word1+" "+word2+" "+word3, n: 3)
+            
+            let db_path = dbObjects().db_path
+            let db = try Connection("\(db_path)/db.sqlite3")
+            let containers = dbObjects.Containers()
+            let currentProfile = UserDefaults.standard.value(forKey: "profile") as! String
+            
+            // Insert ngrams into database and increment their frequencies
+            for ngram in [one_gram, two_gram, three_gram] {
+                // if word notExists in database
+                let exists_in_profile = try db.scalar(containers.table
+                    .filter(containers.ngram == ngram.gram)
+                    .filter(containers.profile == currentProfile)
+                    .count) > 0
+                let exists_in_default = try db.scalar(containers.table
+                    .filter(containers.ngram == ngram.gram)
+                    .filter(containers.profile == "Default")
+                    .count) > 0
+                if (!exists_in_profile) {
+                    // insert ngram into profile
+                    let insert = containers.table.insert(containers.ngram <- ngram.gram,
+                                                         containers.profile <- currentProfile,
+                                                         containers.n <- ngram.n)
+                    _ = try? db.run(insert)
+                }
+                if (!exists_in_default) {
+                    // insert ngram into Default
+                    let insert = containers.table.insert(containers.ngram <- ngram.gram,
+                                                         containers.profile <- "Default",
+                                                         containers.n <- ngram.n)
+                    _ = try? db.run(insert)
+                }
+                // increment ngram in current_profile and default cases
+                _ = try db.run(containers.table.filter(containers.ngram == ngram.gram)
+                    .filter(containers.profile == currentProfile)
+                    .update(containers.frequency += 1.0, containers.lastused <- Date()))
+                _ = try db.run(containers.table.filter(containers.ngram == ngram.gram)
+                    .filter(containers.profile == "Default")
+                    .update(containers.frequency += 1.0, containers.lastused <- Date()))
+            }
+        }
+        catch {
+            print("Something failed while trying to increment ngram frequency")
+        }
+    }
 
     func updateButtons() {
         // Get previous words to give to recommendWords()
@@ -393,9 +385,6 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
         completedAddProfileMode()
         self.banner?.loadingLabel.text = "Creating new Profile (this may take several minutes)"
         self.banner?.showLoadingScreen(toShow: true)
-
-        
-
     }
     
     func showView(viewToShow: ExtraView, toShow: Bool) {
@@ -432,14 +421,14 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
     }
     
     func editProfilesNameView() {
-        profileTextEntryView(toShow: true)
+        textEntryView(toShow: true, view:profileView!)
         self.banner?.textFieldLabel.text = "Edit Name:"
         self.banner?.textField.text = profileView?.profileName!//(profileView as! Profiles).profileName!
         self.banner?.saveButton.addTarget(self, action: #selector(updateProfileName), for: .touchUpInside)
         self.banner?.backButton.addTarget(self, action: #selector(exiteditProfilesNameView), for: .touchUpInside)
     }
     
-    //TODO doesnt work yet
+
     func updateProfileName(){
         //var profile = (profileView as! Profiles)
         let newName = (self.banner?.textField.text)!
@@ -450,13 +439,13 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
     }
     
     func exiteditProfilesNameView() {
-        profileTextEntryView(toShow: false)
+        textEntryView(toShow: false, view: profileView!)
         self.banner?.saveButton.removeTarget(self, action: #selector(updateProfileName), for: .touchUpInside)
         self.banner?.backButton.removeTarget(self, action: #selector(exiteditProfilesNameView), for: .touchUpInside)
     }
     
     func addDataSourceView() {
-        profileTextEntryView(toShow: true)
+        textEntryView(toShow: true, view: profileView!)
         self.banner?.textFieldLabel.text = "Data Source URL:"
         self.banner?.textField.text = "www."
         self.banner?.saveButton.addTarget(self, action: #selector(addDataSource), for: .touchUpInside)
@@ -464,7 +453,7 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
     }
     
     func exitDataSourceView() {
-        profileTextEntryView(toShow: false)
+        textEntryView(toShow: false, view: phrasesView!)
         self.banner?.saveButton.removeTarget(self, action: #selector(addDataSource), for: .touchUpInside)
         self.banner?.backButton.removeTarget(self, action: #selector(exitDataSourceView), for: .touchUpInside)
     }
@@ -590,9 +579,9 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
         profileToEditProfiles()
     }
     
-    func profileTextEntryView(toShow: Bool) {
+    func textEntryView(toShow: Bool, view:ExtraView) {
         if toShow {
-            showView(viewToShow: profileView!, toShow: false)
+            showView(viewToShow: view, toShow: false)
             self.banner?.selectTextView()
         }
         else {
@@ -640,8 +629,53 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
         if (profileView != nil) {
             showView(viewToShow: profileView!, toShow: false)
         }
+        if phrasesView != nil {
+            showView(viewToShow: phrasesView!, toShow: false)
+        }
         showForwardingView(toShow: true)
         showBanner(toShow: true)
+    }
+    
+    func switchToPhraseMode() {
+        phrasesView = createPhrases()
+        showView(viewToShow: phrasesView!, toShow: true)
+        showForwardingView(toShow: false)
+        showBanner(toShow: false)
+    }
+    
+    func addPhraseView() {
+        textEntryView(toShow: true, view: phrasesView!)
+        self.banner?.textFieldLabel.text = "Add Phrase:"
+        self.banner?.saveButton.addTarget(self, action: #selector(addPhrase), for: .touchUpInside)
+        self.banner?.backButton.addTarget(self, action: #selector(exitAddPhraseView), for: .touchUpInside)
+    }
+    
+    func exitAddPhraseView() {
+        textEntryView(toShow: false, view: phrasesView!)
+        showView(viewToShow: phrasesView!, toShow: true)
+        self.banner?.saveButton.removeTarget(self, action: #selector(addPhrase), for: .touchUpInside)
+        self.banner?.backButton.removeTarget(self, action: #selector(exitAddPhraseView), for: .touchUpInside)
+    }
+    
+    func addPhrase() {
+        self.recommendationEngine?.addPhrase(phrase: (self.banner?.textField.text!)!)
+        exitAddPhraseView()
+    }
+    
+    func removePhrase() {
+        
+    }
+    
+    func editPhraseView() {
+        
+    }
+    
+    func editPhrase() {
+        
+    }
+    
+    func exitEditPhraseView() {
+        
     }
     
     func createEditProfiles() -> ExtraView? {
@@ -682,6 +716,17 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
             profileView?.editName.isEnabled = true
             profileView?.deleteButton.isEnabled = true
         }
+    }
+    
+    func createPhrases() -> Phrases? {
+        // note that dark mode is not yet valid here, so we just put false for clarity
+        let phrasesView = Phrases(globalColors: type(of: self).globalColors, darkMode: false, solidColorMode: self.solidColorMode())
+        phrasesView.backButton?.addTarget(self, action: #selector(goToKeyboard), for: UIControlEvents.touchUpInside)
+        
+        phrasesView.addButton?.action = #selector(addPhraseView)
+        phrasesView.addButton?.target = self
+
+        return phrasesView
     }
     
 }
