@@ -1,3 +1,7 @@
 .DS_Store
 project.xcworkspace
 xcuserdata
+HostingApp/HostingApp.entitlements
+Keyboard/DataModel.xcdatamodeld/
+Keyboard/Keyboard.entitlements
+*SQLite.framework*
