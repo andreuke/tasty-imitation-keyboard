@@ -136,7 +136,7 @@ class Database: NSObject {
             })
             
             
-            let pathToWords = Bundle.main.path(forResource: "google-10000", ofType: "txt")
+            let pathToWords = Bundle.main.path(forResource: "1grams", ofType: "txt")
             let pathToTwoGrams = Bundle.main.path(forResource: "2grams-10000", ofType: "txt")
             let pathToThreeGrams = Bundle.main.path(forResource: "3grams-10000", ofType: "txt")
             
@@ -158,12 +158,18 @@ class Database: NSObject {
             // If not, then insert the missing words
             if (try db.scalar(containers.table.filter(containers.profile == "Default").count) < 20000) {
                 // Populate the Ngrams table and Container table with words
-                var frequency:Float64 = 10000.0
                 for word in allWords {
+                    if word == "" || word == " " {
+                        break
+                    }
+                    let wordComponents = word.components(separatedBy: " ")
+                    let frequency:Float64 = Float64(wordComponents[0])!
+                    let oneGram = wordComponents[1]
+                    
                     // check if word is in Ngrams, and insert it if it's not
-                    let result = try? db.scalar(ngrams.table.filter(ngrams.gram == word).count)
+                    let result = try? db.scalar(ngrams.table.filter(ngrams.gram == oneGram).count)
                     if result! == 0 {
-                        let insert = ngrams.table.insert(ngrams.gram <- word, ngrams.n <- 1,
+                        let insert = ngrams.table.insert(ngrams.gram <- oneGram, ngrams.n <- 1,
                                                          ngrams.frequency <- frequency)
                         _ = try? db.run(insert)
                     }
@@ -174,17 +180,14 @@ class Database: NSObject {
                     // check if word is paired with Default profile in Containers table, insert if not
                     let containerResult = try? db.scalar(containers.table
                         .filter(containers.profile == "Default")
-                        .filter(containers.ngram == word).count)
+                        .filter(containers.ngram == oneGram).count)
                     if containerResult == 0 {
                         let insert = containers.table.insert(containers.profile <- "Default",
-                                                             containers.ngram <- word,
+                                                             containers.ngram <- oneGram,
                                                              containers.n <- 1,
                                                              containers.frequency <- frequency)
                         _ = try? db.run(insert)
                     }
-                    
-                    frequency -= 1.0
-                    
                     DispatchQueue.main.async {
                         self.counter += 1
                         return
