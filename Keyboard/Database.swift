@@ -19,7 +19,7 @@ class dbObjects {
         let table = Table("Ngrams")
         let gram = Expression<String>("gram")
         let n = Expression<Int>("n")
-        let frequency = Expression<Int64>("frequency")
+        let frequency = Expression<Float64>("frequency")
     }
     
     struct Profiles {
@@ -35,7 +35,7 @@ class dbObjects {
         let profile = Expression<String>("profile")
         let ngram = Expression<String>("ngram")
         let n = Expression<Int>("n")
-        let frequency = Expression<Int64>("frequency")
+        let frequency = Expression<Float64>("frequency")
         let lastused = Expression<Date>("lastused")
     }
     
@@ -75,7 +75,7 @@ class Database: NSObject {
     init(progressView:UIProgressView) {
         super.init()
         self.progressBar = progressView
-        //self.resetDatabase()
+        self.resetDatabase()
         do {
             
             let db_path = dbObjects().db_path
@@ -158,7 +158,7 @@ class Database: NSObject {
             // If not, then insert the missing words
             if (try db.scalar(containers.table.filter(containers.profile == "Default").count) < 20000) {
                 // Populate the Ngrams table and Container table with words
-                var frequency:Int64 = 10000
+                var frequency:Float64 = 10000.0
                 for word in allWords {
                     // check if word is in Ngrams, and insert it if it's not
                     let result = try? db.scalar(ngrams.table.filter(ngrams.gram == word).count)
@@ -183,7 +183,7 @@ class Database: NSObject {
                         _ = try? db.run(insert)
                     }
                     
-                    frequency -= 1
+                    frequency -= 1.0
                     
                     DispatchQueue.main.async {
                         self.counter += 1
@@ -198,7 +198,7 @@ class Database: NSObject {
                     let twoGramComponents = twoGram.components(separatedBy: "\t")
                     var insertNgram = ""
                     var insert_n = Int()
-                    let freq = twoGramComponents[0] as! Int64
+                    let freq:Float64 = Float64(twoGramComponents[0])! / 30000.0
                     // if the word2 is "n't" then combine word1 and word2 and insert with n=1
                     if twoGramComponents[2] == "n't" {
                         insertNgram = twoGramComponents[1]+twoGramComponents[2]
@@ -245,7 +245,7 @@ class Database: NSObject {
                     let word3 = threeGramComponents[3]
                     var insertNgram = ""
                     var insert_n = Int()
-                    let freq = threeGramComponents[0] as! Int64
+                    let freq:Float64 = Float64(threeGramComponents[0])! / 30000.0
                     // handle different cases of 3grams like we did with 2grams
                     if word1 == "n't" {
                         word1 = "not"

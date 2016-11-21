@@ -232,10 +232,10 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
                 // increment ngram in current_profile and default cases
                 _ = try db.run(containers.table.filter(containers.ngram == ngram.gram)
                     .filter(containers.profile == currentProfile)
-                    .update(containers.frequency++, containers.lastused <- Date()))
+                    .update(containers.frequency += 1.0, containers.lastused <- Date()))
                 _ = try db.run(containers.table.filter(containers.ngram == ngram.gram)
                     .filter(containers.profile == "Default")
-                    .update(containers.frequency++, containers.lastused <- Date()))
+                    .update(containers.frequency += 1.0, containers.lastused <- Date()))
             }
         }
         catch {
