@@ -323,6 +323,7 @@ class KeyboardViewController: UIInputViewController {
                             keyView.addTarget(self, action: Selector("shiftDown:"), for: .touchDown)
                             keyView.addTarget(self, action: Selector("shiftUp:"), for: .touchUpInside)
                             keyView.addTarget(self, action: Selector("shiftDoubleTapped:"), for: .touchDownRepeat)
+                            keyView.addTarget(self, action: #selector(shiftPressed), for: .touchUpInside)
                         case Key.KeyType.modeChange:
                             keyView.addTarget(self, action: Selector("modeChangeTapped:"), for: .touchDown)
                         case Key.KeyType.settings:
@@ -891,6 +892,10 @@ class KeyboardViewController: UIInputViewController {
     
     func keyPressed(_ key: Key, secondaryMode: Bool) {
         self.textDocumentProxy.insertText(key.outputForCase(self.shiftState.uppercase(), secondary: secondaryMode))
+    }
+    
+    func shiftPressed() {
+        return 
     }
     
     // a banner that sits in the empty space on top of the keyboard
