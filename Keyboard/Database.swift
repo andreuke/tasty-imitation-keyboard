@@ -56,8 +56,9 @@ class dbObjects {
 
 class Database: NSObject {
     
+    var dbCreated = false
     var progressBar:UIProgressView? = nil
-    var numElements = 100
+    var numElements = 30000
     var counter:Int = 0 {
         didSet {
             let progress = Float(counter) / Float(self.numElements)
@@ -76,7 +77,7 @@ class Database: NSObject {
         super.init()
         self.numElements = numElements
         self.progressBar = progressView
-        //self.resetDatabase()
+        self.resetDatabase()
         do {
             
             let db_path = dbObjects().db_path
@@ -89,19 +90,15 @@ class Database: NSObject {
             let phrases = dbObjects.Phrases()
             let data_sources = dbObjects.DataSources()
             
-            //try? db.run(profiles.table.drop(ifExists: true))
-            
             // Create Ngrams table
-            try? db.run(ngrams.table.create(ifNotExists: true) { t in
+            _ = try? db.run(ngrams.table.create(ifNotExists: true) { t in
                 t.column(ngrams.gram, primaryKey: true)
                 t.column(ngrams.n)
                 t.column(ngrams.frequency)
             })
             
-            //_ = try? db.run(profiles.table.drop(ifExists: true))
-            
             // Create Profiles table
-            try? db.run(profiles.table.create(ifNotExists: true) { t in
+            _ = try? db.run(profiles.table.create(ifNotExists: true) { t in
                 t.column(profiles.profileId, primaryKey: .autoincrement)
                 t.column(profiles.name)
                 t.column(profiles.linksTo, defaultValue: 0)
@@ -115,23 +112,25 @@ class Database: NSObject {
             }
             
             // Create Containers table (pairing of profile and ngram)
-            try? db.run(containers.table.create(ifNotExists: true) { t in
+            _ = try? db.run(containers.table.create(ifNotExists: true) { t in
                 t.column(containers.containerId, primaryKey: .autoincrement)
                 t.column(containers.profile)
                 t.column(containers.ngram)
                 t.column(containers.n)
                 t.column(containers.frequency, defaultValue: 0)
                 t.column(containers.lastused, defaultValue: Date())
+                // - - - - - - - - - - - - 
+                t.unique(containers.profile, containers.ngram)
             })
             
             // Create Phrases table so user can store pre-defined phrases
-            try? db.run(phrases.table.create(ifNotExists: true) { t in
+            _ = try? db.run(phrases.table.create(ifNotExists: true) { t in
                 t.column(phrases.phraseId, primaryKey: .autoincrement)
                 t.column(phrases.phrase)
             })
             
             // Create DataSource table
-            try? db.run(data_sources.table.create(ifNotExists: true) { t in
+            _ = try? db.run(data_sources.table.create(ifNotExists: true) { t in
                 t.column(data_sources.profile)
                 t.column(data_sources.title)
                 t.column(data_sources.source)
@@ -157,8 +156,15 @@ class Database: NSObject {
             self.counter = 0
             
             // Check to make sure Database has been created
+            if self.dbCreated == true {
+                return
+            }
+            
             // If not, then insert the missing words
-            if (try db.scalar(containers.table.filter(containers.profile == "Default").count) < 20000) {
+            else {
+                var ngrams_added = Set<String>()
+                var bulk_ngrams_insert = "INSERT INTO Ngrams (gram, n, frequency) VALUES "
+                var bulk_containers_insert = "INSERT INTO Containers (profile, ngram, n, frequency) VALUES "
                 // Populate the Ngrams table and Container table with words
                 for word in allWords {
                     if word == "" || word == " " {
@@ -168,33 +174,17 @@ class Database: NSObject {
                     let frequency:Float64 = Float64(wordComponents[0])!
                     let oneGram = wordComponents[1]
                     
-                    // check if word is in Ngrams, and insert it if it's not
-                    let result = try? db.scalar(ngrams.table.filter(ngrams.gram == oneGram).count)
-                    if result! == 0 {
-                        let insert = ngrams.table.insert(ngrams.gram <- oneGram, ngrams.n <- 1,
-                                                         ngrams.frequency <- frequency)
-                        _ = try? db.run(insert)
-                    }
-                    else if result! > 1{
-                        print("There's a duplicate word in the db!")
-                    }
-                    
-                    // check if word is paired with Default profile in Containers table, insert if not
-                    let containerResult = try? db.scalar(containers.table
-                        .filter(containers.profile == "Default")
-                        .filter(containers.ngram == oneGram).count)
-                    if containerResult == 0 {
-                        let insert = containers.table.insert(containers.profile <- "Default",
-                                                             containers.ngram <- oneGram,
-                                                             containers.n <- 1,
-                                                             containers.frequency <- frequency)
-                        _ = try? db.run(insert)
-                    }
+                    bulk_ngrams_insert.append("(\"\(oneGram)\",1,\(frequency)), ")
+                    bulk_containers_insert.append("(\"Default\",\"\(oneGram)\",1,\(frequency)), ")
+
+                    ngrams_added.insert(oneGram)
+
                     DispatchQueue.main.async {
                         self.counter += 1
                         return
                     }
                 }
+                self.counter = 9735
                 
                 for twoGram in allTwoGrams {
                     if twoGram == "" {
@@ -203,7 +193,7 @@ class Database: NSObject {
                     let twoGramComponents = twoGram.components(separatedBy: "\t")
                     var insertNgram = ""
                     var insert_n = Int()
-                    let freq:Float64 = Float64(twoGramComponents[0])! / 30000.0
+                    let freq:Float64 = Float64(twoGramComponents[0])!
                     // if the word2 is "n't" then combine word1 and word2 and insert with n=1
                     if twoGramComponents[2] == "n't" {
                         insertNgram = twoGramComponents[1]+twoGramComponents[2]
@@ -214,31 +204,20 @@ class Database: NSObject {
                         insertNgram = twoGramComponents[1]+" "+twoGramComponents[2]
                         insert_n = 2
                     }
-                    let result = try? db.scalar(ngrams.table.filter(ngrams.gram == insertNgram).count)
-                    if result! == 0 {
-                        let insert = ngrams.table.insert(ngrams.gram <- insertNgram,
-                                                         ngrams.n <- insert_n,
-                                                         ngrams.frequency <- freq)
-                        _ = try? db.run(insert)
+                    
+                    if !ngrams_added.contains(insertNgram) {//result! == 0 {
+                        bulk_ngrams_insert.append("(\"\(insertNgram)\",\(insert_n),\(freq)), ")
+                        bulk_containers_insert.append("(\"Default\",\"\(insertNgram)\",\(insert_n),\(freq)), ")
+
+                        ngrams_added.insert(insertNgram)
                     }
                     
-                    
-                    // check if insertNgram is paired with Default profile in Containers table, insert if not
-                    let containerResult = try? db.scalar(containers.table
-                        .filter(containers.profile == "Default")
-                        .filter(containers.ngram == insertNgram).count)
-                    if (containerResult == 0) && (insertNgram != "") {
-                        let insert = containers.table.insert(containers.profile <- "Default",
-                                                             containers.ngram <- insertNgram,
-                                                             containers.n <- insert_n,
-                                                             containers.frequency <- freq)
-                        _ = try? db.run(insert)
-                    }
                     DispatchQueue.main.async {
                         self.counter += 1
                         return
                     }
                 }
+                self.counter = 20000
                 
                 for threeGram in allThreeGrams {
                     if threeGram == "" {
@@ -250,7 +229,7 @@ class Database: NSObject {
                     let word3 = threeGramComponents[3]
                     var insertNgram = ""
                     var insert_n = Int()
-                    let freq:Float64 = Float64(threeGramComponents[0])! / 30000.0
+                    let freq:Float64 = Float64(threeGramComponents[0])!
                     // handle different cases of 3grams like we did with 2grams
                     if word1 == "n't" {
                         word1 = "not"
@@ -267,34 +246,32 @@ class Database: NSObject {
                         insertNgram = word1+" "+word2+" "+word3
                         insert_n = 3
                     }
-                    let result = try? db.scalar(ngrams.table.filter(ngrams.gram == insertNgram).count)
-                    if result! == 0 {
-                        let insert = ngrams.table.insert(ngrams.gram <- insertNgram,
-                                                         ngrams.n <- insert_n,
-                                                         ngrams.frequency <- freq)
-                        _ = try? db.run(insert)
+   
+                    if !ngrams_added.contains(insertNgram) {//result! == 0 {
+                        bulk_ngrams_insert.append("(\"\(insertNgram)\",\(insert_n),\(freq)), ")
+                        bulk_containers_insert.append("(\"Default\",\"\(insertNgram)\",\(insert_n),\(freq)), ")
+
+                        ngrams_added.insert(insertNgram)
                     }
                     
-                    // check if insertNgram is paired with Default profile in Containers table, insert if not
-                    let containerResult = try? db.scalar(containers.table
-                        .filter(containers.profile == "Default")
-                        .filter(containers.ngram == insertNgram).count)
-                    if (containerResult == 0) && (insertNgram != "") {
-                        let insert = containers.table.insert(containers.profile <- "Default",
-                                                             containers.ngram <- insertNgram,
-                                                             containers.n <- insert_n,
-                                                             containers.frequency <- freq)
-                        _ = try? db.run(insert)
-                    }
                     DispatchQueue.main.async {
                         self.counter += 1
                         return
                     }
                 }
+                self.counter = 30000
+                // --------------------------
+                bulk_ngrams_insert = String(bulk_ngrams_insert.characters.dropLast(2))+";"
+                _ = try db.run(bulk_ngrams_insert)
+                
+                bulk_containers_insert = String(bulk_containers_insert.characters.dropLast(2))+";"
+                _ = try db.run(bulk_containers_insert)
+                // --------------------------
+                self.dbCreated = true
             }
         }
         catch {
-            print("uh oh")
+            print("Error: \(error)")
         }
     }
     
@@ -307,6 +284,63 @@ class Database: NSObject {
             let insert = ngrams.table.insert(ngrams.gram <- input_ngram, ngrams.n <- n)
             _ = try? db.run(insert)
         } catch {}
+    }
+    
+    func insertAndIncrement(ngram: String, n: Int, new_freq: Float64 = -1.0) {
+        do {
+            let db_path = dbObjects().db_path
+            let db = try Connection("\(db_path)/db.sqlite3")
+            let containers = dbObjects.Containers()
+            let currentProfile = UserDefaults.standard.value(forKey: "profile") as! String
+            
+            // if ngram notExists in database
+            /*let exists_in_profile = try db.scalar(containers.table
+                .filter(containers.ngram == ngram)
+                .filter(containers.profile == currentProfile)
+                .count) > 0
+            let exists_in_default = try db.scalar(containers.table
+                .filter(containers.ngram == ngram)
+                .filter(containers.profile == "Default")
+                .count) > 0*/
+            if true { //(!exists_in_profile) {
+                // insert ngram into profile
+                let insert = containers.table.insert(containers.ngram <- ngram,
+                                                     containers.profile <- currentProfile,
+                                                     containers.n <- n)
+                _ = try? db.run(insert)
+            }
+            if true {//(!exists_in_default) {
+                // insert ngram into Default
+                let insert = containers.table.insert(containers.ngram <- ngram,
+                                                     containers.profile <- "Default",
+                                                     containers.n <- n)
+                _ = try? db.run(insert)
+            }
+            
+            if new_freq == -1 {
+                // increment ngram in current_profile and default cases
+                _ = try db.run(containers.table.filter(containers.ngram == ngram)
+                    .filter(containers.profile == currentProfile)
+                    .update(containers.frequency += 1.0, containers.lastused <- Date()))
+                _ = try db.run(containers.table.filter(containers.ngram == ngram)
+                    .filter(containers.profile == "Default")
+                    .update(containers.frequency += 1.0, containers.lastused <- Date()))
+            }
+            else {
+                // set the frequency to the one provided
+                _ = try db.run(containers.table.filter(containers.ngram == ngram)
+                    .filter(containers.profile == currentProfile)
+                    .update(containers.frequency += new_freq, containers.lastused <- Date()))
+                _ = try db.run(containers.table.filter(containers.ngram == ngram)
+                    .filter(containers.profile == "Default")
+                    .update(containers.frequency += new_freq, containers.lastused <- Date()))
+            }
+            
+        }
+        catch {
+            print("Something failed in insertAndIncrement()")
+            print("Error: \(error)")
+        }
     }
     
     func recommendationQuery(user_profile: String, n: Int, pattern: String,
@@ -378,6 +412,7 @@ class Database: NSObject {
             }
         } catch {
             print("Something went wrong when fetching \(n)grams for input '\(current_input)' in \(user_profile)")
+            print("Error: \(error)")
         }
         return resultSet
     }
@@ -467,31 +502,30 @@ class Database: NSObject {
             // Insert the new profile into the database
             let profiles = dbObjects.Profiles()
             
-            if (try db.scalar(profiles.table.filter(profiles.name == profile_name).count)) == 0 {
-                let insert = profiles.table.insert(profiles.name <- profile_name)
-                _ = try? db.run(insert)
-            }
+            let insert = profiles.table.insert(profiles.name <- profile_name)
+            _ = try? db.run(insert) // will throw error if profile already exists
             
             // Insert all of the original words into the new profile
             let ngrams = dbObjects.Ngrams()
-            let containers = dbObjects.Containers()
             
             self.counter = 0
+            var bulk_insert = "INSERT INTO Containers (profile, ngram, n, frequency) VALUES "
             
             for row in try db.prepare(ngrams.table) {
-                let insert = containers.table.insert(containers.profile <- profile_name,
-                                                     containers.ngram <- row[ngrams.gram],
-                                                     containers.n <- row[ngrams.n],
-                                                     containers.frequency <- row[ngrams.frequency])
-                _ = try? db.run(insert)
+                bulk_insert.append("(\"\(profile_name)\",\"\(row[ngrams.gram])\",\(row[ngrams.n]),\(row[ngrams.frequency])), ")
+                
                 DispatchQueue.main.async {
                     self.counter += 1
                     return
                 }
             }
+            self.counter = 30000
+            
+            _ = try? db.run(String(bulk_insert.characters.dropLast(2))+";")
             
         } catch {
             print("Something failed while trying to add new profile")
+            print("Error: \(error)")
         }
     }
     
@@ -516,6 +550,7 @@ class Database: NSObject {
             
         } catch {
             print("Something failed while trying to delete profile")
+            print("Error: \(error)")
         }
     }
     
@@ -540,6 +575,7 @@ class Database: NSObject {
                             .update(data_sources.profile <- new_name))
         } catch {
             print("Something failed while editing profile name")
+            print("Error: \(error)")
         }
     }
     
@@ -557,6 +593,7 @@ class Database: NSObject {
             }
         } catch {
             print("Something failed while getting list of profiles")
+            print("Error: \(error)")
         }
         return profiles_list
     }
@@ -575,6 +612,7 @@ class Database: NSObject {
             _ = try? db.run(insert)
         } catch {
             print("Something failed while trying to insert new data source")
+            print("Error: \(error)")
         }
     }
     
@@ -592,6 +630,7 @@ class Database: NSObject {
                                          .filter(data_sources.source == data_source).delete())
         } catch {
             print("Something failed while removing data source")
+            print("Error: \(error)")
         }
     }
     
@@ -610,6 +649,7 @@ class Database: NSObject {
             }
         } catch {
             print("Something failed while getting list of data sources")
+            print("Error: \(error)")
         }
         return data_sources_list
     }
@@ -624,13 +664,15 @@ class Database: NSObject {
             let db_path = dbObjects().db_path
             let db = try Connection("\(db_path)/db.sqlite3")
             
-            try? db.run(ngrams.table.drop(ifExists: true))
-            try? db.run(profiles.table.drop(ifExists: true))
-            try? db.run(containers.table.drop(ifExists: true))
-            try? db.run(phrases.table.drop(ifExists: true))
-            try? db.run(data_sources.table.drop(ifExists: true))
+            _ = try? db.run(ngrams.table.drop(ifExists: true))
+            _ = try? db.run(profiles.table.drop(ifExists: true))
+            _ = try? db.run(containers.table.drop(ifExists: true))
+            _ = try? db.run(phrases.table.drop(ifExists: true))
+            _ = try? db.run(data_sources.table.drop(ifExists: true))
+            self.dbCreated = false
         } catch {
             print("reset failed")
+            print("Error: \(error)")
         }
     }
     
@@ -646,6 +688,7 @@ class Database: NSObject {
         }
         catch {
             print("Inserting a new phrase failed")
+            print("Error: \(error)")
         }
     }
     
@@ -661,6 +704,7 @@ class Database: NSObject {
         }
         catch {
             print("Editing a phrase failed")
+            print("Error: \(error)")
         }
     }
     
@@ -675,6 +719,7 @@ class Database: NSObject {
         }
         catch {
             print("Deleting a phrase failed")
+            print("Error: \(error)")
         }
     }
     
@@ -691,6 +736,7 @@ class Database: NSObject {
             }
         } catch {
             print("Something failed while getting list of profiles")
+            print("Error: \(error)")
         }
         return phrase_list
     }

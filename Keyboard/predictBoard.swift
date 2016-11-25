@@ -223,96 +223,31 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
     }
     
     func incrementNgrams() {
-        do {
-            let context = textDocumentProxy.documentContextBeforeInput
-            let components = context?.components(separatedBy: " ")
-            let count = (components?.count)! as Int
-            var word1 = ""
-            var word2 = ""
-            var word3 = ""
-            if count >= 4 {
-                word1 = (components?[count-4])! as String
-            }
-            if count >= 3 {
-                word2 = (components?[count-3])! as String
-            }
-            word3 = (components?[count-2])! as String
-            
-            // Create possible ngrams
-            let one_gram = (gram: word3, n: 1)
-            let two_gram = (gram: word2+" "+word3, n: 2)
-            let three_gram = (gram: word1+" "+word2+" "+word3, n: 3)
-            
-            let db_path = dbObjects().db_path
-            let db = try Connection("\(db_path)/db.sqlite3")
-            let containers = dbObjects.Containers()
-            let currentProfile = UserDefaults.standard.value(forKey: "profile") as! String
-            
-            // Insert ngrams into database and increment their frequencies
-            for ngram in [one_gram, two_gram, three_gram] {
-                insertAndIncrement(ngram: ngram.gram, n: ngram.n)
-            }
+        let context = textDocumentProxy.documentContextBeforeInput
+        let components = context?.components(separatedBy: " ")
+        let count = (components?.count)! as Int
+        var word1 = ""
+        var word2 = ""
+        var word3 = ""
+        if count >= 4 {
+            word1 = (components?[count-4])! as String
         }
-        catch {
-            print("Something failed while trying to increment ngram frequency")
+        if count >= 3 {
+            word2 = (components?[count-3])! as String
+        }
+        word3 = (components?[count-2])! as String
+        
+        // Create possible ngrams
+        let one_gram = (gram: word3, n: 1)
+        let two_gram = (gram: word2+" "+word3, n: 2)
+        let three_gram = (gram: word1+" "+word2+" "+word3, n: 3)
+        
+        // Insert ngrams into database and increment their frequencies
+        for ngram in [one_gram, two_gram, three_gram] {
+            self.recommendationEngine?.insertAndIncrement(ngram: ngram.gram, n: ngram.n)
         }
     }
-    
-    func insertAndIncrement(ngram: String, n: Int, new_freq: Float64 = -1.0) {
-        do {
-            let db_path = dbObjects().db_path
-            let db = try Connection("\(db_path)/db.sqlite3")
-            let containers = dbObjects.Containers()
-            let currentProfile = UserDefaults.standard.value(forKey: "profile") as! String
-            
-            // if word notExists in database
-            let exists_in_profile = try db.scalar(containers.table
-                .filter(containers.ngram == ngram)
-                .filter(containers.profile == currentProfile)
-                .count) > 0
-            let exists_in_default = try db.scalar(containers.table
-                .filter(containers.ngram == ngram)
-                .filter(containers.profile == "Default")
-                .count) > 0
-            if (!exists_in_profile) {
-                // insert ngram into profile
-                let insert = containers.table.insert(containers.ngram <- ngram,
-                                                     containers.profile <- currentProfile,
-                                                     containers.n <- n)
-                _ = try? db.run(insert)
-            }
-            if (!exists_in_default) {
-                // insert ngram into Default
-                let insert = containers.table.insert(containers.ngram <- ngram,
-                                                     containers.profile <- "Default",
-                                                     containers.n <- n)
-                _ = try? db.run(insert)
-            }
-            
-            if new_freq == -1 {
-                // increment ngram in current_profile and default cases
-                _ = try db.run(containers.table.filter(containers.ngram == ngram)
-                    .filter(containers.profile == currentProfile)
-                    .update(containers.frequency += 1.0, containers.lastused <- Date()))
-                _ = try db.run(containers.table.filter(containers.ngram == ngram)
-                    .filter(containers.profile == "Default")
-                    .update(containers.frequency += 1.0, containers.lastused <- Date()))
-            }
-            else {
-                // set the frequency to the one provided
-                _ = try db.run(containers.table.filter(containers.ngram == ngram)
-                    .filter(containers.profile == currentProfile)
-                    .update(containers.frequency += new_freq, containers.lastused <- Date()))
-                _ = try db.run(containers.table.filter(containers.ngram == ngram)
-                    .filter(containers.profile == "Default")
-                    .update(containers.frequency += new_freq, containers.lastused <- Date()))
-            }
-            
-        }
-        catch {
-            print("Something failed in insertAndIncrement()")
-        }
-    }
+
 
     func updateButtons() {
         // Get previous words to give to recommendWords()
@@ -516,9 +451,9 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
         // temp HTML parse code :: START
         // source: http://stackoverflow.com/questions/26134884/how-to-get-html-source-from-url-with-swift
         
-        //let myURLString = self.banner?.textField.text
-        let myURLString = "https://en.wikipedia.org/wiki/Control_engineering"
-        guard let myURL = URL(string: myURLString) else { // include ! after myURLString for first opt, exclude for second opt
+        let myURLString = self.banner?.textField.text
+        // let myURLString = "https://en.wikipedia.org/wiki/Control_engineering"
+        guard let myURL = URL(string: myURLString!) else { // include ! after myURLString for first opt, exclude for second opt
             print("Error: \(myURLString) doesn't seem to be a valid URL")
             return
         }
@@ -607,44 +542,42 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
         globalQueue.async {
             // Background thread
             self.recommendationEngine?.addDataSource(target_profile: (self.profileView?.profileName)!, new_data_source: (self.banner?.textField.text)!, new_title: (self.banner?.textField.text)!)
-            do {
-                let currentProfile = UserDefaults.standard.value(forKey: "profile") as! String
+
+            self.recommendationEngine?.numElements = Int(unigrams.count + bigrams.count + trigrams.count)
+            DispatchQueue.main.async {
+                self.recommendationEngine?.counter = 0
+                return
+            }
+            
+            for unigram in unigrams {
+                self.recommendationEngine?.insertAndIncrement(ngram: unigram.key, n: 1,
+                                                              new_freq: Float64(unigram.value))
                 
-                self.recommendationEngine?.numElements = Int(unigrams.count + bigrams.count + trigrams.count)
                 DispatchQueue.main.async {
-                    self.recommendationEngine?.counter = 0
+                    self.recommendationEngine?.counter += 1
                     return
                 }
+            }
+            for bigram in bigrams {
+                self.recommendationEngine?.insertAndIncrement(ngram: bigram.key, n: 2,
+                                                              new_freq: Float64(bigram.value))
+                DispatchQueue.main.async {
+                    self.recommendationEngine?.counter += 1
+                    return
+                }
+            }
+            for trigram in trigrams {
+                self.recommendationEngine?.insertAndIncrement(ngram: trigram.key, n: 3,
+                                                              new_freq: Float64(trigram.value))
+                DispatchQueue.main.async {
+                    DispatchQueue.main.async {
+                        self.recommendationEngine?.counter += 1
+                        return
+                    }
+                    return
+                }
+            }
                 
-                for unigram in unigrams {
-                    self.insertAndIncrement(ngram: unigram.key, n: 1, new_freq: Float64(unigram.value))
-                    
-                    DispatchQueue.main.async {
-                        self.recommendationEngine?.counter += 1
-                        return
-                    }
-                }
-                for bigram in bigrams {
-                    self.insertAndIncrement(ngram: bigram.key, n: 2, new_freq: Float64(bigram.value))
-                    DispatchQueue.main.async {
-                        self.recommendationEngine?.counter += 1
-                        return
-                    }
-                }
-                for trigram in trigrams {
-                    self.insertAndIncrement(ngram: trigram.key, n: 3, new_freq: Float64(trigram.value))
-                    DispatchQueue.main.async {
-                        DispatchQueue.main.async {
-                            self.recommendationEngine?.counter += 1
-                            return
-                        }
-                        return
-                    }
-                }
-            }
-            catch {
-                print("Adding data source ngrams failed")
-            }
             DispatchQueue.main.async {
                 // UI Updates
                 self.banner?.showLoadingScreen(toShow: false)
