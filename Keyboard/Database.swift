@@ -77,7 +77,7 @@ class Database: NSObject {
         super.init()
         self.numElements = numElements
         self.progressBar = progressView
-        self.resetDatabase()
+        //self.resetDatabase()
         do {
             
             let db_path = dbObjects().db_path
