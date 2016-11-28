@@ -741,5 +741,21 @@ class Database: NSObject {
         return phrase_list
     }
     
+    func getNgramsFromProfile(profile: String) -> Set<String> {
+        var resultSet = Set<String>()
+        do {
+            let db_path = dbObjects().db_path
+            let db = try Connection("\(db_path)/db.sqlite3")
+            let containers = dbObjects.Containers()
+            
+            for row in try db.prepare(containers.table.filter(containers.profile == profile)) {
+                resultSet.insert(row[containers.ngram])
+            }
+        }
+        catch {
+            print("Error: \(error)")
+        }
+        return resultSet
+    }
     
 }

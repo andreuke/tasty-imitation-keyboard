@@ -430,7 +430,7 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
     func addDataSourceView() {
         textEntryView(toShow: true, view: profileView!)
         self.banner?.textFieldLabel.text = "Data Source URL:"
-        self.banner?.textField.text = "www."
+        self.banner?.textField.text = "https://"
         self.banner?.saveButton.addTarget(self, action: #selector(addDataSource), for: .touchUpInside)
         self.banner?.backButton.addTarget(self, action: #selector(exitDataSourceView), for: .touchUpInside)
     }
@@ -541,8 +541,26 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
         // temp HTML parse code :: END
         globalQueue.async {
             // Background thread
+            // NEW IDEA:
+            //   -get all current ngrams from profile (1 db call)
+            //   -put those into a set
+            //   -if new ngram is not in the set, append to bulk_insert string
+            //   -update frequency
             self.recommendationEngine?.addDataSource(target_profile: (self.profileView?.profileName)!, new_data_source: (self.banner?.textField.text)!, new_title: (self.banner?.textField.text)!)
 
+            var bulk_insert = "INSERT INTO Containers (profile, ngram, n, frequency) VALUES "
+            var bulk_update = ""
+            
+            // -----------------------------------
+            // is it possible to do a bulk update?
+            // idk but I'm gonna try anyway
+            // -----------------------------------
+            
+            // REPLACE THIS WITH THE NAME OF THE PROFILE YOU'RE TARGETING, NOT THE ONE YOU'RE USING
+            let target_profile = UserDefaults.standard.value(forKey: "profile") as! String
+            // ---------------------------------------
+            var ngramsSet = self.recommendationEngine?.getNgramsFromProfile(profile: target_profile)
+            
             self.recommendationEngine?.numElements = Int(unigrams.count + bigrams.count + trigrams.count)
             DispatchQueue.main.async {
                 self.recommendationEngine?.counter = 0
@@ -550,8 +568,19 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
             }
             
             for unigram in unigrams {
-                self.recommendationEngine?.insertAndIncrement(ngram: unigram.key, n: 1,
-                                                              new_freq: Float64(unigram.value))
+                //self.recommendationEngine?.insertAndIncrement(ngram: unigram.key, n: 1,
+                //                                              new_freq: Float64(unigram.value))
+                if !(ngramsSet?.contains(unigram.key))! {
+                    // append to bulk insert
+                    bulk_insert.append("(\"\(target_profile)\",\"\(unigram.key)\",1,\(unigram.value)), ")
+                    ngramsSet?.insert(unigram.key)
+                }
+                else {
+                    // update frequency
+                    // use bulk_update if that's possible
+                    let new_update = "UPDATE Containers SET frequency = frequency + \(unigram.value) WHERE ngram = \"\(unigram.key)\"; "
+                    bulk_update.append(new_update)
+                }
                 
                 DispatchQueue.main.async {
                     self.recommendationEngine?.counter += 1
@@ -559,16 +588,40 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
                 }
             }
             for bigram in bigrams {
-                self.recommendationEngine?.insertAndIncrement(ngram: bigram.key, n: 2,
-                                                              new_freq: Float64(bigram.value))
+                //self.recommendationEngine?.insertAndIncrement(ngram: bigram.key, n: 2,
+                //                                              new_freq: Float64(bigram.value))
+                if !(ngramsSet?.contains(bigram.key))! {
+                    // append to bulk insert
+                    bulk_insert.append("(\"\(target_profile)\",\"\(bigram.key)\",2,\(bigram.value)), ")
+                    ngramsSet?.insert(bigram.key)
+                }
+                else {
+                    // update frequency
+                    // use bulk_update if that's possible
+                    let new_update = "UPDATE Containers SET frequency = frequency + \(bigram.value) WHERE ngram = \"\(bigram.key)\"; "
+                    bulk_update.append(new_update)
+                }
+                
                 DispatchQueue.main.async {
                     self.recommendationEngine?.counter += 1
                     return
                 }
             }
             for trigram in trigrams {
-                self.recommendationEngine?.insertAndIncrement(ngram: trigram.key, n: 3,
-                                                              new_freq: Float64(trigram.value))
+                //self.recommendationEngine?.insertAndIncrement(ngram: trigram.key, n: 3,
+                //                                              new_freq: Float64(trigram.value))
+                if !(ngramsSet?.contains(trigram.key))! {
+                    // append to bulk insert
+                    bulk_insert.append("(\"\(target_profile)\",\"\(trigram.key)\",3,\(trigram.value)), ")
+                    ngramsSet?.insert(trigram.key)
+                }
+                else {
+                    // update frequency
+                    // use bulk_update if that's possible
+                    let new_update = "UPDATE Containers SET frequency = frequency + \(trigram.value) WHERE ngram = \"\(trigram.key)\"; "
+                    bulk_update.append(new_update)
+                }
+                
                 DispatchQueue.main.async {
                     DispatchQueue.main.async {
                         self.recommendationEngine?.counter += 1
@@ -576,6 +629,16 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
                     }
                     return
                 }
+            }
+            
+            // Run insert and update
+            do {
+                let db_path = dbObjects().db_path
+                let db = try Connection("\(db_path)/db.sqlite3")
+                _ = try db.run(String(bulk_insert.characters.dropLast(2))+";")
+                _ = try db.run(bulk_update)
+            } catch {
+                print("Error: \(error)")
             }
                 
             DispatchQueue.main.async {
