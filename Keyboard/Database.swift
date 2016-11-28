@@ -434,9 +434,67 @@ class Database: NSObject {
         // 2 & 1:  "\(current_input)%"
         
         var resultSet = Set<String>()
-        let userProfile = UserDefaults.standard.value(forKey: "profile")
+        let userProfile = UserDefaults.standard.value(forKey: "profile") as! String
         let words = [word1, word2, current_input]
         
+            /*
+            .filter(containers.profile == user_profile)
+            .filter(containers.ngram.like(pattern))
+            .filter(containers.ngram != current_input)
+            .filter(containers.ngram != "")
+            .filter(containers.n == n)
+            .order(containers.frequency.desc, containers.ngram)*/
+        
+        /*let raw_SQL =   "SELECT * FROM Containers " +
+                        "WHERE profile = \"\(userProfile)\" " +
+                        "AND ngram LIKE \"\(current_input)%\" " +
+                        "AND ngram != \"\(current_input)\" " +
+                        "AND ngram != \"\" " +
+                        "AND (n = 1 OR n = 2) " +
+                        "UNION " + //////////
+                        "SELECT * FROM Containers " +
+                        "WHERE profile = \"\(userProfile)\" " +
+                        "AND ngram LIKE \"\(word2) \(current_input)%\" " +
+                        "AND ngram != \"\(current_input)\" " +
+                        "AND ngram != \"\" " +
+                        "AND (n = 2 OR n = 3) " +
+                        "UNION " + //////////
+                        "SELECT * FROM Containers " +
+                        "WHERE profile = \"\(userProfile)\" " +
+                        "AND ngram LIKE \"\(word1) \(word2) \(current_input)%\" " +
+                        "AND ngram != \"\(current_input)\" " +
+                        "AND ngram != \"\" " +
+                        "AND n = 3 " +
+                        "ORDER BY n DESC, frequency DESC; " ///////// */
+        /*let raw_SQL =   "SELECT * FROM Containers " +
+                        "WHERE profile = \"\(userProfile)\" " +
+                        "AND ngram != \"\(current_input)\" " +
+                        "AND ngram != \"\" " +
+                        "AND ((ngram LIKE \"\(current_input)%\" " +
+                             "AND (n = 1 OR n = 2)) " +
+                            "OR (ngram LIKE \"\(word2) \(current_input)%\" " +
+                             "AND (n = 2 OR n = 3)) " +
+                            "OR (ngram LIKE \"\(word1) \(word2) \(current_input)%\" " +
+                             "AND n = 3)) " +
+                        "ORDER BY n DESC, frequency DESC; " //////////
+        do {
+            let db_path = dbObjects().db_path
+            let db = try Connection("\(db_path)/db.sqlite3")
+            let containers = dbObjects.Containers()
+            let statement = try db.prepare(raw_SQL)
+            for (a,s) in statement.columnNames.enumerated() {
+                if resultSet.count >= 15 {
+                    break
+                }
+                //resultSet.insert(row[containers.ngram])
+            }
+        }
+        catch {
+            print("Error: \(error)")
+        }*/
+        
+        
+    
         if word1 != "" && word2 != "" {
             resultSet = recommendationQuery(user_profile: userProfile as! String,
                                 n: 3, pattern: "\(word1) \(word2) \(current_input)%",
@@ -471,6 +529,8 @@ class Database: NSObject {
                                 n: 1, pattern: "\(current_input)%",
                                 words: words, result_set: resultSet)
         }
+ 
+ 
         // Fix resultSet based on the ShiftState
         //  disabled: do nothing
         //  enabled: capitalize the first letter

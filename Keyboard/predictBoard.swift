@@ -578,7 +578,7 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
                 else {
                     // update frequency
                     // use bulk_update if that's possible
-                    let new_update = "UPDATE Containers SET frequency = frequency + \(unigram.value) WHERE ngram = \"\(unigram.key)\"; "
+                    let new_update = "UPDATE Containers SET frequency = frequency + \(unigram.value) WHERE profile = \"\(target_profile)\" AND ngram = \"\(unigram.key)\"; "
                     bulk_update.append(new_update)
                 }
                 
