@@ -813,7 +813,7 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
     
     func createPhrases() -> Phrases? {
         // note that dark mode is not yet valid here, so we just put false for clarity
-        let phrasesView = Phrases(onClickCallBack: temp, editCallback: editPhraseView, globalColors: type(of: self).globalColors, darkMode: false, solidColorMode: self.solidColorMode())
+        let phrasesView = Phrases(onClickCallBack: typePhrase, editCallback: editPhraseView, globalColors: type(of: self).globalColors, darkMode: false, solidColorMode: self.solidColorMode())
         phrasesView.backButton?.addTarget(self, action: #selector(goToKeyboard), for: UIControlEvents.touchUpInside)
         
         phrasesView.addButton?.action = #selector(addPhraseView)
@@ -826,13 +826,14 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
         updateButtons()
     }
 
-    func temp(_ sentence: String) {
+    func typePhrase(_ sentence: String) {
         print(sentence)
         let textDocumentProxy = self.textDocumentProxy
         
         let insertionSentence = sentence + " "
         // update database with insertion word
         textDocumentProxy.insertText(insertionSentence)
+        updateButtons()
     }
 }
 

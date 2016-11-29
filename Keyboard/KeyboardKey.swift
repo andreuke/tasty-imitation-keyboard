@@ -472,6 +472,13 @@ class KeyboardKey: UIControl {
             self.popupLabel = popupLabel
             
             self.label.isHidden = true
+            self.secondaryLabel.isHidden = true
+        }
+    }
+    
+    func showSecondaryPopup() {
+        if self.popup != nil {
+            self.popupLabel?.text = self.secondaryLabel.text
         }
     }
     
@@ -489,6 +496,7 @@ class KeyboardKey: UIControl {
             self.popup = nil
             
             self.label.isHidden = false
+            self.secondaryLabel.isHidden = false
             self.background.attach(nil)
             
             self.layer.zPosition = 0
