@@ -39,6 +39,8 @@
 		890536921DD558040096C729 /* Profile.xib in Resources */ = {isa = PBXBuildFile; fileRef = 890536911DD558040096C729 /* Profile.xib */; };
 		890536941DD55C7F0096C729 /* Profiles.swift in Sources */ = {isa = PBXBuildFile; fileRef = 890536931DD55C7F0096C729 /* Profiles.swift */; };
 		89123E9F1DC86A46003A4BD3 /* SQLite.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 89123E9E1DC86A46003A4BD3 /* SQLite.framework */; };
+		892000331DED4290001D66AB /* Settings.bundle in Resources */ = {isa = PBXBuildFile; fileRef = 892000321DED4290001D66AB /* Settings.bundle */; };
+		892000361DED45F2001D66AB /* Settings.bundle in Resources */ = {isa = PBXBuildFile; fileRef = 892000321DED4290001D66AB /* Settings.bundle */; };
 		8952662C1DCABCCE000F6540 /* BannerButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8952662B1DCABCCE000F6540 /* BannerButton.swift */; };
 		897067D81DDAE57E008592E9 /* SQLite.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 89123E9E1DC86A46003A4BD3 /* SQLite.framework */; };
 		89A5DC431DC19D7F0087BEAA /* ExpandedKeyboard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89A5DC421DC19D7F0087BEAA /* ExpandedKeyboard.swift */; };
@@ -151,6 +153,9 @@
 		890536911DD558040096C729 /* Profile.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = Profile.xib; sourceTree = "<group>"; };
 		890536931DD55C7F0096C729 /* Profiles.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Profiles.swift; sourceTree = "<group>"; };
 		89123E9E1DC86A46003A4BD3 /* SQLite.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SQLite.framework; path = Carthage/Build/iOS/SQLite.framework; sourceTree = "<group>"; };
+		892000321DED4290001D66AB /* Settings.bundle */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.plug-in"; name = Settings.bundle; path = ../Keyboard/Settings.bundle; sourceTree = "<group>"; };
+		892891231DED54FB00B0390D /* HostingApp.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = HostingApp.entitlements; sourceTree = "<group>"; };
+		892891241DED553800B0390D /* Keyboard.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Keyboard.entitlements; sourceTree = "<group>"; };
 		895106A41DB55276006D85F2 /* BasicWords.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = BasicWords.txt; sourceTree = "<group>"; };
 		8952662B1DCABCCE000F6540 /* BannerButton.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = BannerButton.swift; path = ../BannerButton.swift; sourceTree = "<group>"; };
 		897067DB1DDAE77A008592E9 /* 2grams-10000.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = "2grams-10000.txt"; sourceTree = "<group>"; };
@@ -303,11 +308,13 @@
 		4E807D9519461D9000D875D1 /* HostingApp */ = {
 			isa = PBXGroup;
 			children = (
+				892891231DED54FB00B0390D /* HostingApp.entitlements */,
 				4EF16F9A19D2550D0076AFCB /* AppDelegate.swift */,
 				4EF16F9519D255030076AFCB /* ViewController.swift */,
 				4EF16F9D19D2552E0076AFCB /* Main.storyboard */,
 				4EF16F9319D255030076AFCB /* Images.xcassets */,
 				4E807D9619461D9000D875D1 /* Supporting Files */,
+				892000321DED4290001D66AB /* Settings.bundle */,
 			);
 			path = HostingApp;
 			sourceTree = "<group>";
@@ -324,6 +331,7 @@
 		4E807DBA19461DC700D875D1 /* Keyboard */ = {
 			isa = PBXGroup;
 			children = (
+				892891241DED553800B0390D /* Keyboard.entitlements */,
 				4E6AEE5219D2488B00931E8F /* Controller */,
 				4E6AEE5019D2486900931E8F /* Model */,
 				4E6AEE4F19D2484B00931E8F /* Views */,
@@ -462,13 +470,23 @@
 				TargetAttributes = {
 					4E807D9219461D9000D875D1 = {
 						CreatedOnToolsVersion = 6.0;
-						DevelopmentTeam = XMMYXA7BA5;
+						DevelopmentTeam = RVGU7YMDGA;
 						LastSwiftMigration = 0800;
+						SystemCapabilities = {
+							com.apple.ApplicationGroups.iOS = {
+								enabled = 1;
+							};
+						};
 					};
 					4E807DB819461DC700D875D1 = {
 						CreatedOnToolsVersion = 6.0;
-						DevelopmentTeam = XMMYXA7BA5;
+						DevelopmentTeam = RVGU7YMDGA;
 						LastSwiftMigration = 0800;
+						SystemCapabilities = {
+							com.apple.ApplicationGroups.iOS = {
+								enabled = 1;
+							};
+						};
 					};
 					4E8EF38019F95D74009CBF5D = {
 						CreatedOnToolsVersion = 6.1;
@@ -500,6 +518,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				892000361DED45F2001D66AB /* Settings.bundle in Resources */,
 				4EF16F9619D255030076AFCB /* Images.xcassets in Resources */,
 				4EF16F9F19D2552E0076AFCB /* Main.storyboard in Resources */,
 				4EF16F9119D254E00076AFCB /* Background.jpg in Resources */,
@@ -512,6 +531,7 @@
 			files = (
 				961D4CDC1DDCCA02002DFF28 /* 2grams-10000.txt in Resources */,
 				961D4CDD1DDCCA02002DFF28 /* 3grams-10000.txt in Resources */,
+				892000331DED4290001D66AB /* Settings.bundle in Resources */,
 				961D4CDE1DDCCA02002DFF28 /* google-10000.txt in Resources */,
 				961D4D031DE2D41A002DFF28 /* Phrases.xib in Resources */,
 				961D4D011DE2D41A002DFF28 /* 1grams.txt in Resources */,
@@ -723,7 +743,8 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = "LaunchImage-1";
-				DEVELOPMENT_TEAM = XMMYXA7BA5;
+				CODE_SIGN_ENTITLEMENTS = HostingApp/HostingApp.entitlements;
+				DEVELOPMENT_TEAM = RVGU7YMDGA;
 				EMBEDDED_CONTENT_CONTAINS_SWIFT = YES;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
@@ -743,7 +764,8 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = "LaunchImage-1";
-				DEVELOPMENT_TEAM = XMMYXA7BA5;
+				CODE_SIGN_ENTITLEMENTS = HostingApp/HostingApp.entitlements;
+				DEVELOPMENT_TEAM = RVGU7YMDGA;
 				EMBEDDED_CONTENT_CONTAINS_SWIFT = YES;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
@@ -762,7 +784,8 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CLANG_ENABLE_MODULES = YES;
-				DEVELOPMENT_TEAM = XMMYXA7BA5;
+				CODE_SIGN_ENTITLEMENTS = Keyboard/Keyboard.entitlements;
+				DEVELOPMENT_TEAM = RVGU7YMDGA;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/Carthage/Build/iOS",
@@ -780,7 +803,8 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CLANG_ENABLE_MODULES = YES;
-				DEVELOPMENT_TEAM = XMMYXA7BA5;
+				CODE_SIGN_ENTITLEMENTS = Keyboard/Keyboard.entitlements;
+				DEVELOPMENT_TEAM = RVGU7YMDGA;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/Carthage/Build/iOS",

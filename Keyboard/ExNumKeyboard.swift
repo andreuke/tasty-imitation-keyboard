@@ -31,7 +31,7 @@ func exNumKeyboard() -> Keyboard {
     tabKey.lowercaseOutput = "\t"
     tabKey.size = 1
     exNumKeyboard.addKey(tabKey, row: 1 + offset, page: 0)
-    for key in ["A#", "S$", "D%", "F+", "G-", "H=", "J*", "K^", "L&", "!;", "\"<", "'>"] {
+    for key in ["A#", "S$", "D%", "F+", "G-", "H=", "J*", "K^", "L&", "!¡", "\"<", "'>"] {
         let keyModel = Key(.character)
         if key.characters.count == 1 {
             keyModel.setLetter(key)
@@ -51,7 +51,7 @@ func exNumKeyboard() -> Keyboard {
     
     exNumKeyboard.addKey(shift, row: 2 + offset, page: 0)
     
-    for key in ["Z", "X", "C", "V", "B", "N", "M", ",", ".", "?"] {
+    for key in ["Z`", "X_", "C✓", "V°", "B×", "N≈", "M÷", ",;", ".•", "?¿"] {
         let keyModel = Key(.character)
         if key.characters.count == 1 {
             keyModel.setLetter(key)

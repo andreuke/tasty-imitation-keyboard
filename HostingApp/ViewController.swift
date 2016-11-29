@@ -20,6 +20,16 @@ class HostingAppViewController: UIViewController {
         NotificationCenter.default.addObserver(self, selector: #selector(HostingAppViewController.keyboardDidHide), name: NSNotification.Name.UIKeyboardDidHide, object: nil)
         //NSNotificationCenter.defaultCenter().addObserver(self, selector: Selector("keyboardWillChangeFrame:"), name: UIKeyboardWillChangeFrameNotification, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(HostingAppViewController.keyboardDidChangeFrame(_:)), name: NSNotification.Name.UIKeyboardDidChangeFrame, object: nil)
+        
+        let appGroupID = "group.com.Meboard"
+        UserDefaults(suiteName: appGroupID)
+        
+        let appDefaults = [String:AnyObject]()
+        UserDefaults.standard.register(defaults: appDefaults)
+        
+        let x = UserDefaults.standard.bool(forKey: "kSmallLowercase")
+       let y =  UserDefaults.standard.bool(forKey: "kSmallLowercase")
+        
     }
 
     override func didReceiveMemoryWarning() {

@@ -82,14 +82,17 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
             else {
                 //if they do a space then a period, put the period next to the last word
                 let punctuation = [".", ",", ";", "!", "?", "\'", ":", "\"", "-"]
-                if punctuation.contains(key.lowercaseOutput!){
+                if punctuation.contains(keyOutput){
                     if let preContext = textDocumentProxy.documentContextBeforeInput {
-                        let endIndex = preContext.endIndex
-                        let preIndex = preContext.index(before: endIndex)
-                        let twoBeforeIndex = preContext.index(before: preIndex)
-                        if (preContext[preIndex] == " ") && (preContext[twoBeforeIndex] != " ") {
-                            textDocumentProxy.deleteBackward()
-                            keyOutput += " "
+                        //ensure at least 2 characters have been typed
+                        if preContext.characters.count > 1 {
+                            let endIndex = preContext.endIndex
+                            let preIndex = preContext.index(before: endIndex)
+                            let twoBeforeIndex = preContext.index(before: preIndex)
+                            if (preContext[preIndex] == " ") && (preContext[twoBeforeIndex] != " ") {
+                                textDocumentProxy.deleteBackward()
+                                keyOutput += " "
+                            }
                         }
                     }
                 }

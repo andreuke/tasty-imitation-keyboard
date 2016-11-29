@@ -41,7 +41,7 @@ class PredictboardBanner: ExtraView {
     }
     
     required init(globalColors: GlobalColors.Type?, darkMode: Bool, solidColorMode: Bool) {
-
+        let defaults = UserDefaults.standard
         
         super.init(globalColors: globalColors, darkMode: darkMode, solidColorMode: solidColorMode)
         

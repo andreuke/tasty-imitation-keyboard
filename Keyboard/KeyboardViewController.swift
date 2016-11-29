@@ -35,6 +35,7 @@ class KeyboardViewController: UIInputViewController {
     var bannerView: ExtraView?
     var settingsView: ExtraView?
     //var profileView: ExtraView?
+    var currentKey: KeyboardKey?
     
     var currentMode: Int {
         didSet {
@@ -100,6 +101,8 @@ class KeyboardViewController: UIInputViewController {
     }
     
     override init(nibName nibNameOrNil: String?, bundle nibBundleOrNil: Bundle?) {
+        let appGroupID = "group.com.Meboard"
+        UserDefaults(suiteName: appGroupID)
         UserDefaults.standard.register(defaults: [
             kAutoCapitalization: true,
             kPeriodShortcut: true,
@@ -108,8 +111,8 @@ class KeyboardViewController: UIInputViewController {
             "numberACSrows": 3,
             "numberACSbuttons": 13
         ])
-    
-        
+        let appDefaults = [String:AnyObject]()
+        UserDefaults.standard.register(defaults: appDefaults)
         self.keyboard = exNumKeyboard()
         
         self.shiftState = .disabled
@@ -333,11 +336,11 @@ class KeyboardViewController: UIInputViewController {
                         }
                         
                         if key.isCharacter {
-                            if UIDevice.current.userInterfaceIdiom != UIUserInterfaceIdiom.pad {
+                            //if UIDevice.current.userInterfaceIdiom != UIUserInterfaceIdiom.pad {
                                 keyView.addTarget(self, action: Selector("showPopup:"), for: [.touchDown, .touchDragInside, .touchDragEnter])
                                 keyView.addTarget(keyView, action: Selector("hidePopup"), for: [.touchDragExit, .touchCancel])
                                 keyView.addTarget(self, action: Selector("hidePopupDelay:"), for: [.touchUpInside, .touchUpOutside, .touchDragOutside])
-                            }
+                            //}
                         }
                         
                         if key.hasOutput {
@@ -571,13 +574,16 @@ class KeyboardViewController: UIInputViewController {
     func keyDown(_ sender: KeyboardKey) {
         self.cancelSecondaryTextTimer()
         // trigger for subsequent deletes
+        self.currentKey = sender
         self.secondaryTextTimer = Timer.scheduledTimer(timeInterval: secondaryTextDelay, target: self, selector: #selector(KeyboardViewController.setSecondaryTextMode), userInfo: nil, repeats: false)
+        //self.secondaryTextTimer = Timer.scheduledTimer(timeInterval: secondaryTextDelay, target: sender, selector: #selector(sender.showSecondaryPopup), userInfo: nil, repeats: false)
     }
     
     func setSecondaryTextMode() {
         if self.secondaryTextTimer != nil {
             playSecondaryKeySound()
         }
+        self.currentKey?.showSecondaryPopup()
         self.secondaryTextMode = true
     }
     
