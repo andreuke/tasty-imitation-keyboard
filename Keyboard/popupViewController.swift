@@ -19,6 +19,7 @@ class PopUpViewController:  UIViewController,UITableViewDelegate, UITableViewDat
     var editButton = UIButton()
     var callBack: () -> ()
     var maxHeight: CGFloat?
+    let fontSize = CGFloat(22)
     init(selector: UIButton, maxHeight: CGFloat, callBack: @escaping () -> ())
     {
         self.callBack = callBack
@@ -82,6 +83,7 @@ class PopUpViewController:  UIViewController,UITableViewDelegate, UITableViewDat
         cell.textLabel?.adjustsFontSizeToFitWidth = true
         let text = self.items[indexPath.row]
         cell.textLabel?.text = text
+        cell.textLabel?.font = UIFont.systemFont(ofSize: fontSize)
         if text == selector?.titleLabel!.text! {
             cell.backgroundColor = UIColor.init(red: 242/255, green: 193/255, blue: 133/255, alpha: 1)
         }
