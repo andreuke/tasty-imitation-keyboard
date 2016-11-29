@@ -50,6 +50,9 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
     var profileView: Profiles?
     var phrasesView: Phrases?
     var total = 100
+    let globalQueue = DispatchQueue.global(qos: .userInitiated)
+    
+    
     override init(nibName nibNameOrNil: String?, bundle nibBundleOrNil: Bundle?) {
 
         UserDefaults.standard.register(defaults: ["profile": "Default"])
@@ -142,9 +145,7 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
             
         }
         
-        let globalQueue = DispatchQueue.global(qos: .userInitiated)
-        
-        globalQueue.async {
+        self.globalQueue.sync {
             // Background thread
             self.recommendationEngine = Database(progressView: (self.banner?.progressBar)!, numElements: 30000)
             self.reccommendationEngineLoaded = true
@@ -226,28 +227,31 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
     }
     
     func incrementNgrams() {
-        let context = textDocumentProxy.documentContextBeforeInput
-        let components = context?.components(separatedBy: " ")
-        let count = (components?.count)! as Int
-        var word1 = ""
-        var word2 = ""
-        var word3 = ""
-        if count >= 4 {
-            word1 = (components?[count-4])! as String
-        }
-        if count >= 3 {
-            word2 = (components?[count-3])! as String
-        }
-        word3 = (components?[count-2])! as String
         
-        // Create possible ngrams
-        let one_gram = (gram: word3, n: 1)
-        let two_gram = (gram: word2+" "+word3, n: 2)
-        let three_gram = (gram: word1+" "+word2+" "+word3, n: 3)
-        
-        // Insert ngrams into database and increment their frequencies
-        for ngram in [one_gram, two_gram, three_gram] {
-            self.recommendationEngine?.insertAndIncrement(ngram: ngram.gram, n: ngram.n)
+        self.globalQueue.sync {
+            let context = self.textDocumentProxy.documentContextBeforeInput
+            let components = context?.components(separatedBy: " ")
+            let count = (components?.count)! as Int
+            var word1 = ""
+            var word2 = ""
+            var word3 = ""
+            if count >= 4 {
+                word1 = (components?[count-4])! as String
+            }
+            if count >= 3 {
+                word2 = (components?[count-3])! as String
+            }
+            word3 = (components?[count-2])! as String
+            
+            // Create possible ngrams
+            let one_gram = (gram: word3, n: 1)
+            let two_gram = (gram: word2+" "+word3, n: 2)
+            let three_gram = (gram: word1+" "+word2+" "+word3, n: 3)
+            
+            // Insert ngrams into database and increment their frequencies
+            for ngram in [one_gram, two_gram, three_gram] {
+                self.recommendationEngine?.insertAndIncrement(ngram: ngram.gram, n: ngram.n)
+            }
         }
     }
 
@@ -255,42 +259,47 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
     func updateButtons() {
         // Get previous words to give to recommendWords()
         // ------------------------
-        if self.reccommendationEngineLoaded {
-            let context = textDocumentProxy.documentContextBeforeInput
-            let components = context?.components(separatedBy: " ")
-            var count = 0
-            if (components != nil) {
-                count = (components?.count)! as Int
-            }
-            var word1 = ""
-            var word2 = ""
-            var current_input = ""
-            if count >= 3 {
-                word1 = (components?[count-3])! as String
-            }
-            if count >= 2 {
-                word2 = (components?[count-2])! as String
-            }
-            if count >= 1 {
-                current_input = (components?[count-1])! as String
-            }
-            // ------------------------
-            let recEngine = recommendationEngine!
-            let recommendations = Array(recEngine.recommendWords(word1: word1, word2: word2,
-                                                                 current_input: current_input,
-                                                                 shift_state: self.shiftState)).sorted()
-            
-            var index = 0
-            for button in (self.banner?.buttons)! {
-                if index < recommendations.count {
-                    button.setTitle(recommendations[index], for: UIControlState())
-                    button.addTarget(self, action: #selector(KeyboardViewController.playKeySound), for: .touchDown)
+        
+        self.globalQueue.sync {
+            if self.reccommendationEngineLoaded {
+                let context = self.textDocumentProxy.documentContextBeforeInput
+                let components = context?.components(separatedBy: " ")
+                var count = 0
+                if (components != nil) {
+                    count = (components?.count)! as Int
                 }
-                else {
-                    button.setTitle(" ", for: UIControlState())
-                    button.removeTarget(self, action: #selector(KeyboardViewController.playKeySound), for: .touchDown)
+                var word1 = ""
+                var word2 = ""
+                var current_input = ""
+                if count >= 3 {
+                    word1 = (components?[count-3])! as String
                 }
-                index += 1
+                if count >= 2 {
+                    word2 = (components?[count-2])! as String
+                }
+                if count >= 1 {
+                    current_input = (components?[count-1])! as String
+                }
+                // ------------------------
+                let recEngine = self.recommendationEngine!
+                let recommendations = Array(recEngine.recommendWords(word1: word1, word2: word2,
+                                                                     current_input: current_input,
+                                                                     shift_state: self.shiftState)).sorted()
+                
+                var index = 0
+                DispatchQueue.main.async {
+                    for button in (self.banner?.buttons)! {
+                        if index < recommendations.count {
+                            button.setTitle(recommendations[index], for: UIControlState())
+                            button.addTarget(self, action: #selector(KeyboardViewController.playKeySound), for: .touchDown)
+                        }
+                        else {
+                            button.setTitle(" ", for: UIControlState())
+                            button.removeTarget(self, action: #selector(KeyboardViewController.playKeySound), for: .touchDown)
+                        }
+                        index += 1
+                    }
+                }
             }
         }
     }
@@ -352,8 +361,7 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
     
     //go from internal text input mode to profile view
     func saveProfile() {
-        let globalQueue = DispatchQueue.global(qos: .userInitiated)
-        globalQueue.async {
+        self.globalQueue.sync {
             // Background thread
             self.recommendationEngine?.numElements = 30000
             self.recommendationEngine?.addProfile(profile_name: (self.banner?.textField.text)!)
@@ -449,100 +457,99 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
         var HTMLArray = [" "]
         
         //For now data source title and data source name are the same
-        let globalQueue = DispatchQueue.global(qos: .userInitiated)
-        
-        // temp HTML parse code :: START
-        // source: http://stackoverflow.com/questions/26134884/how-to-get-html-source-from-url-with-swift
-        
-        let myURLString = self.banner?.textField.text
-        // let myURLString = "https://en.wikipedia.org/wiki/Control_engineering"
-        guard let myURL = URL(string: myURLString!) else { // include ! after myURLString for first opt, exclude for second opt
-            print("Error: \(myURLString) doesn't seem to be a valid URL")
-            return
-        }
-        
-        do {
-            //let myHTMLString = try String(contentsOf: myURL, encoding: .utf8) // select only p
-            let myHTMLString = try String(contentsOf: myURL, encoding: .utf8).html2String
-            var modString = (myHTMLString as NSString).replacingOccurrences(of: "\n", with: "   ")
-            modString = modString.lowercased()
-            let characterset = CharacterSet(charactersIn: "abcdefghijklmnopqrstuvwxyz0123456789- ")
-            modString = modString.components(separatedBy: characterset.inverted).joined(separator: "")
-            HTMLArray = modString.components(separatedBy: " ")
-        } catch let error {
-            print("Error: \(error)")
-        }
-        
-     
-        // gen n-grams
-        
-        var unigrams = [String: Int]()
-        var bigrams = [String: Int]()
-        var trigrams = [String: Int]()
-        
-        var i = 0
-        
-        
-        let len = HTMLArray.count
-        print(HTMLArray)
-        while(i < len){
-            // update unigrams
-            let curUnigram = HTMLArray[i]
-            if curUnigram == ""{
-                i += 1
-                continue
-            }
-            if (unigrams[curUnigram] != nil){
-                unigrams[curUnigram] = unigrams[curUnigram]! + 1
-            }
-            else{
-                unigrams[curUnigram] = 1
+        //let globalQueue = DispatchQueue.global(qos: .userInitiated)
+        self.globalQueue.sync {
+            // temp HTML parse code :: START
+            // source: http://stackoverflow.com/questions/26134884/how-to-get-html-source-from-url-with-swift
+            
+            let myURLString = self.banner?.textField.text
+            // let myURLString = "https://en.wikipedia.org/wiki/Control_engineering"
+            guard let myURL = URL(string: myURLString!) else { // include ! after myURLString for first opt, exclude for second opt
+                print("Error: \(myURLString) doesn't seem to be a valid URL")
+                return
             }
             
-            // update bigrams
-            if i < len - 1{
-                if HTMLArray[i+1]==""{
-                  i += 1
-                  continue
-                }
-                let curBigram = String(describing: HTMLArray[i]) + " " + String(describing: HTMLArray[i+1])
-                if bigrams[curBigram] != nil{
-                    bigrams[curBigram] = bigrams[curBigram]! + 1
-                }
-                else{
-                    bigrams[curBigram] = 1
-                }
+            do {
+                //let myHTMLString = try String(contentsOf: myURL, encoding: .utf8) // select only p
+                let myHTMLString = try String(contentsOf: myURL, encoding: .utf8).html2String
+                var modString = (myHTMLString as NSString).replacingOccurrences(of: "\n", with: "   ")
+                modString = modString.lowercased()
+                let characterset = CharacterSet(charactersIn: "abcdefghijklmnopqrstuvwxyz0123456789- ")
+                modString = modString.components(separatedBy: characterset.inverted).joined(separator: "")
+                HTMLArray = modString.components(separatedBy: " ")
+            } catch let error {
+                print("Error: \(error)")
             }
             
-            // update trigrams
-            if i < len - 2{
-                if HTMLArray[i+1]=="" || HTMLArray[i+2]==""{
+         
+            // gen n-grams
+            
+            var unigrams = [String: Int]()
+            var bigrams = [String: Int]()
+            var trigrams = [String: Int]()
+            
+            var i = 0
+            
+            
+            let len = HTMLArray.count
+            print(HTMLArray)
+            while(i < len){
+                // update unigrams
+                let curUnigram = HTMLArray[i]
+                if curUnigram == ""{
                     i += 1
                     continue
                 }
-                let curTrigram = String(describing: HTMLArray[i]) + " " + String(describing: HTMLArray[i+1]) + " " + String(describing: HTMLArray[i+2])
-                if trigrams[curTrigram] != nil{
-                    trigrams[curTrigram] = trigrams[curTrigram]! + 1
+                if (unigrams[curUnigram] != nil){
+                    unigrams[curUnigram] = unigrams[curUnigram]! + 1
                 }
                 else{
-                    trigrams[curTrigram] = 1
+                    unigrams[curUnigram] = 1
                 }
+                
+                // update bigrams
+                if i < len - 1{
+                    if HTMLArray[i+1]==""{
+                      i += 1
+                      continue
+                    }
+                    let curBigram = String(describing: HTMLArray[i]) + " " + String(describing: HTMLArray[i+1])
+                    if bigrams[curBigram] != nil{
+                        bigrams[curBigram] = bigrams[curBigram]! + 1
+                    }
+                    else{
+                        bigrams[curBigram] = 1
+                    }
+                }
+                
+                // update trigrams
+                if i < len - 2{
+                    if HTMLArray[i+1]=="" || HTMLArray[i+2]==""{
+                        i += 1
+                        continue
+                    }
+                    let curTrigram = String(describing: HTMLArray[i]) + " " + String(describing: HTMLArray[i+1]) + " " + String(describing: HTMLArray[i+2])
+                    if trigrams[curTrigram] != nil{
+                        trigrams[curTrigram] = trigrams[curTrigram]! + 1
+                    }
+                    else{
+                        trigrams[curTrigram] = 1
+                    }
+                }
+                
+                // increment
+                i += 1
             }
             
-            // increment
-            i += 1
-        }
-        
-        /*
-        print("\n---Unigrams---\n")
-        print(unigrams.valueKeySorted)
-        print("\n---Bigrams---\n")
-        print(bigrams.valueKeySorted)
-        print("\n---Trigrams---\n")
-        print(trigrams.valueKeySorted)
-        */
-        // temp HTML parse code :: END
-        globalQueue.async {
+            /*
+            print("\n---Unigrams---\n")
+            print(unigrams.valueKeySorted)
+            print("\n---Bigrams---\n")
+            print(bigrams.valueKeySorted)
+            print("\n---Trigrams---\n")
+            print(trigrams.valueKeySorted)
+            */
+            // temp HTML parse code :: END
             // Background thread
             // NEW IDEA:
             //   -get all current ngrams from profile (1 db call)
