@@ -28,6 +28,8 @@ class PredictboardBanner: ExtraView {
     let textFieldLabel = UILabel()
     let backButton = UIButton()
     let saveButton = UIButton()
+    let pasteButton = UIButton()
+    let clearButton = UIButton()
     let loadingLabel = UILabel()
     
     let progressBar = UIProgressView()
@@ -128,6 +130,18 @@ class PredictboardBanner: ExtraView {
         self.saveButton.titleLabel?.font = UIFont.systemFont(ofSize: fontSize)
         self.textInputView.addSubview(self.saveButton)
         
+        self.pasteButton.setTitle("Paste", for: UIControlState())
+        self.pasteButton.layer.cornerRadius = 5
+        self.pasteButton.titleLabel?.font = UIFont.systemFont(ofSize: fontSize)
+        self.textInputView.addSubview(self.pasteButton)
+        self.pasteButton.addTarget(self, action: #selector(pasteInTextbox), for: .touchUpInside)
+        
+        self.clearButton.setTitle("Clear", for: UIControlState())
+        self.clearButton.layer.cornerRadius = 5
+        self.clearButton.titleLabel?.font = UIFont.systemFont(ofSize: fontSize)
+        self.textInputView.addSubview(self.clearButton)
+        self.clearButton.addTarget(self, action: #selector(clearTextbox), for: .touchUpInside)
+        
         self.loadingLabel.text = "Loading Predictions (may take several minutes)"
         self.loadingLabel.textAlignment = .center
         self.loadingLabel.font = UIFont.systemFont(ofSize: fontSize)
@@ -195,10 +209,13 @@ class PredictboardBanner: ExtraView {
         let butWidth:CGFloat = 75
         let backButtonX = (self.textFieldLabel.frame.origin.x - butWidth) / 2
         let saveButtonX = (self.getMaxX() - self.textField.frame.maxX - butWidth) / 2 + self.textField.frame.maxX
+        
+        
         self.backButton.frame = CGRect(x: backButtonX, y: self.textField.frame.origin.y, width: butWidth, height: 40)
         self.saveButton.frame = CGRect(x: saveButtonX , y: self.textField.frame.origin.y, width: butWidth, height: 40)
+        self.pasteButton.frame = CGRect(x: backButtonX, y: self.textField.frame.origin.y - 50, width: butWidth, height: 40)
+        self.clearButton.frame = CGRect(x: saveButtonX, y: self.textField.frame.origin.y - 50, width: butWidth, height: 40)
         
-
         self.loadingLabel.frame = CGRect(x: self.getMidX() - textWidth, y: self.getMidY() - textHeight / CGFloat(2), width: 2 * textWidth, height: textHeight)
         
         self.progressBar.setProgress(0, animated: true)
@@ -211,6 +228,8 @@ class PredictboardBanner: ExtraView {
         var allButtons: [UIButton] = self.buttons
         allButtons.append(self.backButton)
         allButtons.append(self.saveButton)
+        allButtons.append(self.pasteButton)
+        allButtons.append(self.clearButton)
         for button in allButtons{
             button.backgroundColor = globalColors?.specialKey(darkMode, solidColorMode: solidColorMode)
             button.setTitleColor((self.globalColors?.darkModeTextColor), for: UIControlState.normal)
@@ -284,23 +303,17 @@ class PredictboardBanner: ExtraView {
         }
     }
     
-    /*func startCount() {
-        self.counter = 0
-        
-        
-        let queue = DispatchQueue.global(qos: .utility)
-        for _ in 0..<100 {
-            queue.async {
-                // Background thread
-                sleep(1)
-                DispatchQueue.main.async {
-                    // UI Updates
-                    self.counter += 1
-                    return
-                }
-            }
+    func pasteInTextbox() {
+        if let pasteString = UIPasteboard.general.string {
+            self.textField.text? += String(pasteString)
+
         }
-    }*/
+        
+    }
+    
+    func clearTextbox() {
+        self.textField.text = ""
+    }
 }
 
 
