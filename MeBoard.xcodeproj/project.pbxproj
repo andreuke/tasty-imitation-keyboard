@@ -244,7 +244,6 @@
 			isa = PBXGroup;
 			children = (
 				961D4CFE1DE2D41A002DFF28 /* 1grams.txt */,
-				961D4CFF1DE2D41A002DFF28 /* Phrases.swift */,
 				961D4D001DE2D41A002DFF28 /* Phrases.xib */,
 				897067DB1DDAE77A008592E9 /* 2grams-10000.txt */,
 				897067DC1DDAE77A008592E9 /* 3grams-10000.txt */,
@@ -260,6 +259,7 @@
 				8952662B1DCABCCE000F6540 /* BannerButton.swift */,
 				890536931DD55C7F0096C729 /* Profiles.swift */,
 				890536911DD558040096C729 /* Profile.xib */,
+				961D4CFF1DE2D41A002DFF28 /* Phrases.swift */,
 				8905368D1DD516A30096C729 /* EditProfiles.swift */,
 				89BD86F21DD3AA9C00BD9B1A /* EditProfile.xib */,
 			);

@@ -27,6 +27,7 @@ class dbObjects {
         let profileId = Expression<Int64>("profileId")
         let name = Expression<String>("name")
         let linksTo = Expression<Int64>("linksTo")
+        let order = Expression<Int>("order")
     }
     
     struct Containers {
@@ -43,6 +44,7 @@ class dbObjects {
         let table = Table("Phrases")
         let phraseId = Expression<Int64>("id")
         let phrase = Expression<String>("phrase")
+        let order = Expression<Int>("order")
     }
     
     struct DataSources {
@@ -101,13 +103,14 @@ class Database: NSObject {
             _ = try? db.run(profiles.table.create(ifNotExists: true) { t in
                 t.column(profiles.profileId, primaryKey: .autoincrement)
                 t.column(profiles.name)
+                t.column(profiles.order)
                 t.column(profiles.linksTo, defaultValue: 0)
             })
             
             // Insert the Default profile into the Profiles table if it doesn't exist
             
             if (try db.scalar(profiles.table.filter(profiles.name == "Default").count)) == 0 {
-                let insert = profiles.table.insert(profiles.name <- "Default")
+                let insert = profiles.table.insert(profiles.name <- "Default", profiles.order <- 0)
                 _ = try? db.run(insert)
             }
             
@@ -126,6 +129,7 @@ class Database: NSObject {
             // Create Phrases table so user can store pre-defined phrases
             _ = try? db.run(phrases.table.create(ifNotExists: true) { t in
                 t.column(phrases.phraseId, primaryKey: .autoincrement)
+                t.column(phrases.order)
                 t.column(phrases.phrase)
             })
             
@@ -335,7 +339,6 @@ class Database: NSObject {
                     .filter(containers.profile == "Default")
                     .update(containers.frequency += new_freq, containers.lastused <- Date()))
             }
-            
         }
         catch {
             print("Something failed in insertAndIncrement()")
@@ -561,8 +564,8 @@ class Database: NSObject {
             
             // Insert the new profile into the database
             let profiles = dbObjects.Profiles()
-            
-            let insert = profiles.table.insert(profiles.name <- profile_name)
+            let count = try db.scalar(profiles.table.count)
+            let insert = profiles.table.insert(profiles.name <- profile_name, profiles.order <- count)
             _ = try? db.run(insert) // will throw error if profile already exists
             
             // Insert all of the original words into the new profile
@@ -595,9 +598,20 @@ class Database: NSObject {
         do {
             let db_path = dbObjects().db_path
             let db = try Connection("\(db_path)/db.sqlite3")
+            let profiles = dbObjects.Profiles()
+            
+            //decrement the row order variable of all other profiles
+            var oldRowNum:Int?
+            //this for loop should only have one element, but I dont know how to do it without a loop
+            for row in try db.prepare(profiles.table.filter(profiles.name == profile_name)) {
+                oldRowNum = row[profiles.order]
+            }
+            
+            _ = try db.run(profiles.table.filter(profiles.order > oldRowNum!).update(profiles.order--))
+            
             
             // Delete profile from Profiles
-            let profiles = dbObjects.Profiles()
+
             _ = try db.run(profiles.table.filter(profiles.name == profile_name).delete())
             
             // Delete all ngrams associated with profile from Containers
@@ -639,6 +653,43 @@ class Database: NSObject {
         }
     }
     
+    func reorderProfiles(profileName: String, newRowNum: Int) {
+        
+        let profiles = dbObjects.Profiles()
+        do {
+            let db_path = dbObjects().db_path
+            let db = try Connection("\(db_path)/db.sqlite3")
+            print("---\(profileName), \(newRowNum)---")
+            for p in try db.prepare(profiles.table) {
+                print("phrase: \(p[profiles.name]), order: \(p[profiles.order]), id: \(p[profiles.profileId])")
+            }
+            var oldRowNum:Int?
+            //this for loop should only have one element, but I dont know how to do it without a loop
+            for row in try db.prepare(profiles.table.filter(profiles.name == profileName)) {
+                oldRowNum = row[profiles.order]
+            }
+            
+            if oldRowNum! > newRowNum {
+                _ = try db.run(profiles.table.filter(profiles.order >= newRowNum && profiles.order < oldRowNum!).update(profiles.order++))
+            }
+            else if newRowNum > oldRowNum! {
+                _ = try db.run(profiles.table.filter(profiles.order > oldRowNum! && profiles.order <= newRowNum).update(profiles.order--))
+            }
+            
+            try db.run(profiles.table.filter(profiles.name == profileName)
+                .update(profiles.order <- newRowNum))
+            
+            print()
+            for p in try db.prepare(profiles.table) {
+                print("phrase: \(p[profiles.name]), order: \(p[profiles.order]), id: \(p[profiles.profileId])")
+            }
+            print("--------")
+        }
+        catch {
+            print("update failed: \(error)")
+        }
+    }
+    
     // WARNING: NOT TESTED YET
     func getProfiles() -> [String] {
         var profiles_list: [String] = []
@@ -647,8 +698,8 @@ class Database: NSObject {
             let db = try Connection("\(db_path)/db.sqlite3")
             
             let profiles = dbObjects.Profiles()
-            
-            for row in try db.prepare(profiles.table) {
+            for row in try db.prepare(profiles.table.order(profiles.order.asc)) {
+                print(profiles.name)
                 profiles_list.append(row[profiles.name])
             }
         } catch {
@@ -742,8 +793,8 @@ class Database: NSObject {
             let db = try Connection("\(db_path)/db.sqlite3")
             
             let phrases = dbObjects.Phrases()
-            
-            let insert = phrases.table.insert(phrases.phrase <- phrase)
+            let count = try db.scalar(phrases.table.count)
+            let insert = phrases.table.insert(phrases.phrase <- phrase, phrases.order <- count)
             _ = try? db.run(insert)
         }
         catch {
@@ -768,12 +819,57 @@ class Database: NSObject {
         }
     }
     
+    func reorderPhrase(phrase: String, newRowNum: Int) {
+        
+        let phrases = dbObjects.Phrases()
+        do {
+            let db_path = dbObjects().db_path
+            let db = try Connection("\(db_path)/db.sqlite3")
+            print("---\(phrase), \(newRowNum)---")
+            for p in try db.prepare(phrases.table) {
+                print("phrase: \(p[phrases.phrase]), order: \(p[phrases.order]), id: \(p[phrases.phraseId])")
+            }
+            var oldRowNum:Int?
+            //this for loop should only have one element, but I dont know how to do it without a loop
+            for row in try db.prepare(phrases.table.filter(phrases.phrase == phrase)) {
+                oldRowNum = row[phrases.order]
+            }
+
+            if oldRowNum! > newRowNum {
+                _ = try db.run(phrases.table.filter(phrases.order >= newRowNum && phrases.order < oldRowNum!).update(phrases.order++))
+            }
+            else if newRowNum > oldRowNum! {
+                _ = try db.run(phrases.table.filter(phrases.order > oldRowNum! && phrases.order <= newRowNum).update(phrases.order--))
+            }
+            
+            try db.run(phrases.table.filter(phrases.phrase == phrase)
+                .update(phrases.order <- newRowNum))
+            
+            print()
+            for p in try db.prepare(phrases.table) {
+                print("phrase: \(p[phrases.phrase]), order: \(p[phrases.order]), id: \(p[phrases.phraseId])")
+            }
+            print("--------")
+        }
+        catch {
+            print("update failed: \(error)")
+        }
+    }
+    
     func deletePhrase(phrase: String) {
         do {
             let db_path = dbObjects().db_path
             let db = try Connection("\(db_path)/db.sqlite3")
             
             let phrases = dbObjects.Phrases()
+            var oldRowNum:Int?
+            //this for loop should only have one element, but I dont know how to do it without a loop
+            for row in try db.prepare(phrases.table.filter(phrases.phrase == phrase)) {
+                oldRowNum = row[phrases.order]
+            }
+            
+            _ = try db.run(phrases.table.filter(phrases.order > oldRowNum!).update(phrases.order--))
+            
             
             _ = try db.run(phrases.table.filter(phrases.phrase == phrase).delete())
         }
@@ -791,7 +887,7 @@ class Database: NSObject {
             
             let phrases = dbObjects.Phrases()
             
-            for row in try db.prepare(phrases.table) {
+            for row in try db.prepare(phrases.table.order(phrases.order.asc)) {
                 phrase_list.append(row[phrases.phrase])
             }
         } catch {
