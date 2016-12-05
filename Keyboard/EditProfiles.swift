@@ -173,9 +173,11 @@ class EditProfiles: ExtraView, UITableViewDataSource, UITableViewDelegate {
                         Path.initialIndexPath = nil
                         My.cellSnapshot!.removeFromSuperview()
                         My.cellSnapshot = nil
-                        let profileName = self.profilesList![0].1[indexPath!.row]
-                        let newRow = indexPath!.row
-                        Database().reorderProfiles(profileName: profileName, newRowNum: newRow)
+                        if indexPath != nil {
+                            let profileName = self.profilesList![0].1[indexPath!.row]
+                            let newRow = indexPath!.row
+                            Database().reorderProfiles(profileName: profileName, newRowNum: newRow)
+                        }
                     }
                 })
             }

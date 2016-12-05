@@ -441,7 +441,7 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
     func addDataSourceView() {
         textEntryView(toShow: true, view: profileView!)
         self.banner?.textFieldLabel.text = "Data Source URL:"
-        self.banner?.textField.text = "https://"
+        self.banner?.textField.text = ""
         self.banner?.saveButton.addTarget(self, action: #selector(addDataSource), for: .touchUpInside)
         self.banner?.backButton.addTarget(self, action: #selector(exitDataSourceView), for: .touchUpInside)
     }
@@ -457,17 +457,31 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
         var HTMLArray = [" "]
         
         //For now data source title and data source name are the same
-        //let globalQueue = DispatchQueue.global(qos: .userInitiated)
-        self.globalQueue.sync {
+        
+        //grab url before it is cleared
+        let myURLString = self.banner?.textField.text
+        
+        //show loading screen, and open keyboard while loading
+        exitDataSourceView()
+        self.goToKeyboard()
+        self.banner?.showLoadingScreen(toShow: true)
+        
+        //start loading data in another thread
+        self.globalQueue.async {
             // temp HTML parse code :: START
             // source: http://stackoverflow.com/questions/26134884/how-to-get-html-source-from-url-with-swift
             
-            let myURLString = self.banner?.textField.text
             // let myURLString = "https://en.wikipedia.org/wiki/Control_engineering"
             guard let myURL = URL(string: myURLString!) else { // include ! after myURLString for first opt, exclude for second opt
                 print("Error: \(myURLString) doesn't seem to be a valid URL")
+                
+                self.banner?.showWarningView(title: "Warning", message: "Invalid URL. Please try again.")
+                self.banner?.showLoadingScreen(toShow: false)
+                self.addDataSourceView()
+                self.banner?.textField.text = myURLString
                 return
             }
+            
             
             do {
                 //let myHTMLString = try String(contentsOf: myURL, encoding: .utf8) // select only p
@@ -479,6 +493,13 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
                 HTMLArray = modString.components(separatedBy: " ")
             } catch let error {
                 print("Error: \(error)")
+                
+                self.banner?.showWarningView(title: "Warning", message: "Unable to reach URL. Please try again.")
+                self.banner?.showLoadingScreen(toShow: false)
+                self.addDataSourceView()
+                self.banner?.textField.text = myURLString
+                
+                return
             }
             
          
@@ -633,10 +654,7 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
                 }
                 
                 DispatchQueue.main.async {
-                    DispatchQueue.main.async {
-                        self.recommendationEngine?.counter += 1
-                        return
-                    }
+                    self.recommendationEngine?.counter += 1
                     return
                 }
             }
@@ -660,10 +678,6 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
                 self.showView(viewToShow: self.profileView!, toShow: true)
             }
         }
-
-        exitDataSourceView()
-        self.goToKeyboard()
-        self.banner?.showLoadingScreen(toShow: true)
     }
     
     func deleteProfile() {

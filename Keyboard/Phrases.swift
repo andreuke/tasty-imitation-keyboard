@@ -192,9 +192,11 @@ class Phrases: ExtraView, UITableViewDataSource, UITableViewDelegate {
                         Path.initialIndexPath = nil
                         My.cellSnapshot!.removeFromSuperview()
                         My.cellSnapshot = nil
-                        let phrase = self.phrasesList![0].1[indexPath!.row]
-                        let newRow = indexPath!.row
-                        Database().reorderPhrase(phrase: phrase, newRowNum: newRow)
+                        if indexPath != nil {
+                            let phrase = self.phrasesList![0].1[indexPath!.row]
+                            let newRow = indexPath!.row
+                            Database().reorderPhrase(phrase: phrase, newRowNum: newRow)
+                        }
                     }
                 })
             }

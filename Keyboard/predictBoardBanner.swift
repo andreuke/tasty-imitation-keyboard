@@ -32,6 +32,11 @@ class PredictboardBanner: ExtraView {
     let clearButton = UIButton()
     let loadingLabel = UILabel()
     
+    let warningView = UIView()
+    let warningTitle = UILabel()
+    let warningMessage = UILabel()
+    let warningButton = UIButton()
+    
     let progressBar = UIProgressView()
     var counter:Int = 0 {
         didSet {
@@ -61,6 +66,8 @@ class PredictboardBanner: ExtraView {
         
         //if textField is selected, we cant type on the main app anymore
         self.textField.isUserInteractionEnabled = false
+        
+        let largeFont = CGFloat(30)
         let fontSize = CGFloat(22)
         
         for _ in 0..<self.numButtons {
@@ -142,6 +149,31 @@ class PredictboardBanner: ExtraView {
         self.textInputView.addSubview(self.clearButton)
         self.clearButton.addTarget(self, action: #selector(clearTextbox), for: .touchUpInside)
         
+        self.warningView.layer.cornerRadius = 20
+        self.warningView.backgroundColor = UIColor.white
+        self.warningView.layer.borderColor = UIColor.gray.cgColor
+        self.warningView.layer.borderWidth = 1
+        self.textInputView.addSubview(self.warningView)
+        
+        self.warningTitle.font = UIFont.boldSystemFont(ofSize: largeFont)
+        self.warningTitle.adjustsFontSizeToFitWidth = true
+        self.warningTitle.textAlignment = .center
+        self.warningView.addSubview(self.warningTitle)
+        
+        
+        self.warningMessage.font = UIFont.systemFont(ofSize: fontSize)
+        self.warningMessage.textAlignment = .center
+        self.warningTitle.adjustsFontSizeToFitWidth = true
+        self.warningMessage.numberOfLines = 0
+        self.warningView.addSubview(self.warningMessage)
+        
+        
+        self.warningButton.setTitle("OK", for: .normal)
+        self.warningButton.setTitleColor(UIColor.init(red: 20/255, green: 123/255, blue: 255/255, alpha: 1), for: UIControlState.normal)
+        self.warningButton.titleLabel?.font = UIFont.boldSystemFont(ofSize: largeFont)
+        self.warningView.addSubview(self.warningButton)
+        self.warningButton.addTarget(self, action: #selector(hideWarningView), for: .touchUpInside)
+        
         self.loadingLabel.text = "Loading Predictions (may take several minutes)"
         self.loadingLabel.textAlignment = .center
         self.loadingLabel.font = UIFont.systemFont(ofSize: fontSize)
@@ -149,6 +181,7 @@ class PredictboardBanner: ExtraView {
         
         self.loadingView.addSubview(progressBar)
         
+        hideWarningView()
         updateAppearance()
         
         UserDefaults.standard.register(defaults: ["keyboardInputToApp": true])
@@ -215,6 +248,15 @@ class PredictboardBanner: ExtraView {
         self.saveButton.frame = CGRect(x: saveButtonX , y: self.textField.frame.origin.y, width: butWidth, height: 40)
         self.pasteButton.frame = CGRect(x: backButtonX, y: self.textField.frame.origin.y - 50, width: butWidth, height: 40)
         self.clearButton.frame = CGRect(x: saveButtonX, y: self.textField.frame.origin.y - 50, width: butWidth, height: 40)
+        
+        let warningViewWidth = (self.getMaxX() - self.getMinX()) * CGFloat(0.75)
+        let warningViewHeight = (self.getMaxY() - self.getMinY()) * CGFloat(0.9)
+        self.warningView.frame = CGRect(x: self.getMidX() - warningViewWidth / CGFloat(2), y: self.getMidY() - warningViewHeight / CGFloat(2), width: warningViewWidth, height: warningViewHeight)
+        
+        self.warningTitle.frame = CGRect(x: 0, y: 0, width: warningViewWidth, height: warningViewHeight / CGFloat(3))
+        
+        self.warningMessage.frame = CGRect(x: 0, y: self.warningTitle.frame.maxY, width: warningViewWidth, height: warningViewHeight / CGFloat(3))
+        self.warningButton.frame = CGRect(x: 0, y: self.warningMessage.frame.maxY, width: warningViewWidth, height: warningViewHeight / CGFloat(3))
         
         self.loadingLabel.frame = CGRect(x: self.getMidX() - textWidth, y: self.getMidY() - textHeight / CGFloat(2), width: 2 * textWidth, height: textHeight)
         
@@ -314,6 +356,19 @@ class PredictboardBanner: ExtraView {
     func clearTextbox() {
         self.textField.text = ""
     }
+    
+    func hideWarningView() {
+        self.warningView.isUserInteractionEnabled = false
+        self.warningView.isHidden = true
+    }
+    
+    func showWarningView(title: String, message: String) {
+        self.warningTitle.text = title
+        self.warningMessage.text = message
+        self.warningView.isUserInteractionEnabled = true
+        self.warningView.isHidden = false
+    }
+    
 }
 
 
