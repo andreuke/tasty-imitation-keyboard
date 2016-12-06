@@ -160,7 +160,8 @@ class Database: NSObject {
             self.counter = 0
             
             // Check to make sure Database has been created
-            if self.dbCreated == true {
+            //if self.dbCreated == true {
+            if (try db.scalar(containers.table.count)) != 0 {
                 return
             }
             

@@ -317,6 +317,7 @@ class PredictboardBanner: ExtraView {
     
     func selectTextView() {
         self.textField.text = ""
+        self.enableSaveButton(enable: false)
         UserDefaults.standard.register(defaults: ["keyboardInputToApp": false])
         switchView()
     }
@@ -351,6 +352,16 @@ class PredictboardBanner: ExtraView {
 
         }
         
+    }
+    
+    func enableSaveButton(enable:Bool) {
+        self.saveButton.isEnabled = enable
+        /*if enable {
+            self.saveButton.backgroundColor = globalColors?.regularKey(darkMode, solidColorMode: solidColorMode)
+        }
+        else {
+            self.saveButton.backgroundColor?.withAlphaComponent(0.1)
+        }*/
     }
     
     func clearTextbox() {

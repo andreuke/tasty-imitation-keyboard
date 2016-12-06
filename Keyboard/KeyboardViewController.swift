@@ -23,7 +23,7 @@ let kSmallLowercase = "kSmallLowercase"
 class KeyboardViewController: UIInputViewController {
 
     let backspaceDelay: TimeInterval = 0.5
-    let backspaceRepeat: TimeInterval = 0.07
+    let backspaceRepeat: TimeInterval = 0.15
     
     let secondaryTextDelay: TimeInterval = 0.5
     
@@ -550,7 +550,7 @@ class KeyboardViewController: UIInputViewController {
     
     func backspaceUp(_ sender: KeyboardKey) {
         self.cancelBackspaceTimers()
-        //self.keyPressed(Key(.backspace))
+        updateButtons()
     }
     
     func backspaceDelayCallback() {
@@ -560,7 +560,7 @@ class KeyboardViewController: UIInputViewController {
     
     func backspaceRepeatCallback() {
         self.playKeySound()
-        self.keyPressed(Key(.backspace), secondaryMode: false)
+        self.keyPressed(Key(.backspace), secondaryMode: true)
         //self.textDocumentProxy.deleteBackward()
         self.setCapsIfNeeded()
     }
@@ -898,6 +898,10 @@ class KeyboardViewController: UIInputViewController {
     
     func keyPressed(_ key: Key, secondaryMode: Bool) {
         self.textDocumentProxy.insertText(key.outputForCase(self.shiftState.uppercase(), secondary: secondaryMode))
+    }
+    
+    func updateButtons() {
+        return
     }
     
     func shiftPressed() {

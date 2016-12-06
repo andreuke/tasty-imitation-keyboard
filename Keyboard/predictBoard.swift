@@ -51,7 +51,9 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
     var phrasesView: Phrases?
     var total = 100
     let globalQueue = DispatchQueue.global(qos: .userInitiated)
-    
+    var keyPressTimer: Timer?
+    var canPress: Bool = true
+    let canPressDelay: TimeInterval = 0.1
     
     override init(nibName nibNameOrNil: String?, bundle nibBundleOrNil: Bundle?) {
 
@@ -64,11 +66,16 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
         fatalError("init(coder:) has not been implemented")
     }
 
+    deinit {
+        keyPressTimer?.invalidate()
+    }
+    
     override func keyPressed(_ key: Key, secondaryMode: Bool) {
         var keyOutput = ""
         if key.type != .backspace {
                 keyOutput = key.outputForCase(self.shiftState.uppercase(), secondary: secondaryMode)
         }
+
         if key.type == .shift {
             updateButtons()
             return
@@ -77,10 +84,21 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
         if UserDefaults.standard.bool(forKey: "keyboardInputToApp") == true
         {
             let textDocumentProxy = self.textDocumentProxy
-            
+            //make sure Brad does not accidently double click
+            if !self.canPress && !fastDeleteMode(key: key, secondaryMode: secondaryMode) {
+                return
+            }
+            self.canPress = false
+            self.keyPressTimer = Timer.scheduledTimer(timeInterval: canPressDelay, target: self, selector: #selector(resetCanPress), userInfo: nil, repeats: false)
             //check if it is a backspace
             if key.type == .backspace {
-                textDocumentProxy.deleteBackward()
+                if fastDeleteMode(key: key, secondaryMode: secondaryMode) {
+                    fastDelete()
+                    return //in fast delete mode do not update buttons
+                }
+                else {
+                    textDocumentProxy.deleteBackward()
+                }
             }
             else {
                 //if they do a space then a period, put the period next to the last word
@@ -104,15 +122,15 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
                     self.incrementNgrams()
                 }
             }
-            //let lastWord = getLastWord(delete: false)
             self.updateButtons()
             
             
         }
-            //type in in-keyboard textbox
+        //type in in-keyboard textbox
         else {
             if key.type != .backspace {
                 self.banner?.textField.text? += keyOutput
+                self.banner?.enableSaveButton(enable: true)
             }
             else{
                 let oldText = (self.banner?.textField.text)!
@@ -120,8 +138,10 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
                     var endIndex = oldText.endIndex
                     
                     self.banner?.textField.text? = oldText.substring(to: oldText.index(before: endIndex))
+                    if self.banner?.textField.text?.characters.count == 0 {
+                        self.banner?.enableSaveButton(enable: false)
+                    }
                 }
-                //self.banner?.textField.text? += keyOutput
             }
         }
     }
@@ -145,7 +165,9 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
             
         }
         
-        self.globalQueue.sync {
+        
+        
+        self.globalQueue.async {
             // Background thread
             self.recommendationEngine = Database(progressView: (self.banner?.progressBar)!, numElements: 30000)
             self.reccommendationEngineLoaded = true
@@ -160,6 +182,9 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
         return self.banner
     }
     
+    func resetCanPress() {
+        self.canPress = true
+    }
     
     
     ///autocomplete code
@@ -182,6 +207,20 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
         }
         // update database with insertion word
         textDocumentProxy.insertText(insertionWord)
+    }
+    
+    func fastDelete() {
+        let deletedWord = getLastWord(delete: true)
+        if (deletedWord.characters.count == 0) {
+            let textDocumentProxy = self.textDocumentProxy
+            if let context = textDocumentProxy.documentContextBeforeInput
+            {
+                if context.characters.count > 0 {
+                    textDocumentProxy.deleteBackward()
+                    _ = getLastWord(delete: true)
+                }
+            }
+        }
     }
     
     func getLastWord(delete: Bool) ->String {
@@ -256,11 +295,11 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
     }
 
 
-    func updateButtons() {
+    override func updateButtons() {
         // Get previous words to give to recommendWords()
         // ------------------------
         
-        self.globalQueue.sync {
+        self.globalQueue.async {
             if self.reccommendationEngineLoaded {
                 let context = self.textDocumentProxy.documentContextBeforeInput
                 let components = context?.components(separatedBy: " ")
@@ -855,6 +894,10 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
         // update database with insertion word
         textDocumentProxy.insertText(insertionSentence)
         updateButtons()
+    }
+    
+    func fastDeleteMode(key:Key, secondaryMode:Bool) ->Bool {
+        return (key.type == .backspace && secondaryMode)
     }
 }
 
