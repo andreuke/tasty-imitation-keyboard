@@ -36,6 +36,7 @@ class dbObjects {
         let profile = Expression<String>("profile")
         let ngram = Expression<String>("ngram")
         let n = Expression<Int>("n")
+        let dataSource = Expression<String>("dataSource")
         let frequency = Expression<Float64>("frequency")
         let lastused = Expression<Date>("lastused")
     }
@@ -120,6 +121,7 @@ class Database: NSObject {
                 t.column(containers.profile)
                 t.column(containers.ngram)
                 t.column(containers.n)
+                t.column(containers.dataSource, defaultValue: "")
                 t.column(containers.frequency, defaultValue: 0)
                 t.column(containers.lastused, defaultValue: Date())
                 // - - - - - - - - - - - - 
@@ -500,16 +502,16 @@ class Database: NSObject {
         
     
         if word1 != "" && word2 != "" {
-            resultSet = recommendationQuery(user_profile: userProfile as! String,
+            resultSet = recommendationQuery(user_profile: userProfile,
                                 n: 3, pattern: "\(word1) \(word2) \(current_input)%",
                                 words: words, result_set: resultSet)
             for n in [2,3] {
-                resultSet = recommendationQuery(user_profile: userProfile as! String,
+                resultSet = recommendationQuery(user_profile: userProfile,
                                 n: n, pattern: "\(word2) \(current_input)%",
                                 words: words, result_set: resultSet)
             }
             for n in [1,2] {
-                resultSet = recommendationQuery(user_profile: userProfile as! String,
+                resultSet = recommendationQuery(user_profile: userProfile,
                                 n: n, pattern: "\(current_input)%",
                                 words: words, result_set: resultSet)
             }
@@ -517,19 +519,19 @@ class Database: NSObject {
             
         else if word1 == "" && word2 != "" {
             for n in [2,3] {
-                resultSet = recommendationQuery(user_profile: userProfile as! String,
+                resultSet = recommendationQuery(user_profile: userProfile,
                                 n: n, pattern: "\(word2) \(current_input)%",
                                 words: words, result_set: resultSet)
             }
             for n in [1,2] {
-                resultSet = recommendationQuery(user_profile: userProfile as! String,
+                resultSet = recommendationQuery(user_profile: userProfile,
                                 n: n, pattern: "\(current_input)%",
                                 words: words, result_set: resultSet)
             }
         }
             
         else /* word1 and word2 are empty */ {
-            resultSet = recommendationQuery(user_profile: userProfile as! String,
+            resultSet = recommendationQuery(user_profile: userProfile,
                                 n: 1, pattern: "\(current_input)%",
                                 words: words, result_set: resultSet)
         }
@@ -737,9 +739,13 @@ class Database: NSObject {
             let db = try Connection("\(db_path)/db.sqlite3")
             
             let data_sources = dbObjects.DataSources()
+            let containers = dbObjects.Containers()
             
             _ = try db.run(data_sources.table.filter(data_sources.profile == target_profile)
                                          .filter(data_sources.source == data_source).delete())
+            _ = try db.run(containers.table.filter(containers.profile == target_profile
+                                                    || containers.profile == "Default")
+                                           .filter(containers.dataSource == data_source).delete())
         } catch {
             print("Something failed while removing data source")
             print("Error: \(error)")

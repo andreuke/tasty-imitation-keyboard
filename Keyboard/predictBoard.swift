@@ -616,9 +616,10 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
             //   -put those into a set
             //   -if new ngram is not in the set, append to bulk_insert string
             //   -update frequency
-            self.recommendationEngine?.addDataSource(target_profile: (self.profileView?.profileName)!, new_data_source: (self.banner?.textField.text)!, new_title: (self.banner?.textField.text)!)
+            let source = (self.banner?.textField.text)!
+            self.recommendationEngine?.addDataSource(target_profile: (self.profileView?.profileName)!, new_data_source: source, new_title: source)
 
-            var bulk_insert = "INSERT INTO Containers (profile, ngram, n, frequency) VALUES "
+            var bulk_insert = "INSERT INTO Containers (profile, ngram, n, dataSource, frequency) VALUES "
             var bulk_update = ""
             
             // -----------------------------------
@@ -642,7 +643,8 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
                 //                                              new_freq: Float64(unigram.value))
                 if !(ngramsSet?.contains(unigram.key))! {
                     // append to bulk insert
-                    bulk_insert.append("(\"\(target_profile)\",\"\(unigram.key)\",1,\(unigram.value)), ")
+                    bulk_insert.append("(\"\(target_profile)\",\"\(unigram.key)\",1,"
+                                        + "\"\(source)\",\(unigram.value)), ")
                     ngramsSet?.insert(unigram.key)
                 }
                 else {
@@ -662,13 +664,14 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
                 //                                              new_freq: Float64(bigram.value))
                 if !(ngramsSet?.contains(bigram.key))! {
                     // append to bulk insert
-                    bulk_insert.append("(\"\(target_profile)\",\"\(bigram.key)\",2,\(bigram.value)), ")
+                    bulk_insert.append("(\"\(target_profile)\",\"\(bigram.key)\",2,"
+                                        + "\"\(source)\",\(bigram.value)), ")
                     ngramsSet?.insert(bigram.key)
                 }
                 else {
                     // update frequency
                     // use bulk_update if that's possible
-                    let new_update = "UPDATE Containers SET frequency = frequency + \(bigram.value) WHERE ngram = \"\(bigram.key)\"; "
+                    let new_update = "UPDATE Containers SET frequency = frequency + \(bigram.value) WHERE ngram = \"\(bigram.key)\" AND profile = \"\(target_profile)\"; "
                     bulk_update.append(new_update)
                 }
                 
@@ -682,13 +685,14 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
                 //                                              new_freq: Float64(trigram.value))
                 if !(ngramsSet?.contains(trigram.key))! {
                     // append to bulk insert
-                    bulk_insert.append("(\"\(target_profile)\",\"\(trigram.key)\",3,\(trigram.value)), ")
+                    bulk_insert.append("(\"\(target_profile)\",\"\(trigram.key)\",3,"
+                                        + "\"\(source)\",\(trigram.value)), ")
                     ngramsSet?.insert(trigram.key)
                 }
                 else {
                     // update frequency
                     // use bulk_update if that's possible
-                    let new_update = "UPDATE Containers SET frequency = frequency + \(trigram.value) WHERE ngram = \"\(trigram.key)\"; "
+                    let new_update = "UPDATE Containers SET frequency = frequency + \(trigram.value) WHERE ngram = \"\(trigram.key)\" AND profile = \"\(target_profile)\"; "
                     bulk_update.append(new_update)
                 }
                 
