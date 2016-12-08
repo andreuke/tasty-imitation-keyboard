@@ -528,8 +528,8 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
                 print(myHTMLString)
                 var modString = (myHTMLString as NSString).replacingOccurrences(of: "\n", with: "   ")
                 modString = modString.lowercased()
-                let characterset = CharacterSet(charactersIn: "abcdefghijklmnopqrstuvwxyz0123456789- ")
-                modString = modString.components(separatedBy: characterset.inverted).joined(separator: "")
+                let characterset = CharacterSet(charactersIn: "abcdefghijklmnopqrstuvwxyz0123456789-' ")
+                modString = modString.components(separatedBy: characterset.inverted).joined(separator: " ")
                 HTMLArray = modString.components(separatedBy: " ")
             } catch let error {
                 print("Error: \(error)")
