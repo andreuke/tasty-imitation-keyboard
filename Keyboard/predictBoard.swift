@@ -525,6 +525,7 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
             do {
                 //let myHTMLString = try String(contentsOf: myURL, encoding: .utf8) // select only p
                 let myHTMLString = try String(contentsOf: myURL, encoding: .utf8).html2String
+                print(myHTMLString)
                 var modString = (myHTMLString as NSString).replacingOccurrences(of: "\n", with: "   ")
                 modString = modString.lowercased()
                 let characterset = CharacterSet(charactersIn: "abcdefghijklmnopqrstuvwxyz0123456789- ")

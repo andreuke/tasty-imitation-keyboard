@@ -348,6 +348,7 @@ class PredictboardBanner: ExtraView {
     
     func pasteInTextbox() {
         if let pasteString = UIPasteboard.general.string {
+            self.enableSaveButton(enable: true)
             self.textField.text? += String(pasteString)
 
         }
@@ -366,6 +367,7 @@ class PredictboardBanner: ExtraView {
     
     func clearTextbox() {
         self.textField.text = ""
+        self.enableSaveButton(enable: false)
     }
     
     func hideWarningView() {
