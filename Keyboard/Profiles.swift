@@ -17,13 +17,17 @@ class Profiles: ExtraView, UITableViewDataSource, UITableViewDelegate {
     @IBOutlet weak var addButton: UIBarButtonItem!
     @IBOutlet var tableView: UITableView?
     @IBOutlet var effectsView: UIVisualEffectView?
-    @IBOutlet var backButton: UIButton?
+
+    
+    @IBOutlet weak var keyboardButton: UIBarButtonItem!
+    
     @IBOutlet var settingsLabel: UILabel?
     @IBOutlet var pixelLine: UIView?
     
     @IBOutlet weak var editName: UIBarButtonItem!
     //var callBack: () -> ()
-    @IBOutlet weak var profileViewButton: UIButton!
+    @IBOutlet weak var profileViewButton: UIBarButtonItem!
+
     
     override var darkMode: Bool {
         didSet {
@@ -150,7 +154,7 @@ class Profiles: ExtraView, UITableViewDataSource, UITableViewDelegate {
             self.effectsView?.effect
             let blueColor = UIColor(red: 135/CGFloat(255), green: 206/CGFloat(255), blue: 250/CGFloat(255), alpha: 1)
             self.pixelLine?.backgroundColor = blueColor.withAlphaComponent(CGFloat(0.5))
-            self.backButton?.setTitleColor(blueColor, for: UIControlState())
+            //self.keyboardButton?.setTitleColor(blueColor, for: UIControlState())
             self.settingsLabel?.textColor = UIColor.white
             
             if let visibleCells = self.tableView?.visibleCells {
@@ -166,7 +170,7 @@ class Profiles: ExtraView, UITableViewDataSource, UITableViewDelegate {
         else {
             let blueColor = UIColor(red: 0/CGFloat(255), green: 122/CGFloat(255), blue: 255/CGFloat(255), alpha: 1)
             self.pixelLine?.backgroundColor = blueColor.withAlphaComponent(CGFloat(0.5))
-            self.backButton?.setTitleColor(blueColor, for: UIControlState())
+            //self.keyboardButton?.setTitleColor(blueColor, for: UIControlState())
             self.settingsLabel?.textColor = UIColor.gray
             
             if let visibleCells = self.tableView?.visibleCells {

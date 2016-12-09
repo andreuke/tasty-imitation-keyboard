@@ -293,7 +293,10 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
             }
         }
     }
-
+    
+    override func didReceiveMemoryWarning() {
+        print("ASDFLHASDFLKHASDLFKHASDLFKH MEMORY WARNING")
+    }
 
     override func updateButtons() {
         // Get previous words to give to recommendWords()
@@ -400,24 +403,30 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
     
     //go from internal text input mode to profile view
     func saveProfile() {
-        self.globalQueue.sync {
-            // Background thread
-            self.recommendationEngine?.numElements = 30000
-            self.recommendationEngine?.addProfile(profile_name: (self.banner?.textField.text)!)
-            DispatchQueue.main.async {
-                // UI Updates
-                self.banner?.showLoadingScreen(toShow: false)
-                self.showForwardingView(toShow: false)
-                self.showBanner(toShow: false)
-                self.profileView = self.createProfile(profileName:(self.banner?.textField.text)!)
-                self.showView(viewToShow: self.profileView!, toShow: true)
-                self.reccommendationEngineLoaded = true
-            }
+        let profileName = (self.banner?.textField.text)!
+        if !(self.recommendationEngine?.checkProfile(profile_name: profileName))! {
+            self.banner?.showWarningView(title: "Duplicate Profile", message: "Please change your profile name")
+            return
         }
         self.reccommendationEngineLoaded = false
         completedAddProfileMode()
         self.banner?.loadingLabel.text = "Creating new Profile (this may take several minutes)"
         self.banner?.showLoadingScreen(toShow: true)
+        
+        self.globalQueue.sync {
+            // Background thread
+            self.recommendationEngine?.numElements = 30000
+            self.recommendationEngine?.addProfile(profile_name: profileName)
+            DispatchQueue.main.async {
+                // UI Updates
+                self.banner?.showLoadingScreen(toShow: false)
+                self.showForwardingView(toShow: false)
+                self.showBanner(toShow: false)
+                self.profileView = self.createProfile(profileName:profileName)
+                self.showView(viewToShow: self.profileView!, toShow: true)
+                self.reccommendationEngineLoaded = true
+            }
+        }
     }
     
     func showView(viewToShow: ExtraView, toShow: Bool) {
@@ -492,13 +501,17 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
     }
     
     func addDataSource() {
+         //grab url before it is cleared
+        let myURLString = self.banner?.textField.text
         
+        if !(self.recommendationEngine?.checkDataSource(dataSource: myURLString!))! {
+            self.banner?.showWarningView(title: "Duplicate Data Source", message: "This data source has already been added")
+            return
+        }
         var HTMLArray = [" "]
         
         //For now data source title and data source name are the same
         
-        //grab url before it is cleared
-        let myURLString = self.banner?.textField.text
         
         //show loading screen, and open keyboard while loading
         exitDataSourceView()
@@ -730,6 +743,11 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
         profileToEditProfiles()
     }
     
+    func deleteWarning(type:String, name:String) {
+
+        self.banner?.showWarningView(title: "Warning", message: "Are you sure you want to delete the \(type) \(name)")
+    }
+    
     func textEntryView(toShow: Bool, view:ExtraView) {
         if toShow {
             showView(viewToShow: view, toShow: false)
@@ -809,6 +827,10 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
     }
     
     func addPhrase() {
+        if !(self.recommendationEngine?.checkPhrase(phrase: (self.banner?.textField.text!)!))! {
+            self.banner?.showWarningView(title: "Duplicate Phrase", message: "This phrase already exists")
+            return
+        }
         self.recommendationEngine?.addPhrase(phrase: (self.banner?.textField.text!)!)
         self.phrasesView?.reloadData()
         exitAddPhraseView()
@@ -832,12 +854,19 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
     
     func exitEditPhraseView() {
         textEntryView(toShow: false, view: phrasesView!)
+        showView(viewToShow: phrasesView!, toShow: true)
+        phrasesView?.tableView?.setEditing(false, animated: false)
         self.banner?.saveButton.removeTarget(self, action: #selector(editPhrase), for: .touchUpInside)
         self.banner?.backButton.removeTarget(self, action: #selector(exitEditPhraseView), for: .touchUpInside)
     }
     
     func createEditProfiles() -> ExtraView? {
         let editProfiles = EditProfiles(globalColors: type(of: self).globalColors, darkMode: false, solidColorMode: self.solidColorMode())
+        
+        //editProfiles.keyboardButton?.action = #selector(toggleEditProfiles)
+        //editProfiles.keyboardButton?.target = self
+        //editProfiles.addButton?.action = #selector(switchToAddProfileMode)
+        //editProfiles.addButton?.target = self
         
         editProfiles.backButton?.addTarget(self, action: #selector(toggleEditProfiles), for: UIControlEvents.touchUpInside)
         editProfiles.callBack = openProfileCallback
@@ -848,8 +877,13 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
         // note that dark mode is not yet valid here, so we just put false for clarity
         let profileView = Profiles(profileName: profileName, globalColors: type(of: self).globalColors, darkMode: false, solidColorMode: self.solidColorMode())
         //profileView.NavBar.title = title
-        profileView.backButton?.addTarget(self, action: #selector(goToKeyboard), for: UIControlEvents.touchUpInside)
-        profileView.profileViewButton?.addTarget(self, action: #selector(profileToEditProfiles), for: UIControlEvents.touchUpInside)
+        //profileView.keyboardButton?.addTarget(self, action: #selector(goToKeyboard), for: UIControlEvents.touchUpInside)
+        profileView.keyboardButton?.action = #selector(goToKeyboard)
+        profileView.keyboardButton?.target = self
+        
+        profileView.profileViewButton?.action = #selector(profileToEditProfiles)
+        profileView.keyboardButton?.target = self
+        //profileView.profileViewButton?.addTarget(self, action: #selector(profileToEditProfiles), for: UIControlEvents.touchUpInside)
         profileView.editName?.action = #selector(editProfilesNameView)
         profileView.editName?.target = self
         profileView.addButton?.action = #selector(addDataSourceView)

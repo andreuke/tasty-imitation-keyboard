@@ -560,7 +560,26 @@ class Database: NSObject {
         return resultSet
     }
     
-    func addProfile(profile_name:String){
+    func checkProfile(profile_name: String) ->Bool {
+        do {
+            let db_path = dbObjects().db_path
+            let db = try Connection("\(db_path)/db.sqlite3")
+            let profiles = dbObjects.Profiles()
+            //let count = try db.scalar(profiles.table.count)
+            let count = try db.scalar(profiles.table.filter(profiles.name == profile_name).count)
+            if count > 0 {
+                return false
+            }
+            else {
+                return true
+            }
+        }
+        catch {
+            return false
+        }
+    }
+    
+    func addProfile(profile_name:String) -> Bool{
         do {
             let db_path = dbObjects().db_path
             let db = try Connection("\(db_path)/db.sqlite3")
@@ -592,7 +611,9 @@ class Database: NSObject {
         } catch {
             print("Something failed while trying to add new profile")
             print("Error: \(error)")
+            return false
         }
+        return true
     }
     
 
@@ -712,6 +733,25 @@ class Database: NSObject {
         return profiles_list
     }
     
+    func checkDataSource(dataSource: String) ->Bool {
+        do {
+            let db_path = dbObjects().db_path
+            let db = try Connection("\(db_path)/db.sqlite3")
+            let dataSources = dbObjects.DataSources()
+            //let count = try db.scalar(profiles.table.count)
+            let count = try db.scalar(dataSources.table.filter(dataSources.source == dataSource).count)
+            if count > 0 {
+                return false
+            }
+            else {
+                return true
+            }
+        }
+        catch {
+            return false
+        }
+    }
+    
     // WARNING: NOT TESTED YET
     func addDataSource(target_profile: String, new_data_source: String, new_title: String) {
         do {
@@ -791,6 +831,25 @@ class Database: NSObject {
         } catch {
             print("reset failed")
             print("Error: \(error)")
+        }
+    }
+    
+    func checkPhrase(phrase: String) ->Bool {
+        do {
+            let db_path = dbObjects().db_path
+            let db = try Connection("\(db_path)/db.sqlite3")
+            let phrases = dbObjects.Phrases()
+            //let count = try db.scalar(profiles.table.count)
+            let count = try db.scalar(phrases.table.filter(phrases.phrase == phrase).count)
+            if count > 0 {
+                return false
+            }
+            else {
+                return true
+            }
+        }
+        catch {
+            return false
         }
     }
     

@@ -25,6 +25,8 @@ class Phrases: ExtraView, UITableViewDataSource, UITableViewDelegate {
     var editPhraseCallBack: (String) -> ()
     var onClickCallBack: (String) -> ()
     var oldEditPhrase:String = "" //used for editing purposes
+    var deleteScreen:DeleteViewController?
+    var editAction:Bool = false
     override var darkMode: Bool {
         didSet {
             self.updateAppearance(darkMode)
@@ -82,13 +84,15 @@ class Phrases: ExtraView, UITableViewDataSource, UITableViewDelegate {
                 self.addConstraint(bottom)
             }
         }
-        self.tableView?.register(PhraseTableViewCell.self, forCellReuseIdentifier: "cell")
+        self.tableView?.register(UITableViewCell.self, forCellReuseIdentifier: "cell")
         self.tableView?.estimatedRowHeight = 44;
         self.tableView?.rowHeight = UITableViewAutomaticDimension;
         
         let longpress = UILongPressGestureRecognizer(target: self, action: #selector(Phrases.longPressGestureRecognized(_:)))
         self.tableView?.addGestureRecognizer(longpress)
         
+        let tap = UITapGestureRecognizer(target: self, action: #selector(Phrases.clickCallback(_:)))
+        self.tableView?.addGestureRecognizer(tap)
         // XXX: this is here b/c a totally transparent background does not support scrolling in blank areas
         self.tableView?.backgroundColor = UIColor.white.withAlphaComponent(0.01)
         
@@ -246,31 +250,30 @@ class Phrases: ExtraView, UITableViewDataSource, UITableViewDelegate {
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        if let cell = tableView.dequeueReusableCell(withIdentifier: "cell") as? PhraseTableViewCell {
+        if let cell = tableView.dequeueReusableCell(withIdentifier: "cell") {
             let key = self.phrasesList?[(indexPath as NSIndexPath).section].1[(indexPath as NSIndexPath).row]
             
-            if cell.sw.allTargets.count == 0 {
+            /*if cell.sw.allTargets.count == 0 {
                 cell.sw.addTarget(self, action: #selector(Phrases.toggleSetting(_:)), for: UIControlEvents.valueChanged)
-            }
+            }*/
             
-
-            cell.label.setTitle(key!, for: .normal)
-            cell.label.addTarget(self, action: #selector(clickCallback(_:)), for: .touchUpInside)
-            cell.longLabel.text = nil
+            cell.textLabel?.text = key!
             
+            cell.textLabel?.numberOfLines = 0
+            cell.textLabel?.lineBreakMode = NSLineBreakMode.byWordWrapping
+            cell.textLabel?.adjustsFontSizeToFitWidth = true
             cell.backgroundColor = (self.darkMode ? cellBackgroundColorDark : cellBackgroundColorLight)
-            cell.label.setTitleColor((self.darkMode ? cellLabelColorDark : cellLabelColorLight), for: UIControlState.normal)
-            //cell.label.textColor = (self.darkMode ? cellLabelColorDark : cellLabelColorLight)
-            cell.longLabel.textColor = (self.darkMode ? cellLongLabelColorDark : cellLongLabelColorLight)
-            //cell.editingStyle = .delete
-            cell.changeConstraints()
-            
             return cell
         }
         else {
             assert(false, "this is a bad thing that just happened")
             return UITableViewCell()
         }
+    }
+    
+    func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat
+    {
+        return 80;//Choose your custom row height
     }
     
     func updateAppearance(_ dark: Bool) {
@@ -319,11 +322,13 @@ class Phrases: ExtraView, UITableViewDataSource, UITableViewDelegate {
     
     func tableView(_ tableView: UITableView, editActionsForRowAt indexPath: IndexPath) -> [UITableViewRowAction]? {
         let delete = UITableViewRowAction(style: .destructive, title: "Delete") { (action, indexPath) in
-            //self.phrasesList![0].1.remove(at: indexPath.row)
-            //Database().removephrase(target_profile: "Default", data_source: (self.phrasesList?[(indexPath as NSIndexPath).section].1[(indexPath as NSIndexPath).row])!)
-            Database().deletePhrase(phrase: (self.phrasesList?[(indexPath as NSIndexPath).section].1[(indexPath as NSIndexPath).row])!)
+            let phrase = (self.phrasesList?[(indexPath as NSIndexPath).section].1[(indexPath as NSIndexPath).row])!
+            self.deleteScreen = DeleteViewController(view: self as UIView, type: "phrase", name: phrase, callBack: self.reloadData)
+            self.deleteScreen?.cancelButton.addTarget(self, action: #selector(self.removeDeleteScreen), for: .touchUpInside)
+            self.deleteScreen?.deleteButton.tag = (indexPath as NSIndexPath).row
+            self.deleteScreen?.deleteButton.addTarget(self, action: #selector(self.deleteElm(_:)), for: .touchUpInside)
+            //Database().deletePhrase(phrase: phrase)
             
-            self.reloadData()
         }
         let edit = UITableViewRowAction(style: .normal, title: "Edit") { (action, indexPath) in
             self.editPhraseCallBack((self.phrasesList?[(indexPath as NSIndexPath).section].1[(indexPath as NSIndexPath).row])!)
@@ -333,117 +338,35 @@ class Phrases: ExtraView, UITableViewDataSource, UITableViewDelegate {
         return [delete, edit]
     }
     
+    
+    func removeDeleteScreen() {
+        if self.deleteScreen != nil {
+            self.deleteScreen?.warningView.removeFromSuperview()
+        }
+        self.deleteScreen = nil
+    }
+    
+    func deleteElm(_ sender:UIButton) {
+        let phrase = (self.phrasesList?[0].1[sender.tag])!
+        Database().deletePhrase(phrase: phrase)
+        removeDeleteScreen()
+        self.reloadData()
+    }
+    
     func reloadData() {
         let phrases: [String] = Database().getPhrases()
         self.phrasesList = [("Phrases", phrases)]
         tableView?.reloadData()
     }
     
-    func clickCallback(_ sender:UIButton) {
-        print("i was clicked")
-        self.onClickCallBack(sender.titleLabel!.text!)
-    }
-    
-}
-
-class PhraseTableViewCell: UITableViewCell {
-    
-    var sw: UIButton
-    var label: UIButton
-    var longLabel: UITextView
-    var constraintsSetForLongLabel: Bool
-    var cellConstraints: [NSLayoutConstraint]
-    
-    override init(style: UITableViewCellStyle, reuseIdentifier: String?) {
-        self.sw = UIButton()
-        self.label = UIButton()
-        self.longLabel = UITextView()
-        self.cellConstraints = []
+    func clickCallback(_ gestureRecognizer: UIGestureRecognizer) {
         
-        self.constraintsSetForLongLabel = false
-        
-        super.init(style: style, reuseIdentifier: reuseIdentifier)
-        
-        self.sw.translatesAutoresizingMaskIntoConstraints = false
-        self.label.translatesAutoresizingMaskIntoConstraints = false
-        self.longLabel.translatesAutoresizingMaskIntoConstraints = false
-        
-        self.longLabel.text = nil
-        self.longLabel.isScrollEnabled = false
-        self.longLabel.isSelectable = false
-        self.longLabel.backgroundColor = UIColor.clear
-        
-        self.sw.tag = 1
-        self.label.tag = 2
-        self.longLabel.tag = 3
-        
-        self.addSubview(self.sw)
-        self.addSubview(self.label)
-        self.addSubview(self.longLabel)
-        
-        self.addConstraints()
-    }
-    
-    required init?(coder aDecoder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
-    
-    func addConstraints() {
-        let margin: CGFloat = 8
-        let sideMargin = margin * 2
-        
-        let hasLongText = self.longLabel.text != nil && !self.longLabel.text.isEmpty
-        if hasLongText {
-            let switchSide = NSLayoutConstraint(item: sw, attribute: NSLayoutAttribute.right, relatedBy: NSLayoutRelation.equal, toItem: self, attribute: NSLayoutAttribute.right, multiplier: 1, constant: -sideMargin)
-            let switchTop = NSLayoutConstraint(item: sw, attribute: NSLayoutAttribute.top, relatedBy: NSLayoutRelation.equal, toItem: self, attribute: NSLayoutAttribute.top, multiplier: 1, constant: margin)
-            let labelSide = NSLayoutConstraint(item: label, attribute: NSLayoutAttribute.left, relatedBy: NSLayoutRelation.equal, toItem: self, attribute: NSLayoutAttribute.left, multiplier: 1, constant: sideMargin)
-            let labelCenter = NSLayoutConstraint(item: label, attribute: NSLayoutAttribute.centerY, relatedBy: NSLayoutRelation.equal, toItem: sw, attribute: NSLayoutAttribute.centerY, multiplier: 1, constant: 0)
-            
-            self.addConstraint(switchSide)
-            self.addConstraint(switchTop)
-            self.addConstraint(labelSide)
-            self.addConstraint(labelCenter)
-            
-            let left = NSLayoutConstraint(item: longLabel, attribute: NSLayoutAttribute.left, relatedBy: NSLayoutRelation.equal, toItem: self, attribute: NSLayoutAttribute.left, multiplier: 1, constant: sideMargin)
-            let right = NSLayoutConstraint(item: longLabel, attribute: NSLayoutAttribute.right, relatedBy: NSLayoutRelation.equal, toItem: self, attribute: NSLayoutAttribute.right, multiplier: 1, constant: -sideMargin)
-            let top = NSLayoutConstraint(item: longLabel, attribute: NSLayoutAttribute.top, relatedBy: NSLayoutRelation.equal, toItem: sw, attribute: NSLayoutAttribute.bottom, multiplier: 1, constant: margin)
-            let bottom = NSLayoutConstraint(item: longLabel, attribute: NSLayoutAttribute.bottom, relatedBy: NSLayoutRelation.equal, toItem: self, attribute: NSLayoutAttribute.bottom, multiplier: 1, constant: -margin)
-            
-            self.addConstraint(left)
-            self.addConstraint(right)
-            self.addConstraint(top)
-            self.addConstraint(bottom)
-            
-            self.cellConstraints += [switchSide, switchTop, labelSide, labelCenter, left, right, top, bottom]
-            
-            self.constraintsSetForLongLabel = true
-        }
-        else {
-            let switchSide = NSLayoutConstraint(item: sw, attribute: NSLayoutAttribute.right, relatedBy: NSLayoutRelation.equal, toItem: self, attribute: NSLayoutAttribute.right, multiplier: 1, constant: -sideMargin)
-            let switchTop = NSLayoutConstraint(item: sw, attribute: NSLayoutAttribute.top, relatedBy: NSLayoutRelation.equal, toItem: self, attribute: NSLayoutAttribute.top, multiplier: 1, constant: margin)
-            let switchBottom = NSLayoutConstraint(item: sw, attribute: NSLayoutAttribute.bottom, relatedBy: NSLayoutRelation.equal, toItem: self, attribute: NSLayoutAttribute.bottom, multiplier: 1, constant: -margin)
-            let labelSide = NSLayoutConstraint(item: label, attribute: NSLayoutAttribute.left, relatedBy: NSLayoutRelation.equal, toItem: self, attribute: NSLayoutAttribute.left, multiplier: 1, constant: sideMargin)
-            let labelCenter = NSLayoutConstraint(item: label, attribute: NSLayoutAttribute.centerY, relatedBy: NSLayoutRelation.equal, toItem: sw, attribute: NSLayoutAttribute.centerY, multiplier: 1, constant: 0)
-            
-            self.addConstraint(switchSide)
-            self.addConstraint(switchTop)
-            self.addConstraint(switchBottom)
-            self.addConstraint(labelSide)
-            self.addConstraint(labelCenter)
-            
-            self.cellConstraints += [switchSide, switchTop, switchBottom, labelSide, labelCenter]
-            
-            self.constraintsSetForLongLabel = false
-        }
-    }
-    
-    // XXX: not in updateConstraints because it doesn't play nice with UITableViewAutomaticDimension for some reason
-    func changeConstraints() {
-        let hasLongText = self.longLabel.text != nil && !self.longLabel.text.isEmpty
-        if hasLongText != self.constraintsSetForLongLabel {
-            self.removeConstraints(self.cellConstraints)
-            self.cellConstraints.removeAll()
-            self.addConstraints()
+        let tap = gestureRecognizer as! UITapGestureRecognizer
+        let locationInView = tap.location(in: tableView)
+        let indexPath = tableView?.indexPathForRow(at: locationInView)
+        if (self.tableView?.isEditing == false) {
+            let text = self.phrasesList?[((indexPath)?.section)!].1[(((indexPath))?.row)!]
+            self.onClickCallBack(text!)
         }
     }
     

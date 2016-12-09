@@ -401,6 +401,7 @@ class KeyboardViewController: UIInputViewController {
     /////////////////////
     
     override func didReceiveMemoryWarning() {
+        print("MEMORY WARNING")
         super.didReceiveMemoryWarning()
         // Dispose of any resources that can be recreated
     }
