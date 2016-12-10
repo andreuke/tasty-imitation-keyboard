@@ -34,7 +34,7 @@ class PredictboardBanner: ExtraView {
     let loadingLabelMessage = UILabel()
     var tiButtons = [BannerButton]()
     let numTIbuttons = 5
-    
+    var setCaps:() -> (Bool)
     
     let warningView = UIView()
     let warningTitle = UILabel()
@@ -51,9 +51,9 @@ class PredictboardBanner: ExtraView {
         }
     }
     
-    required init(globalColors: GlobalColors.Type?, darkMode: Bool, solidColorMode: Bool) {
+    required init(setCaps:@escaping () -> (Bool), globalColors: GlobalColors.Type?, darkMode: Bool, solidColorMode: Bool) {
         let defaults = UserDefaults.standard
-        
+        self.setCaps = setCaps
         super.init(globalColors: globalColors, darkMode: darkMode, solidColorMode: solidColorMode)
         
         defaultView.frame = CGRect(x: self.getMinX(), y: self.getMinY(), width: self.frame.width, height: self.frame.height)
@@ -209,6 +209,10 @@ class PredictboardBanner: ExtraView {
     
     required init?(coder aDecoder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
+    }
+    
+    required init(globalColors: GlobalColors.Type?, darkMode: Bool, solidColorMode: Bool) {
+        fatalError("init(globalColors:darkMode:solidColorMode:) has not been implemented")
     }
     
     
@@ -372,6 +376,7 @@ class PredictboardBanner: ExtraView {
             self.defaultView.isUserInteractionEnabled = true
             self.textInputView.isHidden = true
             self.textInputView.isUserInteractionEnabled = false
+            self.setCaps()
         }
         else {
             self.bringSubview(toFront: self.textInputView)
@@ -379,6 +384,7 @@ class PredictboardBanner: ExtraView {
             self.textInputView.isUserInteractionEnabled = true
             self.defaultView.isHidden = true
             self.defaultView.isUserInteractionEnabled = false
+            self.setCaps()
         }
     }
     

@@ -550,10 +550,21 @@ class Database: NSObject {
                 resultSet.remove(word)
                 resultSet.insert(placeholder)
             }
-            else {
+            else if shift_state == ShiftState.locked{
                 let placeholder = word.uppercased()
                 resultSet.remove(word)
                 resultSet.insert(placeholder)
+            }
+        }
+        
+        for word in resultSet {
+            if (current_input != "" && current_input == current_input.capitalized && shift_state == .disabled) {
+                let placeholder = word.capitalized
+                resultSet.remove(word)
+                resultSet.insert(placeholder)
+            }
+            else {
+                break
             }
         }
         

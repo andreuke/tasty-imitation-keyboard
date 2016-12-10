@@ -78,7 +78,7 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
         }
 
         if key.type == .shift {
-            updateButtons()
+            //updateButtons()
             return
         }
         
@@ -118,7 +118,7 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
         if key.type == .space {
             self.incrementNgrams()
         }
-        self.updateButtons()
+        //self.updateButtons()
     }
     
     func backspace() {
@@ -182,7 +182,7 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
     }
     
     override func createBanner() -> ExtraView? {
-        self.banner = PredictboardBanner(globalColors: type(of: self).globalColors, darkMode: self.darkMode(), solidColorMode: self.solidColorMode())
+        self.banner = PredictboardBanner(setCaps: self.setCapsIfNeeded, globalColors: type(of: self).globalColors, darkMode: self.darkMode(), solidColorMode: self.solidColorMode())
         self.layout?.darkMode
         self.banner?.isHidden = true
         //set up profile selector
@@ -291,7 +291,8 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
         {
             self.autoComplete(wordToAdd)
             self.incrementNgrams()
-            updateButtons()
+            //updateButtons()
+            setCapsIfNeeded()
         }
     }
 
@@ -413,7 +414,7 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
         self.showForwardingView(toShow: true)
         self.showView(viewToShow: self.editProfilesView!, toShow: false)
         self.banner?.selectTextView()
-        self.updateButtons()
+        //self.updateButtons()
         self.banner?.textFieldLabel.text = "Profile Name:"
         self.banner?.saveButton.addTarget(self, action: #selector(saveProfile), for: .touchUpInside)
         self.banner?.backButton.addTarget(self, action: #selector(completedAddProfileMode), for: .touchUpInside)
@@ -840,7 +841,7 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
         if toShow {
             showView(viewToShow: view, toShow: false)
             self.banner?.selectTextView()
-            self.updateButtons()
+            //self.updateButtons()
         }
         else {
             self.banner?.selectDefaultView()
@@ -848,6 +849,7 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
             profileView?.isHidden = false
             profileView?.isUserInteractionEnabled = true
         }
+        //updateButtons()
         showForwardingView(toShow: toShow)
         showBanner(toShow: toShow)
         
@@ -1019,7 +1021,97 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
     }
     
     override func shiftPressed() {
-        updateButtons()
+        //updateButtons()
+    }
+    
+    override func setCapsIfNeeded() -> Bool {
+        if self.shouldAutoCapitalize() {
+            switch self.shiftState {
+            case .disabled:
+                self.shiftState = .enabled
+            case .enabled:
+                self.shiftState = .enabled
+            case .locked:
+                self.shiftState = .locked
+            }
+            self.updateButtons()
+            return true
+        }
+        else {
+            switch self.shiftState {
+            case .disabled:
+                self.shiftState = .disabled
+            case .enabled:
+                self.shiftState = .disabled
+            case .locked:
+                self.shiftState = .locked
+            }
+            self.updateButtons()
+            return false
+        }
+    }
+    
+    override func shouldAutoCapitalize() -> Bool {
+        if !UserDefaults.standard.bool(forKey: kAutoCapitalization) {
+            return false
+        }
+        
+        let traits = self.textDocumentProxy
+        let normalInputMode = UserDefaults.standard.bool(forKey: "keyboardInputToApp")
+        if let autocapitalization = (normalInputMode ? traits.autocapitalizationType : UITextAutocapitalizationType.sentences) {
+            switch autocapitalization {
+            case .none:
+                return false
+            case .words:
+                let beforeContext = self.contextBeforeInput()
+                if beforeContext.characters.count > 0 {
+                    let previousCharacter = beforeContext[beforeContext.characters.index(before: beforeContext.endIndex)]
+                    return self.characterIsWhitespace(previousCharacter)
+                }
+                else {
+                    return true
+                }
+                
+            case .sentences:
+                let beforeContext = self.contextBeforeInput()
+                if beforeContext.characters.count > 0 {
+                    let offset = min(3, beforeContext.characters.count)
+                    var index = beforeContext.endIndex
+                    
+                    for i in 0 ..< offset {
+                        index = beforeContext.index(before: index)
+                        let char = beforeContext[index]
+                        
+                        if characterIsPunctuation(char) {
+                            if i == 0 {
+                                return false //not enough spaces after punctuation
+                            }
+                            else {
+                                return true //punctuation with at least one space after it
+                            }
+                        }
+                        else {
+                            if !characterIsWhitespace(char) {
+                                return false //hit a foreign character before getting to 3 spaces
+                            }
+                            else if characterIsNewline(char) {
+                                return true //hit start of line
+                            }
+                        }
+                    }
+                    
+                    return true //either got 3 spaces or hit start of line
+                }
+                else {
+                    return true
+                }
+            case .allCharacters:
+                return true
+            }
+        }
+        else {
+            return false
+        }
     }
 
     func typePhrase(_ sentence: String) {
@@ -1028,7 +1120,8 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
         let insertionSentence = sentence + " "
         // update database with insertion word
         addText(text: insertionSentence)
-        updateButtons()
+        //updateButtons()
+        setCapsIfNeeded()
     }
     
     func fastDeleteMode(key:Key, secondaryMode:Bool) ->Bool {
