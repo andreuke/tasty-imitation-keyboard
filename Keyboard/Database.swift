@@ -350,9 +350,9 @@ class Database: NSObject {
     }
     
     func recommendationQuery(user_profile: String, n: Int, pattern: String,
-                             words: [String], result_set: Set<String>) -> Set<String> {
+                             words: [String], result_set: Set<String>, numResults:Int) -> Set<String> {
         
-        if result_set.count == 14 {
+        if result_set.count == numResults {
             return result_set
         }
         
@@ -375,7 +375,7 @@ class Database: NSObject {
                 .filter(containers.ngram != "")
                 .filter(containers.n == n)
                 .order(containers.frequency.desc, containers.ngram)
-                .limit(14, offset: 0)) {
+                .limit(numResults, offset: 0)) {
                     // This wall have a different number of components for different patterns!
                     let row_components = row[containers.ngram].components(separatedBy: " ")
                     
@@ -387,30 +387,30 @@ class Database: NSObject {
                     
                     if n == 3 {
                         if pattern == "\(word1) \(word2) \(current_input)%" {
-                            if resultSet.count < 14 {
+                            if resultSet.count < numResults {
                                 resultSet.insert(row_components[2])
                             }
                         }
                         else if pattern == "\(word2) \(current_input)%" {
-                            if resultSet.count < 14 {
+                            if resultSet.count < numResults {
                                 resultSet.insert(row_components[1]+" "+row_components[2])
                             }
                         }
                     }
                     else if n == 2 {
                         if pattern == "\(word2) \(current_input)%" {
-                            if resultSet.count < 14 {
+                            if resultSet.count < numResults {
                                 resultSet.insert(row_components[1])
                             }
                         }
                         else if pattern == "\(current_input)%" {
-                            if resultSet.count < 14 {
+                            if resultSet.count < numResults {
                                 resultSet.insert(row_components[0]+" "+row_components[1])
                             }
                         }
                     }
                     else /* n == 1 */ {
-                        if resultSet.count < 14 {
+                        if resultSet.count < numResults {
                             resultSet.insert(row[containers.ngram])
                         }
                     }
@@ -432,7 +432,7 @@ class Database: NSObject {
     */
  
     func recommendWords(word1: String = "", word2: String = "", current_input: String,
-                        shift_state: ShiftState = ShiftState.disabled)->Set<String>{
+                        shift_state: ShiftState = ShiftState.disabled, numResults:Int)->Set<String>{
         // POSSIBLE PATTERNS
         // 3:      "\(word1) \(word2) \(current_input)%"
         // 3:      "% \(word2) \(current_input)%" ********* <--- maybe not
@@ -504,16 +504,16 @@ class Database: NSObject {
         if word1 != "" && word2 != "" {
             resultSet = recommendationQuery(user_profile: userProfile,
                                 n: 3, pattern: "\(word1) \(word2) \(current_input)%",
-                                words: words, result_set: resultSet)
+                                words: words, result_set: resultSet, numResults: numResults)
             for n in [2,3] {
                 resultSet = recommendationQuery(user_profile: userProfile,
                                 n: n, pattern: "\(word2) \(current_input)%",
-                                words: words, result_set: resultSet)
+                                words: words, result_set: resultSet, numResults: numResults)
             }
             for n in [1,2] {
                 resultSet = recommendationQuery(user_profile: userProfile,
                                 n: n, pattern: "\(current_input)%",
-                                words: words, result_set: resultSet)
+                                words: words, result_set: resultSet, numResults: numResults)
             }
         }
             
@@ -521,19 +521,19 @@ class Database: NSObject {
             for n in [2,3] {
                 resultSet = recommendationQuery(user_profile: userProfile,
                                 n: n, pattern: "\(word2) \(current_input)%",
-                                words: words, result_set: resultSet)
+                                words: words, result_set: resultSet, numResults: numResults)
             }
             for n in [1,2] {
                 resultSet = recommendationQuery(user_profile: userProfile,
                                 n: n, pattern: "\(current_input)%",
-                                words: words, result_set: resultSet)
+                                words: words, result_set: resultSet, numResults: numResults)
             }
         }
             
         else /* word1 and word2 are empty */ {
             resultSet = recommendationQuery(user_profile: userProfile,
                                 n: 1, pattern: "\(current_input)%",
-                                words: words, result_set: resultSet)
+                                words: words, result_set: resultSet, numResults: numResults)
         }
  
  

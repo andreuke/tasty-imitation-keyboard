@@ -356,9 +356,11 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
                 }
                 // ------------------------
                 let recEngine = self.recommendationEngine!
+                var numResults = (normalInputMode ? (self.banner?.numButtons)!: 5)
                 let recommendations = Array(recEngine.recommendWords(word1: word1, word2: word2,
                                                                      current_input: current_input,
-                                                                     shift_state: self.shiftState)).sorted()
+                                                                     shift_state: self.shiftState,
+                                                                     numResults:numResults)).sorted()
                 
                 var index = 0
                 DispatchQueue.main.async {
