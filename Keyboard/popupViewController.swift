@@ -15,7 +15,7 @@ class PopUpViewController:  UIViewController,UITableViewDelegate, UITableViewDat
     let tableView = UITableView()
     var selector: UIButton?
     var items: [String] = []
-    var addButton = UIButton()
+    //var addButton = UIButton()
     var editButton = UIButton()
     var callBack: () -> ()
     var maxHeight: CGFloat?
@@ -58,18 +58,20 @@ class PopUpViewController:  UIViewController,UITableViewDelegate, UITableViewDat
         
         self.view.addSubview(tableView)
         
+        /*
         addButton.frame = CGRect(x: 0, y: height, width: width / 2 - 1, height: Int(tableView.rowHeight))
         addButton.backgroundColor = UIColor.white
         addButton.setTitle("+", for: UIControlState())
         addButton.setTitleColor(UIColor.black, for: UIControlState())
         addButton.addTarget(self, action: #selector(dismissPopUp), for: .touchUpInside)
-        self.view.addSubview(addButton)
+        self.view.addSubview(addButton)*/
         
-        editButton.frame = CGRect(x: width / 2 + 1, y: height, width: width / 2 - 1, height: Int(tableView.rowHeight))
+        editButton.frame = CGRect(x: 0, y: height, width: width, height: Int(tableView.rowHeight))
         editButton.backgroundColor = UIColor.white
         editButton.setTitle("edit", for: UIControlState())
         editButton.setTitleColor(UIColor.black, for: UIControlState())
         editButton.addTarget(self, action: #selector(dismissPopUp), for: .touchUpInside)
+        editButton.backgroundColor = UIColor.lightGray.withAlphaComponent(0.7)
         self.view.addSubview(editButton)
     }
     

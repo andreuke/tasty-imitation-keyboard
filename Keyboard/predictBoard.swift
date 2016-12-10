@@ -369,7 +369,7 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
         let maxHeight = self.forwardingView.frame.maxY - sender.frame.maxY
         let popUpViewController = PopUpViewController(selector: sender as UIButton!, maxHeight: maxHeight, callBack: updateButtons)
         popUpViewController.modalPresentationStyle = UIModalPresentationStyle.popover
-        popUpViewController.addButton.addTarget(self, action: #selector(switchToAddProfileMode), for: .touchUpInside)
+        //popUpViewController.addButton.addTarget(self, action: #selector(switchToAddProfileMode), for: .touchUpInside)
         popUpViewController.editButton.addTarget(self, action: #selector(toggleEditProfiles), for: .touchUpInside)
         
         present(popUpViewController, animated: true, completion: nil)
@@ -384,6 +384,9 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
     }
     
     func switchToAddProfileMode(){
+        self.showBanner(toShow: true)
+        self.showForwardingView(toShow: true)
+        self.showView(viewToShow: self.editProfilesView!, toShow: false)
         self.banner?.selectTextView()
         self.banner?.textFieldLabel.text = "Profile Name:"
         self.banner?.saveButton.addTarget(self, action: #selector(saveProfile), for: .touchUpInside)
@@ -395,9 +398,11 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
         
         self.banner?.saveButton.removeTarget(self, action: #selector(saveProfile), for: .touchUpInside)
         self.banner?.backButton.removeTarget(self, action: #selector(completedAddProfileMode), for: .touchUpInside)
+        self.showView(viewToShow: self.editProfilesView!, toShow: true)
+        self.showBanner(toShow: false)
+        self.showForwardingView(toShow: false)
         self.banner?.selectDefaultView()
-        //self.banner?.textField.resignFirstResponder()
-        //dismissKeyboard()
+
     }
     
     
@@ -409,7 +414,12 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
             return
         }
         self.reccommendationEngineLoaded = false
-        completedAddProfileMode()
+        //completedAddProfileMode()
+        
+        self.banner?.saveButton.removeTarget(self, action: #selector(saveProfile), for: .touchUpInside)
+        self.banner?.backButton.removeTarget(self, action: #selector(completedAddProfileMode), for: .touchUpInside)
+        self.banner?.selectDefaultView()
+        
         self.banner?.loadingLabel.text = "Creating new Profile (this may take several minutes)"
         self.banner?.showLoadingScreen(toShow: true)
         
@@ -504,7 +514,7 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
          //grab url before it is cleared
         let myURLString = self.banner?.textField.text
         
-        if !(self.recommendationEngine?.checkDataSource(dataSource: myURLString!))! {
+        if !(self.recommendationEngine?.checkDataSource(targetProfile: (self.profileView?.profileName)!, dataSource: myURLString!))! {
             self.banner?.showWarningView(title: "Duplicate Data Source", message: "This data source has already been added")
             return
         }
@@ -863,12 +873,12 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
     func createEditProfiles() -> ExtraView? {
         let editProfiles = EditProfiles(globalColors: type(of: self).globalColors, darkMode: false, solidColorMode: self.solidColorMode())
         
-        //editProfiles.keyboardButton?.action = #selector(toggleEditProfiles)
-        //editProfiles.keyboardButton?.target = self
-        //editProfiles.addButton?.action = #selector(switchToAddProfileMode)
-        //editProfiles.addButton?.target = self
+        editProfiles.keyboardButton?.action = #selector(toggleEditProfiles)
+        editProfiles.keyboardButton?.target = self
+        editProfiles.addButton?.action = #selector(switchToAddProfileMode)
+        editProfiles.addButton?.target = self
         
-        editProfiles.backButton?.addTarget(self, action: #selector(toggleEditProfiles), for: UIControlEvents.touchUpInside)
+        //editProfiles.backButton?.addTarget(self, action: #selector(toggleEditProfiles), for: UIControlEvents.touchUpInside)
         editProfiles.callBack = openProfileCallback
         return editProfiles
     }

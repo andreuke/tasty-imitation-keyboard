@@ -343,6 +343,7 @@ class Phrases: ExtraView, UITableViewDataSource, UITableViewDelegate {
         if self.deleteScreen != nil {
             self.deleteScreen?.warningView.removeFromSuperview()
         }
+        self.tableView?.setEditing(false, animated: false)
         self.deleteScreen = nil
     }
     
@@ -364,6 +365,7 @@ class Phrases: ExtraView, UITableViewDataSource, UITableViewDelegate {
         let tap = gestureRecognizer as! UITapGestureRecognizer
         let locationInView = tap.location(in: tableView)
         let indexPath = tableView?.indexPathForRow(at: locationInView)
+        print("index path is \((indexPath))?.row)")
         if (self.tableView?.isEditing == false) {
             let text = self.phrasesList?[((indexPath)?.section)!].1[(((indexPath))?.row)!]
             self.onClickCallBack(text!)

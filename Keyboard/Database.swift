@@ -733,13 +733,13 @@ class Database: NSObject {
         return profiles_list
     }
     
-    func checkDataSource(dataSource: String) ->Bool {
+    func checkDataSource(targetProfile:String, dataSource: String) ->Bool {
         do {
             let db_path = dbObjects().db_path
             let db = try Connection("\(db_path)/db.sqlite3")
             let dataSources = dbObjects.DataSources()
             //let count = try db.scalar(profiles.table.count)
-            let count = try db.scalar(dataSources.table.filter(dataSources.source == dataSource).count)
+            let count = try db.scalar(dataSources.table.filter(dataSources.source == dataSource && dataSources.profile == targetProfile).count)
             if count > 0 {
                 return false
             }
