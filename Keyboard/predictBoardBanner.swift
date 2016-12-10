@@ -31,6 +31,7 @@ class PredictboardBanner: ExtraView {
     let pasteButton = UIButton()
     let clearButton = UIButton()
     let loadingLabel = UILabel()
+    let loadingLabelMessage = UILabel()
     var tiButtons = [BannerButton]()
     let numTIbuttons = 5
     
@@ -193,6 +194,10 @@ class PredictboardBanner: ExtraView {
         self.loadingLabel.font = UIFont.systemFont(ofSize: fontSize)
         self.loadingView.addSubview(self.loadingLabel)
         
+        self.loadingLabelMessage.textAlignment = .center
+        self.loadingLabelMessage.font = UIFont.systemFont(ofSize: fontSize)
+        self.loadingView.addSubview(self.loadingLabelMessage)
+        
         self.loadingView.addSubview(progressBar)
         
         hideWarningView()
@@ -289,8 +294,10 @@ class PredictboardBanner: ExtraView {
         
         self.loadingLabel.frame = CGRect(x: self.getMidX() - textWidth, y: self.getMidY() - textHeight / CGFloat(2), width: 2 * textWidth, height: textHeight)
         
+        self.loadingLabelMessage.frame = CGRect(x: self.loadingLabel.frame.origin.x, y: self.loadingLabel.frame.maxY + rowSpacing, width: self.loadingLabel.frame.width, height: self.loadingLabel.frame.height)
+        
         self.progressBar.setProgress(0, animated: true)
-        self.progressBar.frame = CGRect(x: self.getMidX() - textWidth, y: self.getMidY() + CGFloat(2.5) * textHeight / CGFloat(2), width: 2 * textWidth, height: textHeight)
+        self.progressBar.frame = CGRect(x: self.loadingLabel.frame.origin.x, y: self.loadingLabel.frame.maxY + rowSpacing, width: self.loadingLabel.frame.width, height: self.loadingLabel.frame.height)
 
     }
     
@@ -351,6 +358,7 @@ class PredictboardBanner: ExtraView {
     }
     
     func showLoadingScreen(toShow: Bool) {
+        self.loadingLabelMessage.text = ""
         self.loadingView.isHidden = !toShow
         self.defaultView.isHidden = toShow
         self.defaultView.isUserInteractionEnabled = !toShow

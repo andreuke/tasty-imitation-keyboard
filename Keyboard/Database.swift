@@ -607,7 +607,11 @@ class Database: NSObject {
             self.counter = 30000
             
             _ = try? db.run(String(bulk_insert.characters.dropLast(2))+";")
-            
+            print()
+            for p in try db.prepare(profiles.table) {
+                print("profile: \(p[profiles.name]), order: \(p[profiles.order]), id: \(p[profiles.profileId])")
+            }
+            print("--------")
         } catch {
             print("Something failed while trying to add new profile")
             print("Error: \(error)")
@@ -630,9 +634,9 @@ class Database: NSObject {
             for row in try db.prepare(profiles.table.filter(profiles.name == profile_name)) {
                 oldRowNum = row[profiles.order]
             }
-            
-            _ = try db.run(profiles.table.filter(profiles.order > oldRowNum!).update(profiles.order--))
-            
+            if oldRowNum != nil {
+                _ = try db.run(profiles.table.filter(profiles.order > oldRowNum!).update(profiles.order--))
+            }
             
             // Delete profile from Profiles
 
@@ -645,6 +649,12 @@ class Database: NSObject {
             // Delete all data sources associated with profile
             let data_sources = dbObjects.DataSources()
             _ = try db.run(data_sources.table.filter(data_sources.profile == profile_name).delete())
+            
+            print()
+            for p in try db.prepare(profiles.table) {
+                print("profile: \(p[profiles.name]), order: \(p[profiles.order]), id: \(p[profiles.profileId])")
+            }
+            print("--------")
             
         } catch {
             print("Something failed while trying to delete profile")

@@ -55,10 +55,10 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
     var canPress: Bool = true
     let canPressDelay: TimeInterval = 0.1
     var deleteScreen:DeleteViewController?
-    
+    let defaultProf = "Default"
     override init(nibName nibNameOrNil: String?, bundle nibBundleOrNil: Bundle?) {
 
-        UserDefaults.standard.register(defaults: ["profile": "Default"])
+        UserDefaults.standard.register(defaults: ["profile": self.defaultProf])
         super.init(nibName: nibNameOrNil, bundle: nibBundleOrNil)
         
     }
@@ -553,8 +553,10 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
         if (self.banner?.emptyTextbox())! {
             return
         }
+        // REPLACE THIS WITH THE NAME OF THE PROFILE YOU'RE TARGETING, NOT THE ONE YOU'RE USING
+        let target_profile:String = (self.profileView?.profileName!)!
         
-        if !(self.recommendationEngine?.checkDataSource(targetProfile: (self.profileView?.profileName)!, dataSource: myURLString!))! {
+        if !(self.recommendationEngine?.checkDataSource(targetProfile: target_profile, dataSource: myURLString!))! {
             self.banner?.showWarningView(title: "Duplicate Data Source", message: "This data source has already been added")
             return
         }
@@ -567,21 +569,29 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
         exitDataSourceView()
         self.goToKeyboard()
         self.banner?.showLoadingScreen(toShow: true)
-        
+        self.banner?.progressBar.isHidden = true
+        self.banner?.loadingLabelMessage.text = "YooHooo"
         //start loading data in another thread
         self.globalQueue.async {
             // temp HTML parse code :: START
-        
+            DispatchQueue.main.async {
+                self.banner?.loadingLabelMessage.text = "Accessing URL"
+                return
+            }
             guard let myURL = URL(string: myURLString!) else { // include ! after myURLString for first opt, exclude for second opt
                 print("Error: \(myURLString) doesn't seem to be a valid URL")
                 
                 self.banner?.showWarningView(title: "Warning", message: "Invalid URL. Please try again.")
-                self.banner?.showLoadingScreen(toShow: false)
+                //self.banner?.showLoadingScreen(toShow: false)
                 self.addDataSourceView()
                 self.banner?.textField.text = myURLString
                 return
             }
             
+            DispatchQueue.main.async {
+                self.banner?.loadingLabelMessage.text = "Processing text"
+                return
+            }
             
             do {
                 //let myHTMLString = try String(contentsOf: myURL, encoding: .utf8) // select only p
@@ -597,6 +607,7 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
                 
                 self.banner?.showWarningView(title: "Warning", message: "Unable to reach URL. Please try again.")
                 self.banner?.showLoadingScreen(toShow: false)
+                self.banner?.progressBar.isHidden = false
                 self.addDataSourceView()
                 self.banner?.textField.text = myURLString
                 
@@ -679,7 +690,7 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
             //   -if new ngram is not in the set, append to bulk_insert string
             //   -update frequency
             let source = (self.banner?.textField.text)!
-            self.recommendationEngine?.addDataSource(target_profile: (self.profileView?.profileName)!, new_data_source: source, new_title: source)
+            self.recommendationEngine?.addDataSource(target_profile: target_profile, new_data_source: source, new_title: source)
 
             var bulk_insert = "INSERT INTO Containers (profile, ngram, n, dataSource, frequency) VALUES "
             var bulk_update = ""
@@ -689,16 +700,15 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
             // idk but I'm gonna try anyway
             // -----------------------------------
             
-            // REPLACE THIS WITH THE NAME OF THE PROFILE YOU'RE TARGETING, NOT THE ONE YOU'RE USING
-            let target_profile = (self.profileView?.profileName!)!//UserDefaults.standard.value(forKey: "profile") as! String
             // ---------------------------------------
             var ngramsSet = self.recommendationEngine?.getNgramsFromProfile(profile: target_profile)
             
             self.recommendationEngine?.numElements = Int(unigrams.count + bigrams.count + trigrams.count)
+            /*
             DispatchQueue.main.async {
                 self.recommendationEngine?.counter = 0
                 return
-            }
+            }*/
             
             for unigram in unigrams {
                 //self.recommendationEngine?.insertAndIncrement(ngram: unigram.key, n: 1,
@@ -716,10 +726,10 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
                     bulk_update.append(new_update)
                 }
                 
-                DispatchQueue.main.async {
+                /*DispatchQueue.main.async {
                     self.recommendationEngine?.counter += 1
                     return
-                }
+                }*/
             }
             for bigram in bigrams {
                 //self.recommendationEngine?.insertAndIncrement(ngram: bigram.key, n: 2,
@@ -737,10 +747,10 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
                     bulk_update.append(new_update)
                 }
                 
-                DispatchQueue.main.async {
+               /* DispatchQueue.main.async {
                     self.recommendationEngine?.counter += 1
                     return
-                }
+                }*/
             }
             for trigram in trigrams {
                 //self.recommendationEngine?.insertAndIncrement(ngram: trigram.key, n: 3,
@@ -758,18 +768,30 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
                     bulk_update.append(new_update)
                 }
                 
-                DispatchQueue.main.async {
+               /* DispatchQueue.main.async {
                     self.recommendationEngine?.counter += 1
                     return
-                }
+                }*/
             }
             
             // Run insert and update
             do {
                 let db_path = dbObjects().db_path
                 let db = try Connection("\(db_path)/db.sqlite3")
+                DispatchQueue.main.async {
+                    self.banner?.loadingLabelMessage.text = "Updating words"
+                    return
+                }
                 _ = try db.run(String(bulk_insert.characters.dropLast(2))+";")
+                DispatchQueue.main.async {
+                    self.banner?.loadingLabelMessage.text = "Adding words"
+                    return
+                }
                 _ = try db.run(bulk_update)
+                DispatchQueue.main.async {
+                    self.banner?.loadingLabelMessage.text = "Load Completed"
+                    return
+                }
             } catch {
                 print("Error: \(error)")
             }
@@ -792,9 +814,18 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
         self.deleteScreen?.deleteButton.addTarget(self, action: #selector(self.deleteProfile), for: .touchUpInside)
     }
     
+    func deleteProfileHelper(profile:String) {
+        recommendationEngine?.deleteProfile(profile_name: profile)
+        if profile == UserDefaults.standard.string(forKey: "profile") {
+            UserDefaults.standard.string(forKey: "profile")
+            UserDefaults.standard.register(defaults: ["profile": self.defaultProf])
+            self.banner?.profileSelector.setTitle(UserDefaults.standard.string(forKey: "profile")!, for: UIControlState())
+        }
+    }
+    
     func deleteProfile() {
         let profileName = profileView?.profileName!
-        recommendationEngine?.deleteProfile(profile_name: profileName!)
+        deleteProfileHelper(profile: profileName!)
         profileToEditProfiles()
     }
     
@@ -938,6 +969,7 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
         editProfiles.addButton?.action = #selector(switchToAddProfileMode)
         editProfiles.addButton?.target = self
         editProfiles.callBack = openProfileCallback
+        editProfiles.deleteCallback = deleteProfileHelper
         return editProfiles
     }
     
@@ -961,11 +993,11 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
     }
     
     func openProfileCallback(tableTitle:String) {
-        let title = tableTitle.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
-        openProfile(profileName: title)
-        profileView?.NavBar.title = title
+        //let title = tableTitle.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
+        openProfile(profileName: tableTitle)
+        profileView?.NavBar.title = tableTitle
         //we dont want you editing the default profile name
-        if title == "Default" {
+        if title == self.defaultProf {
             profileView?.editName.isEnabled = false
             profileView?.deleteButton.isEnabled = false
         }

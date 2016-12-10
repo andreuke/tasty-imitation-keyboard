@@ -20,7 +20,7 @@ class EditProfiles: ExtraView, UITableViewDataSource, UITableViewDelegate {
     @IBOutlet var pixelLine: UIView?
     
     var callBack: (String) -> ()
-    
+    var deleteCallback: (String) -> ()
     override var darkMode: Bool {
         didSet {
             self.updateAppearance(darkMode)
@@ -41,6 +41,7 @@ class EditProfiles: ExtraView, UITableViewDataSource, UITableViewDelegate {
     
     required init(globalColors: GlobalColors.Type?, darkMode: Bool, solidColorMode: Bool) {
         self.callBack = tempCallBack
+        self.deleteCallback = tempCallBack
         super.init(globalColors: globalColors, darkMode: darkMode, solidColorMode: solidColorMode)
         self.loadNib()
         
@@ -331,7 +332,11 @@ class EditProfiles: ExtraView, UITableViewDataSource, UITableViewDelegate {
     
     func deleteElm(_ sender:UIButton) {
         let profile = (self.profilesList?[0].1[sender.tag])!
-        Database().deleteProfile(profile_name: profile)
+        self.deleteCallback(profile)
+        /*Database().deleteProfile(profile_name: profile)
+        UserDefaults.standard.string(forKey: "profile")
+        UserDefaults.standard.register(defaults: ["profile": "Default"])
+        self.banner?.profileSelector.setTitle(UserDefaults.standard.string(forKey: "profile")!, for: UIControlState())*/
         removeDeleteScreen()
         self.reloadData()
     }
