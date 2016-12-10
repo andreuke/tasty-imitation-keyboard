@@ -24,7 +24,7 @@ class PredictboardBanner: ExtraView {
     let defaultView = PassThroughView()
     let textInputView = PassThroughView()
     let loadingView = PassThroughView()
-    let textField = UITextField()
+    let textField = keyboardTextField()
     let textFieldLabel = UILabel()
     let backButton = UIButton()
     let saveButton = UIButton()
@@ -120,14 +120,19 @@ class PredictboardBanner: ExtraView {
         self.phraseSelector.addTarget(self, action: #selector(buttonUnclicked), for: .touchUpInside)
         self.phraseSelector.setTitle("Phrases", for: .normal)
         
-        self.textField.placeholder = "Just Start Typing"
+        //self.textField.placeholder = "Just Start Typing"
         self.textField.font = UIFont.systemFont(ofSize: fontSize)
-        self.textField.borderStyle = UITextBorderStyle.roundedRect
-        self.textField.autocorrectionType = UITextAutocorrectionType.no
-        self.textField.returnKeyType = UIReturnKeyType.done
-        self.textField.clearButtonMode = UITextFieldViewMode.whileEditing;
-        self.textField.contentVerticalAlignment = UIControlContentVerticalAlignment.center
-        self.textField.adjustsFontSizeToFitWidth = true
+        self.textField.lineBreakMode = .byTruncatingHead
+        self.textField.layer.borderWidth = 1
+        self.textField.layer.cornerRadius = 5
+        self.textField.layer.borderColor = UIColor.black.cgColor
+        //self.textField.borderStyle = UITextBorderStyle.roundedRect
+        //self.textField.autocorrectionType = UITextAutocorrectionType.no
+        //self.textField.returnKeyType = UIReturnKeyType.done
+        //self.textField.clearButtonMode = UITextFieldViewMode.whileEditing;
+        //self.textField.contentVerticalAlignment = UIControlContentVerticalAlignment.center
+        self.textField.backgroundColor = UIColor.white
+        //self.textField.adjustsFontSizeToFitWidth = true
         self.textInputView.addSubview(self.textField)
         
         //self.textFieldLabel.text = "Profile Name:"
@@ -302,7 +307,6 @@ class PredictboardBanner: ExtraView {
             button.setTitleColor((darkMode ? self.globalColors?.darkModeTextColor : self.globalColors?.lightModeTextColor), for: UIControlState.highlighted)
         }
         
-        self.textField.keyboardAppearance = (darkMode ? .dark : .light)
         
         self.profileSelector.backgroundColor = globalColors?.regularKey(darkMode, solidColorMode: solidColorMode)
         self.profileSelector.setTitleColor((darkMode ? self.globalColors?.darkModeTextColor : self.globalColors?.lightModeTextColor), for: UIControlState.normal)
@@ -315,6 +319,7 @@ class PredictboardBanner: ExtraView {
         self.textFieldLabel.textColor = (darkMode ? self.globalColors?.darkModeTextColor : self.globalColors?.lightModeTextColor)
         self.loadingLabel.textColor = (darkMode ? self.globalColors?.darkModeTextColor : self.globalColors?.lightModeTextColor)
     }
+    
     
     func buttonClicked(_ sender:BannerButton){
         if sender.type == "ACButton" {
@@ -405,4 +410,9 @@ class PredictboardBanner: ExtraView {
 }
 
 
-
+class keyboardTextField: UILabel {
+    override func drawText(in rect: CGRect) {
+        let insets = UIEdgeInsets.init(top: 0, left: 5, bottom: 0, right: 5)
+        super.drawText(in: UIEdgeInsetsInsetRect(rect, insets))
+    }
+}
