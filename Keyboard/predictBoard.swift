@@ -54,6 +54,7 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
     var keyPressTimer: Timer?
     var canPress: Bool = true
     let canPressDelay: TimeInterval = 0.1
+    var deleteScreen:DeleteViewController?
     
     override init(nibName nibNameOrNil: String?, bundle nibBundleOrNil: Bundle?) {
 
@@ -531,9 +532,7 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
         //start loading data in another thread
         self.globalQueue.async {
             // temp HTML parse code :: START
-            // source: http://stackoverflow.com/questions/26134884/how-to-get-html-source-from-url-with-swift
-            
-            // let myURLString = "https://en.wikipedia.org/wiki/Control_engineering"
+        
             guard let myURL = URL(string: myURLString!) else { // include ! after myURLString for first opt, exclude for second opt
                 print("Error: \(myURLString) doesn't seem to be a valid URL")
                 
@@ -652,7 +651,7 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
             // -----------------------------------
             
             // REPLACE THIS WITH THE NAME OF THE PROFILE YOU'RE TARGETING, NOT THE ONE YOU'RE USING
-            let target_profile = UserDefaults.standard.value(forKey: "profile") as! String
+            let target_profile = (self.profileView?.profileName!)!//UserDefaults.standard.value(forKey: "profile") as! String
             // ---------------------------------------
             var ngramsSet = self.recommendationEngine?.getNgramsFromProfile(profile: target_profile)
             
@@ -747,15 +746,24 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
         }
     }
     
+    func deleteProfilePressed() {
+        self.deleteScreen = DeleteViewController(view: self.profileView! as UIView, type: "profile", name: (profileView?.profileName!)!)
+        self.deleteScreen?.cancelButton.addTarget(self, action: #selector(self.removeDeleteScreen), for: .touchUpInside)
+        //self.deleteScreen?.deleteButton.tag = (indexPath as NSIndexPath).row
+        self.deleteScreen?.deleteButton.addTarget(self, action: #selector(self.deleteProfile), for: .touchUpInside)
+    }
+    
     func deleteProfile() {
         let profileName = profileView?.profileName!
         recommendationEngine?.deleteProfile(profile_name: profileName!)
         profileToEditProfiles()
     }
     
-    func deleteWarning(type:String, name:String) {
-
-        self.banner?.showWarningView(title: "Warning", message: "Are you sure you want to delete the \(type) \(name)")
+    func removeDeleteScreen() {
+        if self.deleteScreen != nil {
+            self.deleteScreen?.warningView.removeFromSuperview()
+        }
+        self.deleteScreen = nil
     }
     
     func textEntryView(toShow: Bool, view:ExtraView) {
@@ -898,7 +906,7 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
         profileView.editName?.target = self
         profileView.addButton?.action = #selector(addDataSourceView)
         profileView.addButton?.target = self
-        profileView.deleteButton.action = #selector(deleteProfile)
+        profileView.deleteButton.action = #selector(deleteProfilePressed)
 
         profileView.deleteButton.target = self
         return profileView

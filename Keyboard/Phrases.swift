@@ -323,7 +323,7 @@ class Phrases: ExtraView, UITableViewDataSource, UITableViewDelegate {
     func tableView(_ tableView: UITableView, editActionsForRowAt indexPath: IndexPath) -> [UITableViewRowAction]? {
         let delete = UITableViewRowAction(style: .destructive, title: "Delete") { (action, indexPath) in
             let phrase = (self.phrasesList?[(indexPath as NSIndexPath).section].1[(indexPath as NSIndexPath).row])!
-            self.deleteScreen = DeleteViewController(view: self as UIView, type: "phrase", name: phrase, callBack: self.reloadData)
+            self.deleteScreen = DeleteViewController(view: self as UIView, type: "phrase", name: phrase)
             self.deleteScreen?.cancelButton.addTarget(self, action: #selector(self.removeDeleteScreen), for: .touchUpInside)
             self.deleteScreen?.deleteButton.tag = (indexPath as NSIndexPath).row
             self.deleteScreen?.deleteButton.addTarget(self, action: #selector(self.deleteElm(_:)), for: .touchUpInside)

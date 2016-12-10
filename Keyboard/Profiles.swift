@@ -44,6 +44,7 @@ class Profiles: ExtraView, UITableViewDataSource, UITableViewDelegate {
     var profileName:String?
     // TODO: these probably don't belong here, and also need to be localized
     var dataSourcesList: [(String, [String])]?
+    var deleteScreen:DeleteViewController?
     
     required init(profileName: String, globalColors: GlobalColors.Type?, darkMode: Bool, solidColorMode: Bool) {
         //self.callBack = tempCallBack
@@ -197,17 +198,38 @@ class Profiles: ExtraView, UITableViewDataSource, UITableViewDelegate {
     func tableView(_ tableView: UITableView, editActionsForRowAt indexPath: IndexPath) -> [UITableViewRowAction]? {
         let delete = UITableViewRowAction(style: .destructive, title: "Delete") { (action, indexPath) in
             //self.dataSourcesList![0].1.remove(at: indexPath.row)
-            Database().removeDataSource(target_profile: self.profileName!, data_source: (self.dataSourcesList?[(indexPath as NSIndexPath).section].1[(indexPath as NSIndexPath).row])!)
-            self.reloadData()
+            //Database().removeDataSource(target_profile: self.profileName!, data_source: (self.dataSourcesList?[(indexPath as NSIndexPath).section].1[(indexPath as NSIndexPath).row])!)
+            let dataSource = (self.dataSourcesList?[(indexPath as NSIndexPath).section].1[(indexPath as NSIndexPath).row])!
+            self.deleteScreen = DeleteViewController(view: self as UIView, type: "data source", name: dataSource)
+            self.deleteScreen?.cancelButton.addTarget(self, action: #selector(self.removeDeleteScreen), for: .touchUpInside)
+            self.deleteScreen?.deleteButton.tag = (indexPath as NSIndexPath).row
+            self.deleteScreen?.deleteButton.addTarget(self, action: #selector(self.deleteDataSource(_:)), for: .touchUpInside)
         }
 
         
         return [delete]
     }
     
+    
+
+    func removeDeleteScreen() {
+        if self.deleteScreen != nil {
+            self.deleteScreen?.warningView.removeFromSuperview()
+        }
+        self.tableView?.setEditing(false, animated: false)
+        self.deleteScreen = nil
+    }
+    
+    func deleteDataSource(_ sender:UIButton) {
+        let dataSource = (self.dataSourcesList?[0].1[sender.tag])!
+        Database().removeDataSource(target_profile: self.profileName!, data_source: dataSource)
+        removeDeleteScreen()
+        self.reloadData()
+    }
+    
     func reloadData() {
-        let profiles: [String] = Database().getDataSources(target_profile: self.profileName!)
-        self.dataSourcesList = [("Data Sources", profiles)]
+        let profile: [String] = Database().getDataSources(target_profile: self.profileName!)
+        self.dataSourcesList = [("Data Sources", profile)]
         tableView?.reloadData()
     }
     

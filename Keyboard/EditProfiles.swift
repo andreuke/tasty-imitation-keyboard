@@ -250,7 +250,7 @@ class EditProfiles: ExtraView, UITableViewDataSource, UITableViewDelegate {
         let profile = (self.profilesList?[(indexPath as NSIndexPath).section].1[(indexPath as NSIndexPath).row])!
         if profile != "Default" {
             let delete = UITableViewRowAction(style: .destructive, title: "Delete") { (action, indexPath) in
-                self.deleteScreen = DeleteViewController(view: self as UIView, type: "profile", name: profile, callBack: self.reloadData)
+                self.deleteScreen = DeleteViewController(view: self as UIView, type: "profile", name: profile)
                 self.deleteScreen?.cancelButton.addTarget(self, action: #selector(self.removeDeleteScreen), for: .touchUpInside)
                 self.deleteScreen?.deleteButton.tag = (indexPath as NSIndexPath).row
                 self.deleteScreen?.deleteButton.addTarget(self, action: #selector(self.deleteElm(_:)), for: .touchUpInside)

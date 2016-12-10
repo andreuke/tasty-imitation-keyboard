@@ -14,7 +14,6 @@ import UIKit
 
 class DeleteViewController:  UIViewController{
     
-    var callBack: () -> ()
     let parentView:UIView
     var warningView:PassThroughView
     var warningTitle:UILabel
@@ -23,9 +22,8 @@ class DeleteViewController:  UIViewController{
     var deleteButton:UIButton
     
     
-    init(view: UIView, type:String, name:String, callBack: @escaping () -> ())
+    init(view: UIView, type:String, name:String)
     {
-        self.callBack = callBack
         self.parentView = view
         self.warningView = PassThroughView()
         self.warningTitle = UILabel()
