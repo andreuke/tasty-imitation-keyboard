@@ -89,7 +89,6 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
         self.canPress = false
         self.keyPressTimer = Timer.scheduledTimer(timeInterval: canPressDelay, target: self, selector: #selector(resetCanPress), userInfo: nil, repeats: false)
         
-        //type in main app
         if key.type == .backspace {
             if fastDeleteMode(key: key, secondaryMode: secondaryMode) {
                 fastDelete()
@@ -98,6 +97,11 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
             else {
                 backspace()
             }
+        }
+        
+        if key.type == .return && !UserDefaults.standard.bool(forKey: "keyboardInputToApp") {
+            self.banner?.saveButton.sendActions(for: .touchUpInside)
+            return
         }
         
         let punctuation = [".", ",", ";", "!", "?", "\'", ":", "\"", "-"]
