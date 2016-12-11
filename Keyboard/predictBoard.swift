@@ -53,11 +53,12 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
     let globalQueue = DispatchQueue.global(qos: .userInitiated)
     var keyPressTimer: Timer?
     var canPress: Bool = true
-    let canPressDelay: TimeInterval = 0.1
-    
+    let canPressDelay: TimeInterval = 0.15
+    var deleteScreen:DeleteViewController?
+    let defaultProf = "Default"
     override init(nibName nibNameOrNil: String?, bundle nibBundleOrNil: Bundle?) {
 
-        UserDefaults.standard.register(defaults: ["profile": "Default"])
+        UserDefaults.standard.register(defaults: ["profile": self.defaultProf])
         super.init(nibName: nibNameOrNil, bundle: nibBundleOrNil)
         
     }
@@ -77,73 +78,107 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
         }
 
         if key.type == .shift {
-            updateButtons()
+            //updateButtons()
             return
         }
-        //type in main app
-        if UserDefaults.standard.bool(forKey: "keyboardInputToApp") == true
-        {
-            let textDocumentProxy = self.textDocumentProxy
-            //make sure Brad does not accidently double click
-            if !self.canPress && !fastDeleteMode(key: key, secondaryMode: secondaryMode) {
-                return
-            }
-            self.canPress = false
-            self.keyPressTimer = Timer.scheduledTimer(timeInterval: canPressDelay, target: self, selector: #selector(resetCanPress), userInfo: nil, repeats: false)
-            //check if it is a backspace
-            if key.type == .backspace {
-                if fastDeleteMode(key: key, secondaryMode: secondaryMode) {
-                    fastDelete()
-                    return //in fast delete mode do not update buttons
-                }
-                else {
-                    textDocumentProxy.deleteBackward()
-                }
+        
+        //make sure Brad does not accidently double click
+        if !self.canPress && !fastDeleteMode(key: key, secondaryMode: secondaryMode) {
+            return
+        }
+        self.canPress = false
+        self.keyPressTimer = Timer.scheduledTimer(timeInterval: canPressDelay, target: self, selector: #selector(resetCanPress), userInfo: nil, repeats: false)
+        
+        if key.type == .backspace {
+            if fastDeleteMode(key: key, secondaryMode: secondaryMode) {
+                fastDelete()
+                return //in fast delete mode do not update buttons
             }
             else {
-                //if they do a space then a period, put the period next to the last word
-                let punctuation = [".", ",", ";", "!", "?", "\'", ":", "\"", "-"]
-                if punctuation.contains(keyOutput){
-                    if let preContext = textDocumentProxy.documentContextBeforeInput {
-                        //ensure at least 2 characters have been typed
-                        if preContext.characters.count > 1 {
-                            let endIndex = preContext.endIndex
-                            let preIndex = preContext.index(before: endIndex)
-                            let twoBeforeIndex = preContext.index(before: preIndex)
-                            if (preContext[preIndex] == " ") && (preContext[twoBeforeIndex] != " ") {
-                                textDocumentProxy.deleteBackward()
-                                keyOutput += " "
-                            }
-                        }
-                    }
-                }
-                textDocumentProxy.insertText(keyOutput)
-                if key.type == .space {
-                    self.incrementNgrams()
+                backspace()
+            }
+        }
+        
+        if key.type == .return && !UserDefaults.standard.bool(forKey: "keyboardInputToApp") {
+            self.banner?.saveButton.sendActions(for: .touchUpInside)
+            return
+        }
+        
+        let punctuation = [".", ",", ";", "!", "?", "\'", ":", "\"", "-"]
+        if punctuation.contains(keyOutput){
+            let preContext = self.contextBeforeInput()
+            //ensure at least 2 characters have been typed
+            if preContext.characters.count > 1 {
+                let endIndex = preContext.endIndex
+                let preIndex = preContext.index(before: endIndex)
+                let twoBeforeIndex = preContext.index(before: preIndex)
+                if (preContext[preIndex] == " ") && (preContext[twoBeforeIndex] != " ") {
+                    backspace()
+                    keyOutput += " "
                 }
             }
-            self.updateButtons()
-            
-            
         }
-        //type in in-keyboard textbox
+        self.addText(text: keyOutput)
+        if key.type == .space {
+            self.incrementNgrams()
+        }
+        //self.updateButtons()
+    }
+    
+    func backspace() {
+        if UserDefaults.standard.bool(forKey: "keyboardInputToApp") {
+            self.textDocumentProxy.deleteBackward()
+        }
         else {
-            if key.type != .backspace {
-                self.banner?.textField.text? += keyOutput
-                self.banner?.enableSaveButton(enable: true)
-            }
-            else{
-                let oldText = (self.banner?.textField.text)!
-                if oldText.characters.count > 0 {
-                    var endIndex = oldText.endIndex
-                    
-                    self.banner?.textField.text? = oldText.substring(to: oldText.index(before: endIndex))
-                    if self.banner?.textField.text?.characters.count == 0 {
-                        self.banner?.enableSaveButton(enable: false)
-                    }
-                }
+            self.bannerTextBackspace()
+        }
+    }
+    
+    func addText(text:String) {
+        if UserDefaults.standard.bool(forKey: "keyboardInputToApp") {
+            self.textDocumentProxy.insertText(text)
+        }
+        else {
+            self.banner?.textField.text? += text
+        }
+    }
+    
+    func contextBeforeInput() -> String {
+        var context = ""
+        if UserDefaults.standard.bool(forKey: "keyboardInputToApp") {
+            if let textContext = self.textDocumentProxy.documentContextBeforeInput {
+                context = textContext
             }
         }
+        else {
+            context = (self.banner?.textField.text)!
+        }
+        return context
+    }
+    
+    func contextAfterInput() ->String {
+        var context = ""
+        if UserDefaults.standard.bool(forKey: "keyboardInputToApp") {
+            if let textContext = self.textDocumentProxy.documentContextAfterInput {
+                context = textContext
+            }
+        }
+        else {
+            context = ""
+        }
+        return context
+    }
+    
+    func bannerTextBackspace() {
+        let oldText = (self.banner?.textField.text)!
+        if oldText.characters.count > 0 {
+            var endIndex = oldText.endIndex
+            
+            self.banner?.textField.text? = oldText.substring(to: oldText.index(before: endIndex))
+            if self.banner?.textField.text?.characters.count == 0 {
+            }
+        }
+
     }
     
     override func setupKeys() {
@@ -151,7 +186,7 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
     }
     
     override func createBanner() -> ExtraView? {
-        self.banner = PredictboardBanner(globalColors: type(of: self).globalColors, darkMode: self.darkMode(), solidColorMode: self.solidColorMode())
+        self.banner = PredictboardBanner(setCaps: self.setCapsIfNeeded, globalColors: type(of: self).globalColors, darkMode: self.darkMode(), solidColorMode: self.solidColorMode())
         self.layout?.darkMode
         self.banner?.isHidden = true
         //set up profile selector
@@ -163,6 +198,11 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
         for button in (self.banner?.buttons)! {
             button.addTarget(self, action: #selector(autocompleteClicked), for: .touchUpInside)
             
+        }
+        
+        //setup autocomplete buttons in in app text input mode
+        for button in (self.banner?.tiButtons)! {
+            button.addTarget(self, action: #selector(autocompleteClicked), for: .touchUpInside)
         }
         
         
@@ -186,14 +226,14 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
         self.canPress = true
     }
     
-    
     ///autocomplete code
     func autoComplete(_ word:String) -> () {
-        let textDocumentProxy = self.textDocumentProxy
         
         _ = getLastWord(delete: true)
         var insertionWord = word
-        if let postContext = textDocumentProxy.documentContextAfterInput
+        let postContext = self.contextAfterInput()
+        
+        if postContext.characters.count > 0
         {
             let postIndex = postContext.startIndex
             if postContext[postIndex] != " " //add space if next word doesnt begin with space
@@ -205,50 +245,44 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
         {
             insertionWord = word + " "
         }
-        // update database with insertion word
-        textDocumentProxy.insertText(insertionWord)
+        addText(text: insertionWord)
     }
+    
     
     func fastDelete() {
         let deletedWord = getLastWord(delete: true)
         if (deletedWord.characters.count == 0) {
-            let textDocumentProxy = self.textDocumentProxy
-            if let context = textDocumentProxy.documentContextBeforeInput
-            {
-                if context.characters.count > 0 {
-                    textDocumentProxy.deleteBackward()
-                    _ = getLastWord(delete: true)
-                }
+            let context = self.contextBeforeInput()
+
+            if context.characters.count > 0 {
+                backspace()
+                _ = getLastWord(delete: true)
             }
+
         }
     }
     
     func getLastWord(delete: Bool) ->String {
-        let textDocumentProxy = self.textDocumentProxy
         var prevWord = ""
-        if let context = textDocumentProxy.documentContextBeforeInput
+        let context = contextBeforeInput()
+        if context.characters.count > 0
         {
-            if context.characters.count > 0
+            var index = context.endIndex
+            index = context.index(before: index)
+            
+            while index > context.startIndex && context[index] != " "
             {
-                var index = context.endIndex
+                prevWord.insert(context[index], at: prevWord.startIndex)
                 index = context.index(before: index)
-                
-                while index > context.startIndex && context[index] != " "
-                {
-                    prevWord.insert(context[index], at: prevWord.startIndex)
-                    //prevWord += String(context[index])
-                    index = context.index(before: index)
-                    if delete{
-                        textDocumentProxy.deleteBackward()
-                    }
+                if delete{
+                    backspace()
                 }
-                if index == context.startIndex && context[index] != " "
-                {
-                    prevWord.insert(context[index], at: prevWord.startIndex)
-                    //prevWord += String(context[index])
-                    if delete {
-                        textDocumentProxy.deleteBackward()
-                    }
+            }
+            if index == context.startIndex && context[index] != " "
+            {
+                prevWord.insert(context[index], at: prevWord.startIndex)
+                if delete {
+                    backspace()
                 }
             }
         }
@@ -256,31 +290,40 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
     }
     
     func autocompleteClicked(_ sender:UIButton) {
+        //make sure Brad does not accidently double click
+        if !self.canPress {
+            return
+        }
+        self.canPress = false
+        self.keyPressTimer = Timer.scheduledTimer(timeInterval: canPressDelay, target: self, selector: #selector(resetCanPress), userInfo: nil, repeats: false)
+        
         let wordToAdd = sender.titleLabel!.text!
         if wordToAdd != " "
         {
             self.autoComplete(wordToAdd)
             self.incrementNgrams()
-            updateButtons()
+            //updateButtons()
+            setCapsIfNeeded()
         }
     }
+
     
     func incrementNgrams() {
         
         self.globalQueue.sync {
-            let context = self.textDocumentProxy.documentContextBeforeInput
-            let components = context?.components(separatedBy: " ")
-            let count = (components?.count)! as Int
+            let context = self.contextBeforeInput()
+            let components = context.components(separatedBy: " ")
+            let count = (components.count) as Int
             var word1 = ""
             var word2 = ""
             var word3 = ""
             if count >= 4 {
-                word1 = (components?[count-4])! as String
+                word1 = (components[count-4]) as String
             }
             if count >= 3 {
-                word2 = (components?[count-3])! as String
+                word2 = (components[count-3]) as String
             }
-            word3 = (components?[count-2])! as String
+            word3 = (components[count-2]) as String
             
             // Create possible ngrams
             let one_gram = (gram: word3, n: 1)
@@ -293,7 +336,10 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
             }
         }
     }
-
+    
+    override func didReceiveMemoryWarning() {
+        print("ASDFLHASDFLKHASDLFKHASDLFKH MEMORY WARNING")
+    }
 
     override func updateButtons() {
         // Get previous words to give to recommendWords()
@@ -301,34 +347,41 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
         
         self.globalQueue.async {
             if self.reccommendationEngineLoaded {
-                let context = self.textDocumentProxy.documentContextBeforeInput
-                let components = context?.components(separatedBy: " ")
-                var count = 0
-                if (components != nil) {
-                    count = (components?.count)! as Int
-                }
+                let context = self.contextBeforeInput()
+                let normalInputMode = UserDefaults.standard.bool(forKey: "keyboardInputToApp")
+                let components = context.components(separatedBy: " ")
+                var count = (components.count) as Int
                 var word1 = ""
                 var word2 = ""
                 var current_input = ""
                 if count >= 3 {
-                    word1 = (components?[count-3])! as String
+                    word1 = (components[count-3]) as String
                 }
                 if count >= 2 {
-                    word2 = (components?[count-2])! as String
+                    word2 = (components[count-2]) as String
                 }
                 if count >= 1 {
-                    current_input = (components?[count-1])! as String
+                    current_input = (components[count-1]) as String
                     current_input = current_input.replacingOccurrences(of: "\n", with: "")
                 }
                 // ------------------------
                 let recEngine = self.recommendationEngine!
+                var numResults = (normalInputMode ? (self.banner?.numButtons)!: 5)
                 let recommendations = Array(recEngine.recommendWords(word1: word1, word2: word2,
                                                                      current_input: current_input,
-                                                                     shift_state: self.shiftState)).sorted()
+                                                                     shift_state: self.shiftState,
+                                                                     numResults:numResults)).sorted()
                 
                 var index = 0
                 DispatchQueue.main.async {
-                    for button in (self.banner?.buttons)! {
+                    var buttons = [BannerButton]()
+                    if normalInputMode {
+                        buttons = (self.banner?.buttons)!
+                    }
+                    else {
+                        buttons = (self.banner?.tiButtons)!
+                    }
+                    for button in buttons {
                         if index < recommendations.count {
                             button.setTitle(recommendations[index], for: UIControlState())
                             button.addTarget(self, action: #selector(KeyboardViewController.playKeySound), for: .touchDown)
@@ -344,21 +397,6 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
         }
     }
     
-    /*func otherUpdate() {
-     let prevWord = self.getLastWord(delete: false)
-     var recommendations = recommendationEngine.recommendWords(input: prevWord)
-     //filter away any blank values, because it causes problems
-     recommendations = recommendations.filter() { $0 != "" }
-     let buttonsPerRow = (banner?.allButtons)! / (banner?.numRows)!
-     let numRows: Int = banner?.numRows
-     for row in stride(from: numRows, to: 0, by: -1) {
-     let constant = row * buttonsPerRow
-     for buttonIndex in 0..<buttonsPerRow {
-     
-     }
-     }
-     }*/
-    
     
     
     //Pop ups
@@ -367,7 +405,6 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
         let maxHeight = self.forwardingView.frame.maxY - sender.frame.maxY
         let popUpViewController = PopUpViewController(selector: sender as UIButton!, maxHeight: maxHeight, callBack: updateButtons)
         popUpViewController.modalPresentationStyle = UIModalPresentationStyle.popover
-        popUpViewController.addButton.addTarget(self, action: #selector(switchToAddProfileMode), for: .touchUpInside)
         popUpViewController.editButton.addTarget(self, action: #selector(toggleEditProfiles), for: .touchUpInside)
         
         present(popUpViewController, animated: true, completion: nil)
@@ -382,7 +419,11 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
     }
     
     func switchToAddProfileMode(){
+        self.showBanner(toShow: true)
+        self.showForwardingView(toShow: true)
+        self.showView(viewToShow: self.editProfilesView!, toShow: false)
         self.banner?.selectTextView()
+        //self.updateButtons()
         self.banner?.textFieldLabel.text = "Profile Name:"
         self.banner?.saveButton.addTarget(self, action: #selector(saveProfile), for: .touchUpInside)
         self.banner?.backButton.addTarget(self, action: #selector(completedAddProfileMode), for: .touchUpInside)
@@ -393,32 +434,47 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
         
         self.banner?.saveButton.removeTarget(self, action: #selector(saveProfile), for: .touchUpInside)
         self.banner?.backButton.removeTarget(self, action: #selector(completedAddProfileMode), for: .touchUpInside)
+        self.showView(viewToShow: self.editProfilesView!, toShow: true)
+        self.showBanner(toShow: false)
+        self.showForwardingView(toShow: false)
         self.banner?.selectDefaultView()
-        //self.banner?.textField.resignFirstResponder()
-        //dismissKeyboard()
+
     }
     
     
     //go from internal text input mode to profile view
     func saveProfile() {
+        let profileName = (self.banner?.textField.text)!
+        if !(self.recommendationEngine?.checkProfile(profile_name: profileName))! {
+            self.banner?.showWarningView(title: "Duplicate Profile", message: "Please change your profile name")
+            return
+        }
+        if (self.banner?.emptyTextbox())! {
+            return
+        }
+        self.reccommendationEngineLoaded = false
+        
+        self.banner?.saveButton.removeTarget(self, action: #selector(saveProfile), for: .touchUpInside)
+        self.banner?.backButton.removeTarget(self, action: #selector(completedAddProfileMode), for: .touchUpInside)
+        self.banner?.selectDefaultView()
+        
+        self.banner?.loadingLabel.text = "Creating new Profile (this may take several minutes)"
+        self.banner?.showLoadingScreen(toShow: true)
+        
         self.globalQueue.sync {
             // Background thread
             self.recommendationEngine?.numElements = 30000
-            self.recommendationEngine?.addProfile(profile_name: (self.banner?.textField.text)!)
+            self.recommendationEngine?.addProfile(profile_name: profileName)
             DispatchQueue.main.async {
                 // UI Updates
                 self.banner?.showLoadingScreen(toShow: false)
                 self.showForwardingView(toShow: false)
                 self.showBanner(toShow: false)
-                self.profileView = self.createProfile(profileName:(self.banner?.textField.text)!)
+                self.profileView = self.createProfile(profileName:profileName)
                 self.showView(viewToShow: self.profileView!, toShow: true)
                 self.reccommendationEngineLoaded = true
             }
         }
-        self.reccommendationEngineLoaded = false
-        completedAddProfileMode()
-        self.banner?.loadingLabel.text = "Creating new Profile (this may take several minutes)"
-        self.banner?.showLoadingScreen(toShow: true)
     }
     
     func showView(viewToShow: ExtraView, toShow: Bool) {
@@ -457,15 +513,23 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
     func editProfilesNameView() {
         textEntryView(toShow: true, view:profileView!)
         self.banner?.textFieldLabel.text = "Edit Name:"
-        self.banner?.textField.text = profileView?.profileName!//(profileView as! Profiles).profileName!
+        self.banner?.textField.text = profileView?.profileName!
         self.banner?.saveButton.addTarget(self, action: #selector(updateProfileName), for: .touchUpInside)
         self.banner?.backButton.addTarget(self, action: #selector(exiteditProfilesNameView), for: .touchUpInside)
     }
     
 
     func updateProfileName(){
-        //var profile = (profileView as! Profiles)
         let newName = (self.banner?.textField.text)!
+        
+        if !(self.recommendationEngine?.checkProfile(profile_name: newName))! {
+            self.banner?.showWarningView(title: "Duplicate Profile", message: "Please change your profile name")
+            return
+        }
+        if (self.banner?.emptyTextbox())! {
+            return
+        }
+        
         profileView?.NavBar.title = newName
         recommendationEngine?.editProfileName(current_name: (profileView?.profileName!)!, new_name: newName)
         profileView?.profileName = newName
@@ -493,49 +557,67 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
     }
     
     func addDataSource() {
+         //grab url before it is cleared
+        let myURLString = self.banner?.textField.text
         
+        if (self.banner?.emptyTextbox())! {
+            return
+        }
+        // REPLACE THIS WITH THE NAME OF THE PROFILE YOU'RE TARGETING, NOT THE ONE YOU'RE USING
+        let target_profile:String = (self.profileView?.profileName!)!
+        
+        if !(self.recommendationEngine?.checkDataSource(targetProfile: target_profile, dataSource: myURLString!))! {
+            self.banner?.showWarningView(title: "Duplicate Data Source", message: "This data source has already been added")
+            return
+        }
         var HTMLArray = [" "]
         
         //For now data source title and data source name are the same
         
-        //grab url before it is cleared
-        let myURLString = self.banner?.textField.text
         
         //show loading screen, and open keyboard while loading
         exitDataSourceView()
         self.goToKeyboard()
         self.banner?.showLoadingScreen(toShow: true)
-        
+        self.banner?.progressBar.isHidden = true
+        self.banner?.loadingLabelMessage.text = "YooHooo"
         //start loading data in another thread
         self.globalQueue.async {
             // temp HTML parse code :: START
-            // source: http://stackoverflow.com/questions/26134884/how-to-get-html-source-from-url-with-swift
-            
-            // let myURLString = "https://en.wikipedia.org/wiki/Control_engineering"
+            DispatchQueue.main.async {
+                self.banner?.loadingLabelMessage.text = "Accessing URL"
+                return
+            }
             guard let myURL = URL(string: myURLString!) else { // include ! after myURLString for first opt, exclude for second opt
                 print("Error: \(myURLString) doesn't seem to be a valid URL")
                 
                 self.banner?.showWarningView(title: "Warning", message: "Invalid URL. Please try again.")
-                self.banner?.showLoadingScreen(toShow: false)
+                //self.banner?.showLoadingScreen(toShow: false)
                 self.addDataSourceView()
                 self.banner?.textField.text = myURLString
                 return
             }
             
+            DispatchQueue.main.async {
+                self.banner?.loadingLabelMessage.text = "Processing text"
+                return
+            }
             
             do {
                 //let myHTMLString = try String(contentsOf: myURL, encoding: .utf8) // select only p
                 let myHTMLString = try String(contentsOf: myURL, encoding: .utf8).html2String
+                print(myHTMLString)
                 var modString = (myHTMLString as NSString).replacingOccurrences(of: "\n", with: "   ")
                 modString = modString.lowercased()
-                let characterset = CharacterSet(charactersIn: "abcdefghijklmnopqrstuvwxyz0123456789- ")
-                modString = modString.components(separatedBy: characterset.inverted).joined(separator: "")
+                let characterset = CharacterSet(charactersIn: "abcdefghijklmnopqrstuvwxyz0123456789-' ")
+                modString = modString.components(separatedBy: characterset.inverted).joined(separator: " ")
                 HTMLArray = modString.components(separatedBy: " ")
             } catch let error {
                 print("Error: \(error)")
                 
                 self.banner?.showWarningView(title: "Warning", message: "Unable to reach URL. Please try again.")
                 self.banner?.showLoadingScreen(toShow: false)
+                self.banner?.progressBar.isHidden = false
                 self.addDataSourceView()
                 self.banner?.textField.text = myURLString
                 
@@ -618,7 +700,7 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
             //   -if new ngram is not in the set, append to bulk_insert string
             //   -update frequency
             let source = (self.banner?.textField.text)!
-            self.recommendationEngine?.addDataSource(target_profile: (self.profileView?.profileName)!, new_data_source: source, new_title: source)
+            self.recommendationEngine?.addDataSource(target_profile: target_profile, new_data_source: source, new_title: source)
 
             var bulk_insert = "INSERT INTO Containers (profile, ngram, n, dataSource, frequency) VALUES "
             var bulk_update = ""
@@ -629,16 +711,15 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
             // idk but I'm gonna try anyway
             // -----------------------------------
             
-            // REPLACE THIS WITH THE NAME OF THE PROFILE YOU'RE TARGETING, NOT THE ONE YOU'RE USING
-            let target_profile = UserDefaults.standard.value(forKey: "profile") as! String
             // ---------------------------------------
             var ngramsSet = self.recommendationEngine?.getNgramsFromProfile(profile: target_profile)
             
             self.recommendationEngine?.numElements = Int(unigrams.count + bigrams.count + trigrams.count)
+            /*
             DispatchQueue.main.async {
                 self.recommendationEngine?.counter = 0
                 return
-            }
+            }*/
             
             for unigram in unigrams {
                 //self.recommendationEngine?.insertAndIncrement(ngram: unigram.key, n: 1,
@@ -657,10 +738,10 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
                     all_updates[unigram.key] = unigram.value
                 }
                 
-                DispatchQueue.main.async {
+                /*DispatchQueue.main.async {
                     self.recommendationEngine?.counter += 1
                     return
-                }
+                }*/
             }
             for bigram in bigrams {
                 //self.recommendationEngine?.insertAndIncrement(ngram: bigram.key, n: 2,
@@ -679,10 +760,10 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
                     all_updates[bigram.key] = bigram.value
                 }
                 
-                DispatchQueue.main.async {
+               /* DispatchQueue.main.async {
                     self.recommendationEngine?.counter += 1
                     return
-                }
+                }*/
             }
             for trigram in trigrams {
                 //self.recommendationEngine?.insertAndIncrement(ngram: trigram.key, n: 3,
@@ -701,25 +782,35 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
                     all_updates[trigram.key] = trigram.value
                 }
                 
-                DispatchQueue.main.async {
+               /* DispatchQueue.main.async {
                     self.recommendationEngine?.counter += 1
                     return
-                }
+                }*/
             }
             
             // Run insert and update
             do {
                 let db_path = dbObjects().db_path
                 let db = try Connection("\(db_path)/db.sqlite3")
-                let containers = dbObjects.Containers()
                 
+                
+                DispatchQueue.main.async {
+                    self.banner?.loadingLabelMessage.text = "Updating words"
+                    return
+                }
+                _ = try db.run(bulk_update)
+                
+                DispatchQueue.main.async {
+                    self.banner?.loadingLabelMessage.text = "Adding words"
+                    return
+                }
                 _ = try db.run(String(bulk_insert.characters.dropLast(2))+";")
-                //_ = try db.run(bulk_update)
-                /*for item in all_updates {
-                    _ = try db.run(containers.table.filter(containers.ngram == item.key)
-                                                    .filter(containers.profile == target_profile)
-                                                    .update(containers.frequency <- item.value))
-                }*/
+                
+                DispatchQueue.main.async {
+                    self.banner?.loadingLabelMessage.text = "Load Completed"
+                    return
+                }
+
             } catch {
                 print("Error: \(error)")
             }
@@ -735,16 +826,40 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
         }
     }
     
+    func deleteProfilePressed() {
+        self.deleteScreen = DeleteViewController(view: self.profileView! as UIView, type: "profile", name: (profileView?.profileName!)!)
+        self.deleteScreen?.cancelButton.addTarget(self, action: #selector(self.removeDeleteScreen), for: .touchUpInside)
+        //self.deleteScreen?.deleteButton.tag = (indexPath as NSIndexPath).row
+        self.deleteScreen?.deleteButton.addTarget(self, action: #selector(self.deleteProfile), for: .touchUpInside)
+    }
+    
+    func deleteProfileHelper(profile:String) {
+        recommendationEngine?.deleteProfile(profile_name: profile)
+        if profile == UserDefaults.standard.string(forKey: "profile") {
+            UserDefaults.standard.string(forKey: "profile")
+            UserDefaults.standard.register(defaults: ["profile": self.defaultProf])
+            self.banner?.profileSelector.setTitle(UserDefaults.standard.string(forKey: "profile")!, for: UIControlState())
+        }
+    }
+    
     func deleteProfile() {
         let profileName = profileView?.profileName!
-        recommendationEngine?.deleteProfile(profile_name: profileName!)
+        deleteProfileHelper(profile: profileName!)
         profileToEditProfiles()
+    }
+    
+    func removeDeleteScreen() {
+        if self.deleteScreen != nil {
+            self.deleteScreen?.warningView.removeFromSuperview()
+        }
+        self.deleteScreen = nil
     }
     
     func textEntryView(toShow: Bool, view:ExtraView) {
         if toShow {
             showView(viewToShow: view, toShow: false)
             self.banner?.selectTextView()
+            //self.updateButtons()
         }
         else {
             self.banner?.selectDefaultView()
@@ -752,6 +867,7 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
             profileView?.isHidden = false
             profileView?.isUserInteractionEnabled = true
         }
+        //updateButtons()
         showForwardingView(toShow: toShow)
         showBanner(toShow: toShow)
         
@@ -820,6 +936,13 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
     }
     
     func addPhrase() {
+        if !(self.recommendationEngine?.checkPhrase(phrase: (self.banner?.textField.text!)!))! {
+            self.banner?.showWarningView(title: "Duplicate Phrase", message: "This phrase already exists")
+            return
+        }
+        if (self.banner?.emptyTextbox())! {
+            return
+        }
         self.recommendationEngine?.addPhrase(phrase: (self.banner?.textField.text!)!)
         self.phrasesView?.reloadData()
         exitAddPhraseView()
@@ -836,6 +959,15 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
     
     func editPhrase() {
         let newPhrase = self.banner?.textField.text
+        if (self.banner?.emptyTextbox())! {
+            return
+        }
+        
+        if !(self.recommendationEngine?.checkPhrase(phrase: (self.banner?.textField.text!)!))! {
+            self.banner?.showWarningView(title: "Duplicate Phrase", message: "This phrase already exists")
+            return
+        }
+        
         recommendationEngine?.editPhrase(old_phrase: (phrasesView?.oldEditPhrase)!, new_phrase: newPhrase!)
         phrasesView?.reloadData()
         exitAddPhraseView()
@@ -843,6 +975,8 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
     
     func exitEditPhraseView() {
         textEntryView(toShow: false, view: phrasesView!)
+        showView(viewToShow: phrasesView!, toShow: true)
+        phrasesView?.tableView?.setEditing(false, animated: false)
         self.banner?.saveButton.removeTarget(self, action: #selector(editPhrase), for: .touchUpInside)
         self.banner?.backButton.removeTarget(self, action: #selector(exitEditPhraseView), for: .touchUpInside)
     }
@@ -850,34 +984,40 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
     func createEditProfiles() -> ExtraView? {
         let editProfiles = EditProfiles(globalColors: type(of: self).globalColors, darkMode: false, solidColorMode: self.solidColorMode())
         
-        editProfiles.backButton?.addTarget(self, action: #selector(toggleEditProfiles), for: UIControlEvents.touchUpInside)
+        editProfiles.keyboardButton?.action = #selector(toggleEditProfiles)
+        editProfiles.keyboardButton?.target = self
+        editProfiles.addButton?.action = #selector(switchToAddProfileMode)
+        editProfiles.addButton?.target = self
         editProfiles.callBack = openProfileCallback
+        editProfiles.deleteCallback = deleteProfileHelper
         return editProfiles
     }
     
     func createProfile(profileName:String) -> Profiles? {
         // note that dark mode is not yet valid here, so we just put false for clarity
         let profileView = Profiles(profileName: profileName, globalColors: type(of: self).globalColors, darkMode: false, solidColorMode: self.solidColorMode())
-        //profileView.NavBar.title = title
-        profileView.backButton?.addTarget(self, action: #selector(goToKeyboard), for: UIControlEvents.touchUpInside)
-        profileView.profileViewButton?.addTarget(self, action: #selector(profileToEditProfiles), for: UIControlEvents.touchUpInside)
+
+        profileView.keyboardButton?.action = #selector(goToKeyboard)
+        profileView.keyboardButton?.target = self
+        
+        profileView.profileViewButton?.action = #selector(profileToEditProfiles)
+        profileView.keyboardButton?.target = self
         profileView.editName?.action = #selector(editProfilesNameView)
         profileView.editName?.target = self
         profileView.addButton?.action = #selector(addDataSourceView)
         profileView.addButton?.target = self
-        profileView.deleteButton.action = #selector(deleteProfile)
+        profileView.deleteButton.action = #selector(deleteProfilePressed)
 
         profileView.deleteButton.target = self
         return profileView
     }
     
     func openProfileCallback(tableTitle:String) {
-        let title = tableTitle.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
-        openProfile(profileName: title)
-        //let profile = profileView as! Profiles
-        profileView?.NavBar.title = title
+        //let title = tableTitle.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
+        openProfile(profileName: tableTitle)
+        profileView?.NavBar.title = tableTitle
         //we dont want you editing the default profile name
-        if title == "Default" {
+        if title == self.defaultProf {
             profileView?.editName.isEnabled = false
             profileView?.deleteButton.isEnabled = false
         }
@@ -890,7 +1030,9 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
     func createPhrases() -> Phrases? {
         // note that dark mode is not yet valid here, so we just put false for clarity
         let phrasesView = Phrases(onClickCallBack: typePhrase, editCallback: editPhraseView, globalColors: type(of: self).globalColors, darkMode: false, solidColorMode: self.solidColorMode())
-        phrasesView.backButton?.addTarget(self, action: #selector(goToKeyboard), for: UIControlEvents.touchUpInside)
+
+        phrasesView.backButton?.action = #selector(goToKeyboard)
+        phrasesView.backButton?.target = self
         
         phrasesView.addButton?.action = #selector(addPhraseView)
         phrasesView.addButton?.target = self
@@ -899,17 +1041,108 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
     }
     
     override func shiftPressed() {
-        updateButtons()
+        //updateButtons()
+    }
+    
+    override func setCapsIfNeeded() -> Bool {
+        if self.shouldAutoCapitalize() {
+            switch self.shiftState {
+            case .disabled:
+                self.shiftState = .enabled
+            case .enabled:
+                self.shiftState = .enabled
+            case .locked:
+                self.shiftState = .locked
+            }
+            self.updateButtons()
+            return true
+        }
+        else {
+            switch self.shiftState {
+            case .disabled:
+                self.shiftState = .disabled
+            case .enabled:
+                self.shiftState = .disabled
+            case .locked:
+                self.shiftState = .locked
+            }
+            self.updateButtons()
+            return false
+        }
+    }
+    
+    override func shouldAutoCapitalize() -> Bool {
+        if !UserDefaults.standard.bool(forKey: kAutoCapitalization) {
+            return false
+        }
+        
+        let traits = self.textDocumentProxy
+        let normalInputMode = UserDefaults.standard.bool(forKey: "keyboardInputToApp")
+        if let autocapitalization = (normalInputMode ? traits.autocapitalizationType : UITextAutocapitalizationType.sentences) {
+            switch autocapitalization {
+            case .none:
+                return false
+            case .words:
+                let beforeContext = self.contextBeforeInput()
+                if beforeContext.characters.count > 0 {
+                    let previousCharacter = beforeContext[beforeContext.characters.index(before: beforeContext.endIndex)]
+                    return self.characterIsWhitespace(previousCharacter)
+                }
+                else {
+                    return true
+                }
+                
+            case .sentences:
+                let beforeContext = self.contextBeforeInput()
+                if beforeContext.characters.count > 0 {
+                    let offset = min(3, beforeContext.characters.count)
+                    var index = beforeContext.endIndex
+                    
+                    for i in 0 ..< offset {
+                        index = beforeContext.index(before: index)
+                        let char = beforeContext[index]
+                        
+                        if characterIsPunctuation(char) {
+                            if i == 0 {
+                                return false //not enough spaces after punctuation
+                            }
+                            else {
+                                return true //punctuation with at least one space after it
+                            }
+                        }
+                        else {
+                            if !characterIsWhitespace(char) {
+                                return false //hit a foreign character before getting to 3 spaces
+                            }
+                            else if characterIsNewline(char) {
+                                return true //hit start of line
+                            }
+                        }
+                    }
+                    
+                    return true //either got 3 spaces or hit start of line
+                }
+                else {
+                    return true
+                }
+            case .allCharacters:
+                return true
+            }
+        }
+        else {
+            return false
+        }
     }
 
     func typePhrase(_ sentence: String) {
         print(sentence)
-        let textDocumentProxy = self.textDocumentProxy
         
         let insertionSentence = sentence + " "
         // update database with insertion word
-        textDocumentProxy.insertText(insertionSentence)
-        updateButtons()
+        addText(text: insertionSentence)
+        //updateButtons()
+        setCapsIfNeeded()
+        self.goToKeyboard()
     }
     
     func fastDeleteMode(key:Key, secondaryMode:Bool) ->Bool {

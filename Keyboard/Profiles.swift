@@ -17,13 +17,17 @@ class Profiles: ExtraView, UITableViewDataSource, UITableViewDelegate {
     @IBOutlet weak var addButton: UIBarButtonItem!
     @IBOutlet var tableView: UITableView?
     @IBOutlet var effectsView: UIVisualEffectView?
-    @IBOutlet var backButton: UIButton?
+
+    
+    @IBOutlet weak var keyboardButton: UIBarButtonItem!
+    
     @IBOutlet var settingsLabel: UILabel?
     @IBOutlet var pixelLine: UIView?
     
     @IBOutlet weak var editName: UIBarButtonItem!
     //var callBack: () -> ()
-    @IBOutlet weak var profileViewButton: UIButton!
+    @IBOutlet weak var profileViewButton: UIBarButtonItem!
+
     
     override var darkMode: Bool {
         didSet {
@@ -40,6 +44,7 @@ class Profiles: ExtraView, UITableViewDataSource, UITableViewDelegate {
     var profileName:String?
     // TODO: these probably don't belong here, and also need to be localized
     var dataSourcesList: [(String, [String])]?
+    var deleteScreen:DeleteViewController?
     
     required init(profileName: String, globalColors: GlobalColors.Type?, darkMode: Bool, solidColorMode: Bool) {
         //self.callBack = tempCallBack
@@ -113,6 +118,11 @@ class Profiles: ExtraView, UITableViewDataSource, UITableViewDelegate {
         }
     }
     
+    func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat
+    {
+        return 80;//Choose your custom row height
+    }
+    
     func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
         return self.dataSourcesList?[section].0
     }
@@ -150,7 +160,7 @@ class Profiles: ExtraView, UITableViewDataSource, UITableViewDelegate {
             self.effectsView?.effect
             let blueColor = UIColor(red: 135/CGFloat(255), green: 206/CGFloat(255), blue: 250/CGFloat(255), alpha: 1)
             self.pixelLine?.backgroundColor = blueColor.withAlphaComponent(CGFloat(0.5))
-            self.backButton?.setTitleColor(blueColor, for: UIControlState())
+            //self.keyboardButton?.setTitleColor(blueColor, for: UIControlState())
             self.settingsLabel?.textColor = UIColor.white
             
             if let visibleCells = self.tableView?.visibleCells {
@@ -166,7 +176,7 @@ class Profiles: ExtraView, UITableViewDataSource, UITableViewDelegate {
         else {
             let blueColor = UIColor(red: 0/CGFloat(255), green: 122/CGFloat(255), blue: 255/CGFloat(255), alpha: 1)
             self.pixelLine?.backgroundColor = blueColor.withAlphaComponent(CGFloat(0.5))
-            self.backButton?.setTitleColor(blueColor, for: UIControlState())
+            //self.keyboardButton?.setTitleColor(blueColor, for: UIControlState())
             self.settingsLabel?.textColor = UIColor.gray
             
             if let visibleCells = self.tableView?.visibleCells {
@@ -193,17 +203,38 @@ class Profiles: ExtraView, UITableViewDataSource, UITableViewDelegate {
     func tableView(_ tableView: UITableView, editActionsForRowAt indexPath: IndexPath) -> [UITableViewRowAction]? {
         let delete = UITableViewRowAction(style: .destructive, title: "Delete") { (action, indexPath) in
             //self.dataSourcesList![0].1.remove(at: indexPath.row)
-            Database().removeDataSource(target_profile: self.profileName!, data_source: (self.dataSourcesList?[(indexPath as NSIndexPath).section].1[(indexPath as NSIndexPath).row])!)
-            self.reloadData()
+            //Database().removeDataSource(target_profile: self.profileName!, data_source: (self.dataSourcesList?[(indexPath as NSIndexPath).section].1[(indexPath as NSIndexPath).row])!)
+            let dataSource = (self.dataSourcesList?[(indexPath as NSIndexPath).section].1[(indexPath as NSIndexPath).row])!
+            self.deleteScreen = DeleteViewController(view: self as UIView, type: "data source", name: dataSource)
+            self.deleteScreen?.cancelButton.addTarget(self, action: #selector(self.removeDeleteScreen), for: .touchUpInside)
+            self.deleteScreen?.deleteButton.tag = (indexPath as NSIndexPath).row
+            self.deleteScreen?.deleteButton.addTarget(self, action: #selector(self.deleteDataSource(_:)), for: .touchUpInside)
         }
 
         
         return [delete]
     }
     
+    
+
+    func removeDeleteScreen() {
+        if self.deleteScreen != nil {
+            self.deleteScreen?.warningView.removeFromSuperview()
+        }
+        self.tableView?.setEditing(false, animated: false)
+        self.deleteScreen = nil
+    }
+    
+    func deleteDataSource(_ sender:UIButton) {
+        let dataSource = (self.dataSourcesList?[0].1[sender.tag])!
+        Database().removeDataSource(target_profile: self.profileName!, data_source: dataSource)
+        removeDeleteScreen()
+        self.reloadData()
+    }
+    
     func reloadData() {
-        let profiles: [String] = Database().getDataSources(target_profile: self.profileName!)
-        self.dataSourcesList = [("Data Sources", profiles)]
+        let profile: [String] = Database().getDataSources(target_profile: self.profileName!)
+        self.dataSourcesList = [("Data Sources", profile)]
         tableView?.reloadData()
     }
     

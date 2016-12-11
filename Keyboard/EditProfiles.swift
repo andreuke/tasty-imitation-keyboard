@@ -13,12 +13,14 @@ class EditProfiles: ExtraView, UITableViewDataSource, UITableViewDelegate {
     
     @IBOutlet var tableView: UITableView?
     @IBOutlet var effectsView: UIVisualEffectView?
-    @IBOutlet var backButton: UIButton?
+
+    @IBOutlet weak var addButton: UIBarButtonItem!
+    @IBOutlet weak var keyboardButton: UIBarButtonItem!
     @IBOutlet var settingsLabel: UILabel?
     @IBOutlet var pixelLine: UIView?
     
     var callBack: (String) -> ()
-    
+    var deleteCallback: (String) -> ()
     override var darkMode: Bool {
         didSet {
             self.updateAppearance(darkMode)
@@ -31,6 +33,7 @@ class EditProfiles: ExtraView, UITableViewDataSource, UITableViewDelegate {
     let cellLabelColorLight = UIColor.black
     let cellLongLabelColorDark = UIColor.lightGray
     let cellLongLabelColorLight = UIColor.gray
+    var deleteScreen:DeleteViewController?
     
     // TODO: these probably don't belong here, and also need to be localized
     var profilesList: [(String, [String])]?
@@ -38,6 +41,7 @@ class EditProfiles: ExtraView, UITableViewDataSource, UITableViewDelegate {
     
     required init(globalColors: GlobalColors.Type?, darkMode: Bool, solidColorMode: Bool) {
         self.callBack = tempCallBack
+        self.deleteCallback = tempCallBack
         super.init(globalColors: globalColors, darkMode: darkMode, solidColorMode: solidColorMode)
         self.loadNib()
         
@@ -74,12 +78,15 @@ class EditProfiles: ExtraView, UITableViewDataSource, UITableViewDelegate {
             }
         }
         
-        self.tableView?.register(EditProfileTableViewCell.self, forCellReuseIdentifier: "cell")
+        self.tableView?.register(UITableViewCell.self, forCellReuseIdentifier: "cell")
         self.tableView?.estimatedRowHeight = 44;
         self.tableView?.rowHeight = UITableViewAutomaticDimension;
         
         let longpress = UILongPressGestureRecognizer(target: self, action: #selector(EditProfiles.longPressGestureRecognized(_:)))
         self.tableView?.addGestureRecognizer(longpress)
+        
+        let tap = UITapGestureRecognizer(target: self, action: #selector(EditProfiles.clickCallback(_:)))
+        self.tableView?.addGestureRecognizer(tap)
         
         // XXX: this is here b/c a totally transparent background does not support scrolling in blank areas
         self.tableView?.backgroundColor = UIColor.white.withAlphaComponent(0.01)
@@ -146,8 +153,6 @@ class EditProfiles: ExtraView, UITableViewDataSource, UITableViewDelegate {
                 if ((indexPath != nil) && (indexPath != Path.initialIndexPath)) {
                     
                     self.profilesList![0].1.insert(self.profilesList![0].1.remove(at: Path.initialIndexPath!.row), at: indexPath!.row)
-                    
-                    //itemsArray.insert(itemsArray.remove(at: Path.initialIndexPath!.row), at: indexPath!.row)
                     tableView?.moveRow(at: Path.initialIndexPath!, to: indexPath!)
                     Path.initialIndexPath = indexPath
                 }
@@ -227,29 +232,13 @@ class EditProfiles: ExtraView, UITableViewDataSource, UITableViewDelegate {
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        if let cell = tableView.dequeueReusableCell(withIdentifier: "cell") as? EditProfileTableViewCell {
+        if let cell = tableView.dequeueReusableCell(withIdentifier: "cell") {
             let key = self.profilesList?[(indexPath as NSIndexPath).section].1[(indexPath as NSIndexPath).row]
             
-            if cell.sw.allTargets.count == 0 {
-                cell.sw.addTarget(self, action: #selector(EditProfiles.toggleSetting(_:)), for: UIControlEvents.valueChanged)
-            }
-            var title = key!
-            let lengthTitle = 100
-            if title.characters.count < lengthTitle {
-                title += String(repeating: " ", count: (lengthTitle - title.characters.count))
-            }
-            //cell.sw.isOn = UserDefaults.standard.bool(forKey: title)
-            cell.label.setTitle(title, for: UIControlState.normal)
-            cell.label.addTarget(self, action: #selector(printHere), for: .touchUpInside)
-            //cell.longLabel.text = self.settingsNotes[key!]
-            
+            let title = key!
+            cell.textLabel?.text = title
             cell.backgroundColor = (self.darkMode ? cellBackgroundColorDark : cellBackgroundColorLight)
-            cell.label.setTitleColor((self.darkMode ? cellLabelColorDark : cellLabelColorLight), for: UIControlState.normal)
-            //cell.label.textColor = (self.darkMode ? cellLabelColorDark : cellLabelColorLight)
-            cell.longLabel.textColor = (self.darkMode ? cellLongLabelColorDark : cellLongLabelColorLight)
             cell.accessoryType = .disclosureIndicator
-            cell.changeConstraints()
-            
             return cell
         }
         else {
@@ -258,12 +247,32 @@ class EditProfiles: ExtraView, UITableViewDataSource, UITableViewDelegate {
         }
     }
     
+    func tableView(_ tableView: UITableView, editActionsForRowAt indexPath: IndexPath) -> [UITableViewRowAction]? {
+        let profile = (self.profilesList?[(indexPath as NSIndexPath).section].1[(indexPath as NSIndexPath).row])!
+        if profile != "Default" {
+            let delete = UITableViewRowAction(style: .destructive, title: "Delete") { (action, indexPath) in
+                self.deleteScreen = DeleteViewController(view: self as UIView, type: "profile", name: profile)
+                self.deleteScreen?.cancelButton.addTarget(self, action: #selector(self.removeDeleteScreen), for: .touchUpInside)
+                self.deleteScreen?.deleteButton.tag = (indexPath as NSIndexPath).row
+                self.deleteScreen?.deleteButton.addTarget(self, action: #selector(self.deleteElm(_:)), for: .touchUpInside)
+                
+            }
+            return [delete]
+        }
+        else {
+            let noDelete = UITableViewRowAction(style: .normal, title: "Delete") { (action, indexPath) in
+                self.tableView?.setEditing(false, animated: false)
+            }
+            return [noDelete]
+        }
+        
+    }
+    
     func updateAppearance(_ dark: Bool) {
         if dark {
             self.effectsView?.effect
             let blueColor = UIColor(red: 135/CGFloat(255), green: 206/CGFloat(255), blue: 250/CGFloat(255), alpha: 1)
             self.pixelLine?.backgroundColor = blueColor.withAlphaComponent(CGFloat(0.5))
-            self.backButton?.setTitleColor(blueColor, for: UIControlState())
             self.settingsLabel?.textColor = UIColor.white
             
             if let visibleCells = self.tableView?.visibleCells {
@@ -279,7 +288,6 @@ class EditProfiles: ExtraView, UITableViewDataSource, UITableViewDelegate {
         else {
             let blueColor = UIColor(red: 0/CGFloat(255), green: 122/CGFloat(255), blue: 255/CGFloat(255), alpha: 1)
             self.pixelLine?.backgroundColor = blueColor.withAlphaComponent(CGFloat(0.5))
-            self.backButton?.setTitleColor(blueColor, for: UIControlState())
             self.settingsLabel?.textColor = UIColor.gray
             
             if let visibleCells = self.tableView?.visibleCells {
@@ -303,9 +311,40 @@ class EditProfiles: ExtraView, UITableViewDataSource, UITableViewDelegate {
         }
     }
     
-    func printHere(_ sender:UIButton) {
-        print("i was clicked")
-        self.callBack(sender.titleLabel!.text!)
+    func clickCallback(_ gestureRecognizer: UIGestureRecognizer) {
+        
+        let tap = gestureRecognizer as! UITapGestureRecognizer
+        let locationInView = tap.location(in: tableView)
+        let indexPath = tableView?.indexPathForRow(at: locationInView)
+        if (self.tableView?.isEditing == false) {
+            let text = self.profilesList?[((indexPath)?.section)!].1[(((indexPath))?.row)!]
+            self.callBack(text!)
+        }
+    }
+    
+    func removeDeleteScreen() {
+        if self.deleteScreen != nil {
+            self.deleteScreen?.warningView.removeFromSuperview()
+        }
+        self.tableView?.setEditing(false, animated: false)
+        self.deleteScreen = nil
+    }
+    
+    func deleteElm(_ sender:UIButton) {
+        let profile = (self.profilesList?[0].1[sender.tag])!
+        self.deleteCallback(profile)
+        /*Database().deleteProfile(profile_name: profile)
+        UserDefaults.standard.string(forKey: "profile")
+        UserDefaults.standard.register(defaults: ["profile": "Default"])
+        self.banner?.profileSelector.setTitle(UserDefaults.standard.string(forKey: "profile")!, for: UIControlState())*/
+        removeDeleteScreen()
+        self.reloadData()
+    }
+    
+    func reloadData() {
+        let profiles: [String] = Database().getProfiles()
+        self.profilesList = [("Profiles", profiles)]
+        tableView?.reloadData()
     }
     
 }
@@ -314,104 +353,3 @@ func tempCallBack(tempString:String) {
     print("Not innitialized")
 }
 
-class EditProfileTableViewCell: UITableViewCell {
-    
-    var sw: UISwitch
-    var label: UIButton
-    var longLabel: UITextView
-    var constraintsSetForLongLabel: Bool
-    var cellConstraints: [NSLayoutConstraint]
-    
-    override init(style: UITableViewCellStyle, reuseIdentifier: String?) {
-        self.sw = UISwitch()
-        self.label = UIButton()
-        self.longLabel = UITextView()
-        self.cellConstraints = []
-        
-        self.constraintsSetForLongLabel = false
-        
-        super.init(style: style, reuseIdentifier: reuseIdentifier)
-        
-        self.sw.translatesAutoresizingMaskIntoConstraints = false
-        self.label.translatesAutoresizingMaskIntoConstraints = false
-        self.longLabel.translatesAutoresizingMaskIntoConstraints = false
-        
-        self.longLabel.text = nil
-        self.longLabel.isScrollEnabled = false
-        self.longLabel.isSelectable = false
-        self.longLabel.backgroundColor = UIColor.clear
-        
-        self.sw.tag = 1
-        self.label.tag = 2
-        self.longLabel.tag = 3
-        self.sw.isHidden = true
-        self.addSubview(self.sw)
-        self.addSubview(self.label)
-        self.addSubview(self.longLabel)
-        
-        self.addConstraints()
-    }
-    
-    required init?(coder aDecoder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
-    
-    func addConstraints() {
-        let margin: CGFloat = 8
-        let sideMargin = margin * 2
-        
-        let hasLongText = self.longLabel.text != nil && !self.longLabel.text.isEmpty
-        if hasLongText {
-            let switchSide = NSLayoutConstraint(item: sw, attribute: NSLayoutAttribute.right, relatedBy: NSLayoutRelation.equal, toItem: self, attribute: NSLayoutAttribute.right, multiplier: 1, constant: -sideMargin)
-            let switchTop = NSLayoutConstraint(item: sw, attribute: NSLayoutAttribute.top, relatedBy: NSLayoutRelation.equal, toItem: self, attribute: NSLayoutAttribute.top, multiplier: 1, constant: margin)
-            let labelSide = NSLayoutConstraint(item: label, attribute: NSLayoutAttribute.left, relatedBy: NSLayoutRelation.equal, toItem: self, attribute: NSLayoutAttribute.left, multiplier: 1, constant: sideMargin)
-            let labelCenter = NSLayoutConstraint(item: label, attribute: NSLayoutAttribute.centerY, relatedBy: NSLayoutRelation.equal, toItem: sw, attribute: NSLayoutAttribute.centerY, multiplier: 1, constant: 0)
-            
-            self.addConstraint(switchSide)
-            self.addConstraint(switchTop)
-            self.addConstraint(labelSide)
-            self.addConstraint(labelCenter)
-            
-            let left = NSLayoutConstraint(item: longLabel, attribute: NSLayoutAttribute.left, relatedBy: NSLayoutRelation.equal, toItem: self, attribute: NSLayoutAttribute.left, multiplier: 1, constant: sideMargin)
-            let right = NSLayoutConstraint(item: longLabel, attribute: NSLayoutAttribute.right, relatedBy: NSLayoutRelation.equal, toItem: self, attribute: NSLayoutAttribute.right, multiplier: 1, constant: -sideMargin)
-            let top = NSLayoutConstraint(item: longLabel, attribute: NSLayoutAttribute.top, relatedBy: NSLayoutRelation.equal, toItem: sw, attribute: NSLayoutAttribute.bottom, multiplier: 1, constant: margin)
-            let bottom = NSLayoutConstraint(item: longLabel, attribute: NSLayoutAttribute.bottom, relatedBy: NSLayoutRelation.equal, toItem: self, attribute: NSLayoutAttribute.bottom, multiplier: 1, constant: -margin)
-            
-            self.addConstraint(left)
-            self.addConstraint(right)
-            self.addConstraint(top)
-            self.addConstraint(bottom)
-            
-            self.cellConstraints += [switchSide, switchTop, labelSide, labelCenter, left, right, top, bottom]
-            
-            self.constraintsSetForLongLabel = true
-        }
-        else {
-            let switchSide = NSLayoutConstraint(item: sw, attribute: NSLayoutAttribute.right, relatedBy: NSLayoutRelation.equal, toItem: self, attribute: NSLayoutAttribute.right, multiplier: 1, constant: -sideMargin)
-            let switchTop = NSLayoutConstraint(item: sw, attribute: NSLayoutAttribute.top, relatedBy: NSLayoutRelation.equal, toItem: self, attribute: NSLayoutAttribute.top, multiplier: 1, constant: margin)
-            let switchBottom = NSLayoutConstraint(item: sw, attribute: NSLayoutAttribute.bottom, relatedBy: NSLayoutRelation.equal, toItem: self, attribute: NSLayoutAttribute.bottom, multiplier: 1, constant: -margin)
-            let labelSide = NSLayoutConstraint(item: label, attribute: NSLayoutAttribute.left, relatedBy: NSLayoutRelation.equal, toItem: self, attribute: NSLayoutAttribute.left, multiplier: 1, constant: sideMargin)
-            let labelCenter = NSLayoutConstraint(item: label, attribute: NSLayoutAttribute.centerY, relatedBy: NSLayoutRelation.equal, toItem: sw, attribute: NSLayoutAttribute.centerY, multiplier: 1, constant: 0)
-            
-            self.addConstraint(switchSide)
-            self.addConstraint(switchTop)
-            self.addConstraint(switchBottom)
-            self.addConstraint(labelSide)
-            self.addConstraint(labelCenter)
-            
-            self.cellConstraints += [switchSide, switchTop, switchBottom, labelSide, labelCenter]
-            
-            self.constraintsSetForLongLabel = false
-        }
-    }
-    
-    // XXX: not in updateConstraints because it doesn't play nice with UITableViewAutomaticDimension for some reason
-    func changeConstraints() {
-        let hasLongText = self.longLabel.text != nil && !self.longLabel.text.isEmpty
-        if hasLongText != self.constraintsSetForLongLabel {
-            self.removeConstraints(self.cellConstraints)
-            self.cellConstraints.removeAll()
-            self.addConstraints()
-        }
-    }
-}

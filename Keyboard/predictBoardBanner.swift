@@ -24,13 +24,17 @@ class PredictboardBanner: ExtraView {
     let defaultView = PassThroughView()
     let textInputView = PassThroughView()
     let loadingView = PassThroughView()
-    let textField = UITextField()
+    let textField = keyboardTextField()
     let textFieldLabel = UILabel()
     let backButton = UIButton()
     let saveButton = UIButton()
     let pasteButton = UIButton()
     let clearButton = UIButton()
     let loadingLabel = UILabel()
+    let loadingLabelMessage = UILabel()
+    var tiButtons = [BannerButton]()
+    let numTIbuttons = 5
+    var setCaps:() -> (Bool)
     
     let warningView = UIView()
     let warningTitle = UILabel()
@@ -47,9 +51,9 @@ class PredictboardBanner: ExtraView {
         }
     }
     
-    required init(globalColors: GlobalColors.Type?, darkMode: Bool, solidColorMode: Bool) {
+    required init(setCaps:@escaping () -> (Bool), globalColors: GlobalColors.Type?, darkMode: Bool, solidColorMode: Bool) {
         let defaults = UserDefaults.standard
-        
+        self.setCaps = setCaps
         super.init(globalColors: globalColors, darkMode: darkMode, solidColorMode: solidColorMode)
         
         defaultView.frame = CGRect(x: self.getMinX(), y: self.getMinY(), width: self.frame.width, height: self.frame.height)
@@ -70,11 +74,17 @@ class PredictboardBanner: ExtraView {
         let largeFont = CGFloat(30)
         let fontSize = CGFloat(22)
         
-        for _ in 0..<self.numButtons {
+        for i in 0..<(self.numButtons + self.numTIbuttons) {
             let button: BannerButton = BannerButton()
             button.type = "ACButton"
-            buttons.append(button)
-            defaultView.addSubview(button)
+            if i < self.numButtons {
+                buttons.append(button)
+                defaultView.addSubview(button)
+            }
+            else {
+                self.tiButtons.append(button)
+                textInputView.addSubview(button)
+            }
             button.layer.borderWidth = 1
             button.layer.borderColor = UIColor.clear.cgColor
             button.titleLabel?.font = UIFont.systemFont(ofSize: fontSize)
@@ -111,14 +121,19 @@ class PredictboardBanner: ExtraView {
         self.phraseSelector.addTarget(self, action: #selector(buttonUnclicked), for: .touchUpInside)
         self.phraseSelector.setTitle("Phrases", for: .normal)
         
-        self.textField.placeholder = "Just Start Typing"
+        //self.textField.placeholder = "Just Start Typing"
         self.textField.font = UIFont.systemFont(ofSize: fontSize)
-        self.textField.borderStyle = UITextBorderStyle.roundedRect
-        self.textField.autocorrectionType = UITextAutocorrectionType.no
-        self.textField.returnKeyType = UIReturnKeyType.done
-        self.textField.clearButtonMode = UITextFieldViewMode.whileEditing;
-        self.textField.contentVerticalAlignment = UIControlContentVerticalAlignment.center
-        self.textField.adjustsFontSizeToFitWidth = true
+        self.textField.lineBreakMode = .byTruncatingHead
+        self.textField.layer.borderWidth = 1
+        self.textField.layer.cornerRadius = 5
+        self.textField.layer.borderColor = UIColor.black.cgColor
+        //self.textField.borderStyle = UITextBorderStyle.roundedRect
+        //self.textField.autocorrectionType = UITextAutocorrectionType.no
+        //self.textField.returnKeyType = UIReturnKeyType.done
+        //self.textField.clearButtonMode = UITextFieldViewMode.whileEditing;
+        //self.textField.contentVerticalAlignment = UIControlContentVerticalAlignment.center
+        self.textField.backgroundColor = UIColor.white
+        //self.textField.adjustsFontSizeToFitWidth = true
         self.textInputView.addSubview(self.textField)
         
         //self.textFieldLabel.text = "Profile Name:"
@@ -179,6 +194,10 @@ class PredictboardBanner: ExtraView {
         self.loadingLabel.font = UIFont.systemFont(ofSize: fontSize)
         self.loadingView.addSubview(self.loadingLabel)
         
+        self.loadingLabelMessage.textAlignment = .center
+        self.loadingLabelMessage.font = UIFont.systemFont(ofSize: fontSize)
+        self.loadingView.addSubview(self.loadingLabelMessage)
+        
         self.loadingView.addSubview(progressBar)
         
         hideWarningView()
@@ -190,6 +209,10 @@ class PredictboardBanner: ExtraView {
     
     required init?(coder aDecoder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
+    }
+    
+    required init(globalColors: GlobalColors.Type?, darkMode: Bool, solidColorMode: Bool) {
+        fatalError("init(globalColors:darkMode:solidColorMode:) has not been implemented")
     }
     
     
@@ -230,24 +253,39 @@ class PredictboardBanner: ExtraView {
             }
         }
         
-        let textWidth:CGFloat = 300
+        let rowSize:CGFloat = self.getMaxX() - self.getMinX()
+        let labelSpacing:CGFloat = 8
+        let textWidth = rowSize * CGFloat(0.75) - labelSpacing * 2
+        let labelWidth = rowSize * CGFloat(0.25)
         let textHeight:CGFloat = 40
-        self.textField.frame = CGRect(x: self.getMidX() - textWidth / CGFloat(3), y: self.getMidY() - textHeight / CGFloat(2), width: textWidth, height: textHeight)
+        let rowSpacing:CGFloat = 3
+        let viewThird = self.getMinY() + (self.getMaxY() - self.getMinY()) / CGFloat(3)
+        let textFieldY = viewThird + rowSpacing
         
+        self.textFieldLabel.frame = CGRect(x: 0, y: textFieldY, width: labelWidth, height: textHeight)
+
+        self.textField.frame = CGRect(x: self.textFieldLabel.frame.maxX + labelSpacing, y: self.textFieldLabel.frame.minY, width: textWidth, height: textHeight)
         
-        let labelWidth:CGFloat = 150
-        let buttonSpacing:CGFloat = 8
-        self.textFieldLabel.frame = CGRect(x: self.textField.frame.origin.x - labelWidth - buttonSpacing, y:self.textField.frame.origin.y, width: labelWidth, height: textHeight)
+    
         
-        let butWidth:CGFloat = 75
-        let backButtonX = (self.textFieldLabel.frame.origin.x - butWidth) / 2
-        let saveButtonX = (self.getMaxX() - self.textField.frame.maxX - butWidth) / 2 + self.textField.frame.maxX
+        let actionButWidth:CGFloat = 75
+        let actionButHeight:CGFloat = 40
+        let actionButtonSpacing:CGFloat = (rowSize - actionButWidth * 4) / 5
         
+        let actionButtonY = rowSpacing
         
-        self.backButton.frame = CGRect(x: backButtonX, y: self.textField.frame.origin.y, width: butWidth, height: 40)
-        self.saveButton.frame = CGRect(x: saveButtonX , y: self.textField.frame.origin.y, width: butWidth, height: 40)
-        self.pasteButton.frame = CGRect(x: backButtonX, y: self.textField.frame.origin.y - 50, width: butWidth, height: 40)
-        self.clearButton.frame = CGRect(x: saveButtonX, y: self.textField.frame.origin.y - 50, width: butWidth, height: 40)
+        self.backButton.frame = CGRect(x: actionButtonSpacing, y: actionButtonY, width: actionButWidth, height: actionButHeight)
+        self.clearButton.frame = CGRect(x: self.backButton.frame.maxX + actionButtonSpacing, y: actionButtonY, width: actionButWidth, height: actionButHeight)
+        self.pasteButton.frame = CGRect(x: self.clearButton.frame.maxX + actionButtonSpacing, y: actionButtonY, width: actionButWidth, height: actionButHeight)
+        self.saveButton.frame = CGRect(x: self.pasteButton.frame.maxX + actionButtonSpacing, y: actionButtonY, width: actionButWidth, height: actionButHeight)
+        
+        let tiButtonY = viewThird * CGFloat(2)
+        var tiButtonX:CGFloat = 0
+        for button in tiButtons {
+            button.frame = CGRect(x: tiButtonX, y: tiButtonY, width: widthBut - 1, height: heightBut - 1)
+            tiButtonX += widthBut
+        }
+        
         
         let warningViewWidth = (self.getMaxX() - self.getMinX()) * CGFloat(0.75)
         let warningViewHeight = (self.getMaxY() - self.getMinY()) * CGFloat(0.9)
@@ -260,14 +298,16 @@ class PredictboardBanner: ExtraView {
         
         self.loadingLabel.frame = CGRect(x: self.getMidX() - textWidth, y: self.getMidY() - textHeight / CGFloat(2), width: 2 * textWidth, height: textHeight)
         
+        self.loadingLabelMessage.frame = CGRect(x: self.loadingLabel.frame.origin.x, y: self.loadingLabel.frame.maxY + rowSpacing, width: self.loadingLabel.frame.width, height: self.loadingLabel.frame.height)
+        
         self.progressBar.setProgress(0, animated: true)
-        self.progressBar.frame = CGRect(x: self.getMidX() - textWidth, y: self.getMidY() + CGFloat(2.5) * textHeight / CGFloat(2), width: 2 * textWidth, height: textHeight)
+        self.progressBar.frame = CGRect(x: self.loadingLabel.frame.origin.x, y: self.loadingLabel.frame.maxY + rowSpacing, width: self.loadingLabel.frame.width, height: self.loadingLabel.frame.height)
 
     }
     
     override func updateAppearance()
     {
-        var allButtons: [UIButton] = self.buttons
+        var allButtons: [UIButton] = self.buttons + self.tiButtons
         allButtons.append(self.backButton)
         allButtons.append(self.saveButton)
         allButtons.append(self.pasteButton)
@@ -278,7 +318,6 @@ class PredictboardBanner: ExtraView {
             button.setTitleColor((darkMode ? self.globalColors?.darkModeTextColor : self.globalColors?.lightModeTextColor), for: UIControlState.highlighted)
         }
         
-        self.textField.keyboardAppearance = (darkMode ? .dark : .light)
         
         self.profileSelector.backgroundColor = globalColors?.regularKey(darkMode, solidColorMode: solidColorMode)
         self.profileSelector.setTitleColor((darkMode ? self.globalColors?.darkModeTextColor : self.globalColors?.lightModeTextColor), for: UIControlState.normal)
@@ -291,6 +330,7 @@ class PredictboardBanner: ExtraView {
         self.textFieldLabel.textColor = (darkMode ? self.globalColors?.darkModeTextColor : self.globalColors?.lightModeTextColor)
         self.loadingLabel.textColor = (darkMode ? self.globalColors?.darkModeTextColor : self.globalColors?.lightModeTextColor)
     }
+    
     
     func buttonClicked(_ sender:BannerButton){
         if sender.type == "ACButton" {
@@ -317,12 +357,12 @@ class PredictboardBanner: ExtraView {
     
     func selectTextView() {
         self.textField.text = ""
-        self.enableSaveButton(enable: false)
         UserDefaults.standard.register(defaults: ["keyboardInputToApp": false])
         switchView()
     }
     
     func showLoadingScreen(toShow: Bool) {
+        self.loadingLabelMessage.text = ""
         self.loadingView.isHidden = !toShow
         self.defaultView.isHidden = toShow
         self.defaultView.isUserInteractionEnabled = !toShow
@@ -336,6 +376,7 @@ class PredictboardBanner: ExtraView {
             self.defaultView.isUserInteractionEnabled = true
             self.textInputView.isHidden = true
             self.textInputView.isUserInteractionEnabled = false
+            self.setCaps()
         }
         else {
             self.bringSubview(toFront: self.textInputView)
@@ -343,6 +384,7 @@ class PredictboardBanner: ExtraView {
             self.textInputView.isUserInteractionEnabled = true
             self.defaultView.isHidden = true
             self.defaultView.isUserInteractionEnabled = false
+            self.setCaps()
         }
     }
     
@@ -354,15 +396,14 @@ class PredictboardBanner: ExtraView {
         
     }
     
-    func enableSaveButton(enable:Bool) {
-        self.saveButton.isEnabled = enable
-        /*if enable {
-            self.saveButton.backgroundColor = globalColors?.regularKey(darkMode, solidColorMode: solidColorMode)
+    func emptyTextbox() -> Bool {
+        if self.textField.text == "" {
+            showWarningView(title: "Warning", message: "No input given")
+            return true
         }
-        else {
-            self.saveButton.backgroundColor?.withAlphaComponent(0.1)
-        }*/
+        return false
     }
+    
     
     func clearTextbox() {
         self.textField.text = ""
@@ -383,4 +424,9 @@ class PredictboardBanner: ExtraView {
 }
 
 
-
+class keyboardTextField: UILabel {
+    override func drawText(in rect: CGRect) {
+        let insets = UIEdgeInsets.init(top: 0, left: 5, bottom: 0, right: 5)
+        super.drawText(in: UIEdgeInsetsInsetRect(rect, insets))
+    }
+}

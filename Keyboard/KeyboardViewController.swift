@@ -401,6 +401,7 @@ class KeyboardViewController: UIInputViewController {
     /////////////////////
     
     override func didReceiveMemoryWarning() {
+        print("MEMORY WARNING")
         super.didReceiveMemoryWarning()
         // Dispose of any resources that can be recreated
     }
@@ -608,6 +609,7 @@ class KeyboardViewController: UIInputViewController {
                 (sender.shape as? ShiftShape)?.withLock = false
             }
         }
+        self.updateButtons()
     }
     
     func shiftUp(_ sender: KeyboardKey) {
@@ -636,6 +638,7 @@ class KeyboardViewController: UIInputViewController {
 
         self.shiftStartingState = nil
         self.shiftWasMultitapped = false
+        self.updateButtons()
     }
     
     func shiftDoubleTapped(_ sender: KeyboardKey) {

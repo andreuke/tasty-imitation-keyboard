@@ -350,9 +350,9 @@ class Database: NSObject {
     }
     
     func recommendationQuery(user_profile: String, n: Int, pattern: String,
-                             words: [String], result_set: Set<String>) -> Set<String> {
+                             words: [String], result_set: Set<String>, numResults:Int) -> Set<String> {
         
-        if result_set.count == 14 {
+        if result_set.count == numResults {
             return result_set
         }
         
@@ -375,7 +375,7 @@ class Database: NSObject {
                 .filter(containers.ngram != "")
                 .filter(containers.n == n)
                 .order(containers.frequency.desc, containers.ngram)
-                .limit(14, offset: 0)) {
+                .limit(numResults, offset: 0)) {
                     // This wall have a different number of components for different patterns!
                     let row_components = row[containers.ngram].components(separatedBy: " ")
                     
@@ -387,30 +387,30 @@ class Database: NSObject {
                     
                     if n == 3 {
                         if pattern == "\(word1) \(word2) \(current_input)%" {
-                            if resultSet.count < 14 {
+                            if resultSet.count < numResults {
                                 resultSet.insert(row_components[2])
                             }
                         }
                         else if pattern == "\(word2) \(current_input)%" {
-                            if resultSet.count < 14 {
+                            if resultSet.count < numResults {
                                 resultSet.insert(row_components[1]+" "+row_components[2])
                             }
                         }
                     }
                     else if n == 2 {
                         if pattern == "\(word2) \(current_input)%" {
-                            if resultSet.count < 14 {
+                            if resultSet.count < numResults {
                                 resultSet.insert(row_components[1])
                             }
                         }
                         else if pattern == "\(current_input)%" {
-                            if resultSet.count < 14 {
+                            if resultSet.count < numResults {
                                 resultSet.insert(row_components[0]+" "+row_components[1])
                             }
                         }
                     }
                     else /* n == 1 */ {
-                        if resultSet.count < 14 {
+                        if resultSet.count < numResults {
                             resultSet.insert(row[containers.ngram])
                         }
                     }
@@ -432,7 +432,7 @@ class Database: NSObject {
     */
  
     func recommendWords(word1: String = "", word2: String = "", current_input: String,
-                        shift_state: ShiftState = ShiftState.disabled)->Set<String>{
+                        shift_state: ShiftState = ShiftState.disabled, numResults:Int)->Set<String>{
         // POSSIBLE PATTERNS
         // 3:      "\(word1) \(word2) \(current_input)%"
         // 3:      "% \(word2) \(current_input)%" ********* <--- maybe not
@@ -504,16 +504,16 @@ class Database: NSObject {
         if word1 != "" && word2 != "" {
             resultSet = recommendationQuery(user_profile: userProfile,
                                 n: 3, pattern: "\(word1) \(word2) \(current_input)%",
-                                words: words, result_set: resultSet)
+                                words: words, result_set: resultSet, numResults: numResults)
             for n in [2,3] {
                 resultSet = recommendationQuery(user_profile: userProfile,
                                 n: n, pattern: "\(word2) \(current_input)%",
-                                words: words, result_set: resultSet)
+                                words: words, result_set: resultSet, numResults: numResults)
             }
             for n in [1,2] {
                 resultSet = recommendationQuery(user_profile: userProfile,
                                 n: n, pattern: "\(current_input)%",
-                                words: words, result_set: resultSet)
+                                words: words, result_set: resultSet, numResults: numResults)
             }
         }
             
@@ -521,19 +521,19 @@ class Database: NSObject {
             for n in [2,3] {
                 resultSet = recommendationQuery(user_profile: userProfile,
                                 n: n, pattern: "\(word2) \(current_input)%",
-                                words: words, result_set: resultSet)
+                                words: words, result_set: resultSet, numResults: numResults)
             }
             for n in [1,2] {
                 resultSet = recommendationQuery(user_profile: userProfile,
                                 n: n, pattern: "\(current_input)%",
-                                words: words, result_set: resultSet)
+                                words: words, result_set: resultSet, numResults: numResults)
             }
         }
             
         else /* word1 and word2 are empty */ {
             resultSet = recommendationQuery(user_profile: userProfile,
                                 n: 1, pattern: "\(current_input)%",
-                                words: words, result_set: resultSet)
+                                words: words, result_set: resultSet, numResults: numResults)
         }
  
  
@@ -550,17 +550,47 @@ class Database: NSObject {
                 resultSet.remove(word)
                 resultSet.insert(placeholder)
             }
-            else {
+            else if shift_state == ShiftState.locked{
                 let placeholder = word.uppercased()
                 resultSet.remove(word)
                 resultSet.insert(placeholder)
             }
         }
         
+        for word in resultSet {
+            if (current_input != "" && current_input == current_input.capitalized && shift_state == .disabled) {
+                let placeholder = word.capitalized
+                resultSet.remove(word)
+                resultSet.insert(placeholder)
+            }
+            else {
+                break
+            }
+        }
+        
         return resultSet
     }
     
-    func addProfile(profile_name:String){
+    func checkProfile(profile_name: String) ->Bool {
+        do {
+            let db_path = dbObjects().db_path
+            let db = try Connection("\(db_path)/db.sqlite3")
+            let profiles = dbObjects.Profiles()
+            //let count = try db.scalar(profiles.table.count)
+            let count = try db.scalar(profiles.table.filter(profiles.name == profile_name).count)
+            if count > 0 {
+                return false
+            }
+            else {
+                return true
+            }
+        }
+        catch {
+            return false
+        }
+    }
+    
+    func addProfile(profile_name:String) -> Bool{
         do {
             let db_path = dbObjects().db_path
             let db = try Connection("\(db_path)/db.sqlite3")
@@ -588,11 +618,17 @@ class Database: NSObject {
             self.counter = 30000
             
             _ = try? db.run(String(bulk_insert.characters.dropLast(2))+";")
-            
+            print()
+            for p in try db.prepare(profiles.table) {
+                print("profile: \(p[profiles.name]), order: \(p[profiles.order]), id: \(p[profiles.profileId])")
+            }
+            print("--------")
         } catch {
             print("Something failed while trying to add new profile")
             print("Error: \(error)")
+            return false
         }
+        return true
     }
     
 
@@ -609,9 +645,9 @@ class Database: NSObject {
             for row in try db.prepare(profiles.table.filter(profiles.name == profile_name)) {
                 oldRowNum = row[profiles.order]
             }
-            
-            _ = try db.run(profiles.table.filter(profiles.order > oldRowNum!).update(profiles.order--))
-            
+            if oldRowNum != nil {
+                _ = try db.run(profiles.table.filter(profiles.order > oldRowNum!).update(profiles.order--))
+            }
             
             // Delete profile from Profiles
 
@@ -624,6 +660,12 @@ class Database: NSObject {
             // Delete all data sources associated with profile
             let data_sources = dbObjects.DataSources()
             _ = try db.run(data_sources.table.filter(data_sources.profile == profile_name).delete())
+            
+            print()
+            for p in try db.prepare(profiles.table) {
+                print("profile: \(p[profiles.name]), order: \(p[profiles.order]), id: \(p[profiles.profileId])")
+            }
+            print("--------")
             
         } catch {
             print("Something failed while trying to delete profile")
@@ -712,6 +754,25 @@ class Database: NSObject {
         return profiles_list
     }
     
+    func checkDataSource(targetProfile:String, dataSource: String) ->Bool {
+        do {
+            let db_path = dbObjects().db_path
+            let db = try Connection("\(db_path)/db.sqlite3")
+            let dataSources = dbObjects.DataSources()
+            //let count = try db.scalar(profiles.table.count)
+            let count = try db.scalar(dataSources.table.filter(dataSources.source == dataSource && dataSources.profile == targetProfile).count)
+            if count > 0 {
+                return false
+            }
+            else {
+                return true
+            }
+        }
+        catch {
+            return false
+        }
+    }
+    
     // WARNING: NOT TESTED YET
     func addDataSource(target_profile: String, new_data_source: String, new_title: String) {
         do {
@@ -791,6 +852,25 @@ class Database: NSObject {
         } catch {
             print("reset failed")
             print("Error: \(error)")
+        }
+    }
+    
+    func checkPhrase(phrase: String) ->Bool {
+        do {
+            let db_path = dbObjects().db_path
+            let db = try Connection("\(db_path)/db.sqlite3")
+            let phrases = dbObjects.Phrases()
+            //let count = try db.scalar(profiles.table.count)
+            let count = try db.scalar(phrases.table.filter(phrases.phrase == phrase).count)
+            if count > 0 {
+                return false
+            }
+            else {
+                return true
+            }
+        }
+        catch {
+            return false
         }
     }
     

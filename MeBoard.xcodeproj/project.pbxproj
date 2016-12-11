@@ -47,6 +47,7 @@
 		89A5DC451DC19ECA0087BEAA /* ExNumKeyboard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89A5DC441DC19ECA0087BEAA /* ExNumKeyboard.swift */; };
 		89AB7F331DA57D7800439FDC /* predictBoard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89AB7F321DA57D7800439FDC /* predictBoard.swift */; };
 		89AB7F351DA57E4300439FDC /* predictBoardBanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89AB7F341DA57E4300439FDC /* predictBoardBanner.swift */; };
+		89BC96181DFB6D40000643B7 /* DeleteViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89BC96171DFB6D40000643B7 /* DeleteViewController.swift */; };
 		89BD86E91DCBACEF00BD9B1A /* popupViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89BD86E81DCBACEF00BD9B1A /* popupViewController.swift */; };
 		89BD86EB1DCFFE5500BD9B1A /* passThroughView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89BD86EA1DCFFE5500BD9B1A /* passThroughView.swift */; };
 		89BD86F31DD3AA9C00BD9B1A /* EditProfile.xib in Resources */ = {isa = PBXBuildFile; fileRef = 89BD86F21DD3AA9C00BD9B1A /* EditProfile.xib */; };
@@ -162,6 +163,7 @@
 		89A5DC441DC19ECA0087BEAA /* ExNumKeyboard.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExNumKeyboard.swift; sourceTree = "<group>"; };
 		89AB7F321DA57D7800439FDC /* predictBoard.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = predictBoard.swift; sourceTree = "<group>"; };
 		89AB7F341DA57E4300439FDC /* predictBoardBanner.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = predictBoardBanner.swift; sourceTree = "<group>"; };
+		89BC96171DFB6D40000643B7 /* DeleteViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DeleteViewController.swift; sourceTree = "<group>"; };
 		89BD86E81DCBACEF00BD9B1A /* popupViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = popupViewController.swift; sourceTree = "<group>"; };
 		89BD86EA1DCFFE5500BD9B1A /* passThroughView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = passThroughView.swift; sourceTree = "<group>"; };
 		89BD86F01DD29BBF00BD9B1A /* google-10000.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = "google-10000.txt"; sourceTree = "<group>"; };
@@ -242,12 +244,12 @@
 			isa = PBXGroup;
 			children = (
 				961D4CFE1DE2D41A002DFF28 /* 1grams.txt */,
-				961D4D001DE2D41A002DFF28 /* Phrases.xib */,
 				897067DB1DDAE77A008592E9 /* 2grams-10000.txt */,
 				897067DC1DDAE77A008592E9 /* 3grams-10000.txt */,
 				89BD86F01DD29BBF00BD9B1A /* google-10000.txt */,
 				4E6AEE4B19D246D700931E8F /* Catboard.swift */,
 				4EEFD78819E0DC6B004D4974 /* CatboardBanner.swift */,
+				89BC96171DFB6D40000643B7 /* DeleteViewController.swift */,
 				961D4CDF1DDCD5B4002DFF28 /* Database.swift */,
 				89AB7F321DA57D7800439FDC /* predictBoard.swift */,
 				89AB7F341DA57E4300439FDC /* predictBoardBanner.swift */,
@@ -259,6 +261,7 @@
 				890536911DD558040096C729 /* Profile.xib */,
 				961D4CFF1DE2D41A002DFF28 /* Phrases.swift */,
 				8905368D1DD516A30096C729 /* EditProfiles.swift */,
+				961D4D001DE2D41A002DFF28 /* Phrases.xib */,
 				89BD86F21DD3AA9C00BD9B1A /* EditProfile.xib */,
 			);
 			name = Demo;
@@ -592,6 +595,7 @@
 				4E00A6E5197183EE009414F2 /* KeyboardKey.swift in Sources */,
 				89A5DC431DC19D7F0087BEAA /* ExpandedKeyboard.swift in Sources */,
 				89AB7F331DA57D7800439FDC /* predictBoard.swift in Sources */,
+				89BC96181DFB6D40000643B7 /* DeleteViewController.swift in Sources */,
 				4EEFD78919E0DC6B004D4974 /* CatboardBanner.swift in Sources */,
 				890536941DD55C7F0096C729 /* Profiles.swift in Sources */,
 				4EE7599B19F75A0D00B4E6ED /* Utilities.swift in Sources */,
