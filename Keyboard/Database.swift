@@ -63,6 +63,7 @@ class Database: NSObject {
     var progressBar:UIProgressView? = nil
     var numElements = 30000
     var unigramDict = [String: Int]()
+    var unigramArray = [String]()
     var counter:Int = 0 {
         didSet {
             let progress = Float(counter) / Float(self.numElements)
@@ -87,6 +88,7 @@ class Database: NSObject {
                     }
                     let keyValPair = val.components(separatedBy: " ")
                     unigramDict[keyValPair[1]] = Int(keyValPair[0])
+                    unigramArray.append(keyValPair[1])
                 }
             }
             catch {
@@ -444,10 +446,11 @@ class Database: NSObject {
         let current_input = words[2]
         
         let typoWords = self.typoList(word: current_input)
+        resultSet.insert(current_input)
         let arrayKeys = self.unigramDict.keys
         var typoList = [String]()
         for word in typoWords{
-            if (arrayKeys.contains(word)){
+            if (unigramArray.contains(word)){
                 resultSet.insert(word)
             }
         }
