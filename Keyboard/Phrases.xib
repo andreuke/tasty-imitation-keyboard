@@ -1,8 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="11201" systemVersion="16B2555" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" colorMatched="YES">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="11542" systemVersion="16B2555" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" colorMatched="YES">
+    <device id="retina4_7" orientation="portrait">
+        <adaptation id="fullscreen"/>
+    </device>
     <dependencies>
         <deployment identifier="iOS"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="11161"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="11524"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
@@ -10,7 +13,7 @@
             <connections>
                 <outlet property="NavBar" destination="lTV-rN-yPI" id="r3i-NZ-BDy"/>
                 <outlet property="addButton" destination="QkP-7k-FA8" id="iIB-28-qz2"/>
-                <outlet property="backButton" destination="x35-jI-wEW" id="8Jf-cz-Pfk"/>
+                <outlet property="backButton" destination="kIP-la-VQD" id="Rxc-MS-0Vj"/>
                 <outlet property="effectsView" destination="p1b-aL-nFG" id="qVH-MN-nbd"/>
                 <outlet property="pixelLine" destination="ooR-t1-RO3" id="RNZ-JA-0tO"/>
                 <outlet property="tableView" destination="PIq-gg-rs6" id="rBh-eg-uhG"/>
@@ -22,8 +25,10 @@
             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
             <subviews>
                 <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="Ibn-Pg-NVs" userLabel="TableView">
+                    <rect key="frame" x="0.0" y="1" width="679" height="391"/>
                     <subviews>
                         <tableView opaque="NO" clipsSubviews="YES" contentMode="scaleToFill" alwaysBounceVertical="YES" indicatorStyle="black" style="grouped" separatorStyle="default" allowsSelection="NO" rowHeight="44" sectionHeaderHeight="10" sectionFooterHeight="10" translatesAutoresizingMaskIntoConstraints="NO" id="PIq-gg-rs6">
+                            <rect key="frame" x="0.0" y="44" width="679" height="347"/>
                             <color key="backgroundColor" red="0.0" green="0.0" blue="0.0" alpha="0.0" colorSpace="custom" customColorSpace="sRGB"/>
                             <connections>
                                 <outlet property="dataSource" destination="-1" id="pOX-gT-pSA"/>
@@ -31,18 +36,10 @@
                             </connections>
                         </tableView>
                         <navigationBar contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="VAq-uI-Z58">
+                            <rect key="frame" x="0.0" y="0.0" width="679" height="44"/>
                             <items>
                                 <navigationItem title="Title" id="lTV-rN-yPI">
-                                    <barButtonItem key="leftBarButtonItem" style="plain" id="gUz-K8-lGM">
-                                        <button key="customView" opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" id="x35-jI-wEW">
-                                            <rect key="frame" x="20" y="7" width="106" height="30"/>
-                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
-                                            <state key="normal" title="〈 Keyboard">
-                                                <color key="titleColor" red="0.0" green="0.47843137254901963" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
-                                                <color key="titleShadowColor" red="0.5" green="0.5" blue="0.5" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
-                                            </state>
-                                        </button>
-                                    </barButtonItem>
+                                    <barButtonItem key="leftBarButtonItem" title="〈 Keyboard" id="kIP-la-VQD"/>
                                     <barButtonItem key="rightBarButtonItem" systemItem="add" id="QkP-7k-FA8"/>
                                 </navigationItem>
                             </items>
@@ -62,11 +59,13 @@
                     </constraints>
                 </view>
                 <visualEffectView opaque="NO" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="p1b-aL-nFG">
+                    <rect key="frame" x="0.0" y="352" width="679" height="40"/>
                     <view key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" id="EjZ-Jw-9eM">
-                        <frame key="frameInset"/>
+                        <rect key="frame" x="0.0" y="0.0" width="679" height="40"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <view alpha="0.5" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="ooR-t1-RO3">
+                                <rect key="frame" x="0.0" y="0.0" width="679" height="1"/>
                                 <color key="backgroundColor" red="0.66666666666666663" green="0.66666666666666663" blue="0.66666666666666663" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                                 <constraints>
                                     <constraint firstAttribute="height" constant="1" id="8r2-39-dpi"/>

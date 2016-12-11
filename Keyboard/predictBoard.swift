@@ -53,7 +53,7 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
     let globalQueue = DispatchQueue.global(qos: .userInitiated)
     var keyPressTimer: Timer?
     var canPress: Bool = true
-    let canPressDelay: TimeInterval = 0.1
+    let canPressDelay: TimeInterval = 0.15
     var deleteScreen:DeleteViewController?
     let defaultProf = "Default"
     override init(nibName nibNameOrNil: String?, bundle nibBundleOrNil: Bundle?) {
@@ -290,6 +290,13 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
     }
     
     func autocompleteClicked(_ sender:UIButton) {
+        //make sure Brad does not accidently double click
+        if !self.canPress {
+            return
+        }
+        self.canPress = false
+        self.keyPressTimer = Timer.scheduledTimer(timeInterval: canPressDelay, target: self, selector: #selector(resetCanPress), userInfo: nil, repeats: false)
+        
         let wordToAdd = sender.titleLabel!.text!
         if wordToAdd != " "
         {
@@ -1016,7 +1023,9 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
     func createPhrases() -> Phrases? {
         // note that dark mode is not yet valid here, so we just put false for clarity
         let phrasesView = Phrases(onClickCallBack: typePhrase, editCallback: editPhraseView, globalColors: type(of: self).globalColors, darkMode: false, solidColorMode: self.solidColorMode())
-        phrasesView.backButton?.addTarget(self, action: #selector(goToKeyboard), for: UIControlEvents.touchUpInside)
+
+        phrasesView.backButton?.action = #selector(goToKeyboard)
+        phrasesView.backButton?.target = self
         
         phrasesView.addButton?.action = #selector(addPhraseView)
         phrasesView.addButton?.target = self
@@ -1126,6 +1135,7 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
         addText(text: insertionSentence)
         //updateButtons()
         setCapsIfNeeded()
+        self.goToKeyboard()
     }
     
     func fastDeleteMode(key:Key, secondaryMode:Bool) ->Bool {
