@@ -62,7 +62,6 @@ class Database: NSObject {
     var dbCreated = false
     var progressBar:UIProgressView? = nil
     var numElements = 30000
-    var unigramDict = [String: Int]()
     var unigramArray = [String]()
     var counter:Int = 0 {
         didSet {
@@ -87,12 +86,10 @@ class Database: NSObject {
                         break
                     }
                     let keyValPair = val.components(separatedBy: " ")
-                    unigramDict[keyValPair[1]] = Int(keyValPair[0])
                     unigramArray.append(keyValPair[1])
                 }
             }
             catch {
-                unigramDict["belod"] = 15
             }
         
     }
@@ -109,7 +106,6 @@ class Database: NSObject {
         //self.resetDatabase()
         do {
             self.arrayFromContentsOfFileWithName(file: "Keyboard/1grams.txt")
-            //unigramDict["below"] = 18
             let db_path = dbObjects().db_path
             let db = try Connection("\(db_path)/db.sqlite3")
             
@@ -388,9 +384,10 @@ class Database: NSObject {
         var removeLetters = [String]()
         
         wordCombos.forEach{str1,str2 in
-            
-            removeLetters.append("\(str1)+\(str2.characters.dropFirst())")
+            let str2String = String(str2.characters.dropFirst())
+            removeLetters.append("\(str1)\(str2String)")
         }
+
         
         let shifts: [String] = wordCombos.map { left, right in
             if let fst = right.characters.first {
@@ -447,12 +444,14 @@ class Database: NSObject {
         
         let typoWords = self.typoList(word: current_input)
         resultSet.insert(current_input)
-        let arrayKeys = self.unigramDict.keys
         var typoList = [String]()
         for word in typoWords{
             if (unigramArray.contains(word)){
                 resultSet.insert(word)
             }
+        }
+        if typoList.contains("that"){
+            resultSet.insert("YeahItBeTrue")
         }
         if typoList.count > 1{
             resultSet.insert(typoList[0])
