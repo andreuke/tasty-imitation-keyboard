@@ -106,7 +106,6 @@ class Database: NSObject {
         self.progressBar = progressView
         //self.resetDatabase()
         do {
-            self.arrayFromContentsOfFileWithName(file: "Keyboard/1grams.txt")
             //unigramDict["below"] = 18
             let db_path = dbObjects().db_path
             let db = try Connection("\(db_path)/db.sqlite3")
@@ -443,21 +442,6 @@ class Database: NSObject {
         let word2 = words[1]
         let current_input = words[2]
         
-        let typoWords = self.typoList(word: current_input)
-        let arrayKeys = self.unigramDict.keys
-        var typoList = [String]()
-        for word in typoWords{
-            if (arrayKeys.contains(word)){
-                resultSet.insert(word)
-            }
-        }
-        if typoList.count > 1{
-            resultSet.insert(typoList[0])
-        }
-        if typoList.count > 2{
-            resultSet.insert(typoList[1])
-        }
-        
         do {
             let db_path = dbObjects().db_path
             let db = try Connection("\(db_path)/db.sqlite3")
@@ -631,7 +615,42 @@ class Database: NSObject {
                                 words: words, result_set: resultSet, numResults: numResults)
         }
  
- 
+        
+        if resultSet.count < numResults {
+            let typoWords = self.typoList(word: current_input)
+            if self.unigramDict.count == 0 {
+                self.arrayFromContentsOfFileWithName(file: "Keyboard/1grams.txt")
+            }
+            let arrayKeys = self.unigramDict.keys
+            var typoList:[(word:String,value:Int)] = []
+            for word in typoWords{
+                var wordContained = false
+                var wordToAdd = ""
+                for tempWord in arrayKeys {
+                    if tempWord.hasPrefix(word) {
+                        wordContained = true
+                        wordToAdd = tempWord
+                        break
+                    }
+                }
+                if (wordContained){
+                    typoList.append((word:wordToAdd, value:self.unigramDict[wordToAdd]!))
+                }
+            }
+            typoList.sort {$0.value > $1.value}
+            for tuple in typoList {
+                if resultSet.count < numResults {
+                    resultSet.insert(tuple.word)
+                }
+            }
+            /*if typoList.count > 1{
+                resultSet.insert(typoList[0])
+            }
+            if typoList.count > 2{
+                resultSet.insert(typoList[1])
+            }*/
+        }
+        
         // Fix resultSet based on the ShiftState
         //  disabled: do nothing
         //  enabled: capitalize the first letter
@@ -665,6 +684,7 @@ class Database: NSObject {
         
         return resultSet
     }
+    
     
     func checkProfile(profile_name: String) ->Bool {
         do {
