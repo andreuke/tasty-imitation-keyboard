@@ -90,7 +90,6 @@ class Database: NSObject {
                 }
             }
             catch {
-                unigramDict["belod"] = 15
             }
         
     }
@@ -106,7 +105,6 @@ class Database: NSObject {
         self.progressBar = progressView
         //self.resetDatabase()
         do {
-            //unigramDict["below"] = 18
             let db_path = dbObjects().db_path
             let db = try Connection("\(db_path)/db.sqlite3")
             
@@ -385,9 +383,10 @@ class Database: NSObject {
         var removeLetters = [String]()
         
         wordCombos.forEach{str1,str2 in
-            
-            removeLetters.append("\(str1)+\(str2.characters.dropFirst())")
+            let str2String = String(str2.characters.dropFirst())
+            removeLetters.append("\(str1)\(str2String)")
         }
+
         
         let shifts: [String] = wordCombos.map { left, right in
             if let fst = right.characters.first {
