@@ -347,7 +347,8 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
         
         self.globalQueue.async {
             if self.reccommendationEngineLoaded {
-                let context = self.contextBeforeInput()
+                var context = self.contextBeforeInput()
+                context = context.replacingOccurrences(of: "\n", with: " ")
                 let normalInputMode = UserDefaults.standard.bool(forKey: "keyboardInputToApp")
                 let components = context.components(separatedBy: " ")
                 var count = (components.count) as Int
@@ -362,7 +363,6 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
                 }
                 if count >= 1 {
                     current_input = (components[count-1]) as String
-                    current_input = current_input.replacingOccurrences(of: "\n", with: "")
                 }
                 // ------------------------
                 let recEngine = self.recommendationEngine!
