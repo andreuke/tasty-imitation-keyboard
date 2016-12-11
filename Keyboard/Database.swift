@@ -62,6 +62,7 @@ class Database: NSObject {
     var dbCreated = false
     var progressBar:UIProgressView? = nil
     var numElements = 30000
+    var unigramDict = [String: Int]()
     var counter:Int = 0 {
         didSet {
             let progress = Float(counter) / Float(self.numElements)
@@ -71,6 +72,29 @@ class Database: NSObject {
             }
         }
     }
+    
+    func arrayFromContentsOfFileWithName(file: String) {
+                    let path = Bundle.main.path(forResource: "1grams", ofType: "txt")
+            
+            //reading
+            do {
+                let text = try String(contentsOfFile:path!, encoding: String.Encoding.utf8).components(separatedBy: "\n")
+                var i = 0
+                for val in text{
+                    i = i+1
+                    if i>1000{
+                        break
+                    }
+                    let keyValPair = val.components(separatedBy: " ")
+                    unigramDict[keyValPair[1]] = Int(keyValPair[0])
+                }
+            }
+            catch {
+                unigramDict["belod"] = 15
+            }
+        
+    }
+
     
     override init() {
         super.init()
@@ -82,7 +106,8 @@ class Database: NSObject {
         self.progressBar = progressView
         //self.resetDatabase()
         do {
-            
+            self.arrayFromContentsOfFileWithName(file: "Keyboard/1grams.txt")
+            //unigramDict["below"] = 18
             let db_path = dbObjects().db_path
             let db = try Connection("\(db_path)/db.sqlite3")
             
@@ -349,6 +374,61 @@ class Database: NSObject {
         }
     }
     
+    func typoList(word: String) -> Set<String> {
+        if word.isEmpty { return ["hello"] }
+        
+        var wordCombos = [(String,String)]()
+        
+        for index in 0...word.characters.count-1 {
+            wordCombos.append((String(word.characters.prefix(index)), String(word.characters.suffix(word.characters.count-index))))
+        }
+        
+        var removeLetters = [String]()
+        
+        wordCombos.forEach{str1,str2 in
+            
+            removeLetters.append("\(str1)+\(str2.characters.dropFirst())")
+        }
+        
+        let shifts: [String] = wordCombos.map { left, right in
+            if let fst = right.characters.first {
+                let drop1 = right.characters.dropFirst()
+                if let snd = drop1.first {
+                    let drop2 = drop1.dropFirst()
+                    return "\(String(left)!)\(String(snd))\(String(fst))\(String(drop2))"
+                }
+            }
+            return ""
+            }.filter { !$0.isEmpty }
+        
+        let letters = "abcdefghijklmnopqrstuvwxyz"
+        
+        let replaces = wordCombos.flatMap { left, right in
+            letters.characters.map { "\(left)\(String($0))\(String(right.characters.dropFirst()))" }
+        }
+        
+        let inserts = wordCombos.flatMap { left, right in
+            letters.characters.map { "\(left)\($0)\(right)" }
+        }
+        
+        removeLetters.append(word)
+        
+        return Set(removeLetters + shifts + replaces + inserts)
+    }
+    
+    func arrayOfCommonElements <T, U> (lhs: T, rhs: U) -> [T.Iterator.Element] where T: Sequence, U: Sequence, T.Iterator.Element: Equatable, T.Iterator.Element == U.Iterator.Element {
+        var returnArray:[T.Iterator.Element] = []
+        for lhsItem in lhs {
+            for rhsItem in rhs {
+                if lhsItem == rhsItem {
+                    returnArray.append(lhsItem)
+                }
+            }
+        }
+        return returnArray
+    }
+
+    
     func recommendationQuery(user_profile: String, n: Int, pattern: String,
                              words: [String], result_set: Set<String>, numResults:Int) -> Set<String> {
         
@@ -362,6 +442,21 @@ class Database: NSObject {
         let word1 = words[0]
         let word2 = words[1]
         let current_input = words[2]
+        
+        let typoWords = self.typoList(word: current_input)
+        let arrayKeys = self.unigramDict.keys
+        var typoList = [String]()
+        for word in typoWords{
+            if (arrayKeys.contains(word)){
+                resultSet.insert(word)
+            }
+        }
+        if typoList.count > 1{
+            resultSet.insert(typoList[0])
+        }
+        if typoList.count > 2{
+            resultSet.insert(typoList[1])
+        }
         
         do {
             let db_path = dbObjects().db_path
