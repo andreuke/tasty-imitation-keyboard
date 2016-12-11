@@ -318,6 +318,7 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
                 }
                 if count >= 1 {
                     current_input = (components?[count-1])! as String
+                    current_input = current_input.replacingOccurrences(of: "\n", with: "")
                 }
                 // ------------------------
                 let recEngine = self.recommendationEngine!
@@ -621,6 +622,7 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
 
             var bulk_insert = "INSERT INTO Containers (profile, ngram, n, dataSource, frequency) VALUES "
             var bulk_update = ""
+            var all_updates = [String: Int]()
             
             // -----------------------------------
             // is it possible to do a bulk update?
@@ -652,6 +654,7 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
                     // use bulk_update if that's possible
                     let new_update = "UPDATE Containers SET frequency = frequency + \(unigram.value) WHERE profile = \"\(target_profile)\" AND ngram = \"\(unigram.key)\"; "
                     bulk_update.append(new_update)
+                    all_updates[unigram.key] = unigram.value
                 }
                 
                 DispatchQueue.main.async {
@@ -673,6 +676,7 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
                     // use bulk_update if that's possible
                     let new_update = "UPDATE Containers SET frequency = frequency + \(bigram.value) WHERE ngram = \"\(bigram.key)\" AND profile = \"\(target_profile)\"; "
                     bulk_update.append(new_update)
+                    all_updates[bigram.key] = bigram.value
                 }
                 
                 DispatchQueue.main.async {
@@ -694,6 +698,7 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
                     // use bulk_update if that's possible
                     let new_update = "UPDATE Containers SET frequency = frequency + \(trigram.value) WHERE ngram = \"\(trigram.key)\" AND profile = \"\(target_profile)\"; "
                     bulk_update.append(new_update)
+                    all_updates[trigram.key] = trigram.value
                 }
                 
                 DispatchQueue.main.async {
@@ -706,8 +711,15 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
             do {
                 let db_path = dbObjects().db_path
                 let db = try Connection("\(db_path)/db.sqlite3")
+                let containers = dbObjects.Containers()
+                
                 _ = try db.run(String(bulk_insert.characters.dropLast(2))+";")
-                _ = try db.run(bulk_update)
+                //_ = try db.run(bulk_update)
+                /*for item in all_updates {
+                    _ = try db.run(containers.table.filter(containers.ngram == item.key)
+                                                    .filter(containers.profile == target_profile)
+                                                    .update(containers.frequency <- item.value))
+                }*/
             } catch {
                 print("Error: \(error)")
             }
