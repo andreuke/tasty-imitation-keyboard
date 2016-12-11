@@ -1050,7 +1050,7 @@ class KeyboardLayout: NSObject, KeyboardKeyProtocol {
         let totalHeight = self.layoutConstants.popupTotalHeight(actualScreenWidth)
         
         let popupWidth = key.bounds.width + self.layoutConstants.popupWidthIncrement
-        let popupHeight = totalHeight - key.bounds.height // - self.layoutConstants.popupGap
+        let popupHeight = CGFloat(50)//totalHeight - key.bounds.height // - self.layoutConstants.popupGap
         let popupCenterY = 0
         
         return CGRect(x: (key.bounds.width - popupWidth) / CGFloat(2), y: -popupHeight - self.layoutConstants.popupGap, width: popupWidth, height: popupHeight)
