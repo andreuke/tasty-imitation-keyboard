@@ -16,7 +16,7 @@ import UIKit
 class PredictboardBanner: ExtraView {
     
     let numButtons = UserDefaults.standard.integer(forKey: "numberACSbuttons")
-    let allButtons = UserDefaults.standard.integer(forKey: "numberACSbuttons") + 2
+    let allButtons = UserDefaults.standard.integer(forKey: "numberACSbuttons")
     let numRows = UserDefaults.standard.integer(forKey: "numberACSrows")
     var buttons = [BannerButton]()
     let profileSelector = BannerButton()
@@ -74,7 +74,7 @@ class PredictboardBanner: ExtraView {
         let largeFont = CGFloat(30)
         let fontSize = CGFloat(22)
         
-        for i in 0..<(self.numButtons + self.numTIbuttons) {
+        for i in 0..<(self.numButtons/* + self.numTIbuttons*/) {
             let button: BannerButton = BannerButton()
             button.type = "ACButton"
             if i < self.numButtons {
@@ -96,30 +96,30 @@ class PredictboardBanner: ExtraView {
         }
         
         //add profile selector button
-        self.profileSelector.type = "SelectorButton"
-        defaultView.addSubview(self.profileSelector)
-        self.profileSelector.titleLabel?.adjustsFontSizeToFitWidth = true
-        self.profileSelector.layer.borderWidth = 1
-        self.profileSelector.layer.cornerRadius = 5
-        self.profileSelector.layer.borderColor = UIColor.clear.cgColor
-        self.profileSelector.titleLabel?.font = UIFont.systemFont(ofSize: fontSize)
-        self.profileSelector.addTarget(self, action: #selector(buttonClicked), for: .touchDown)
-        self.profileSelector.addTarget(self, action: #selector(buttonClicked), for: .touchDragEnter)
-        self.profileSelector.addTarget(self, action: #selector(buttonUnclicked), for: .touchDragExit)
-        self.profileSelector.addTarget(self, action: #selector(buttonUnclicked), for: .touchUpInside)
+//        self.profileSelector.type = "SelectorButton"
+//        defaultView.addSubview(self.profileSelector)
+//        self.profileSelector.titleLabel?.adjustsFontSizeToFitWidth = true
+//        self.profileSelector.layer.borderWidth = 1
+//        self.profileSelector.layer.cornerRadius = 5
+//        self.profileSelector.layer.borderColor = UIColor.clear.cgColor
+//        self.profileSelector.titleLabel?.font = UIFont.systemFont(ofSize: fontSize)
+//        self.profileSelector.addTarget(self, action: #selector(buttonClicked), for: .touchDown)
+//        self.profileSelector.addTarget(self, action: #selector(buttonClicked), for: .touchDragEnter)
+//        self.profileSelector.addTarget(self, action: #selector(buttonUnclicked), for: .touchDragExit)
+//        self.profileSelector.addTarget(self, action: #selector(buttonUnclicked), for: .touchUpInside)
         
-        self.phraseSelector.type = "SelectorButton"
-        defaultView.addSubview(self.phraseSelector)
-        self.phraseSelector.titleLabel?.adjustsFontSizeToFitWidth = true
-        self.phraseSelector.layer.borderWidth = 1
-        self.phraseSelector.layer.cornerRadius = 5
-        self.phraseSelector.layer.borderColor = UIColor.clear.cgColor
-        self.phraseSelector.titleLabel?.font = UIFont.systemFont(ofSize: fontSize)
-        self.phraseSelector.addTarget(self, action: #selector(buttonClicked), for: .touchDown)
-        self.phraseSelector.addTarget(self, action: #selector(buttonClicked), for: .touchDragEnter)
-        self.phraseSelector.addTarget(self, action: #selector(buttonUnclicked), for: .touchDragExit)
-        self.phraseSelector.addTarget(self, action: #selector(buttonUnclicked), for: .touchUpInside)
-        self.phraseSelector.setTitle("Phrases", for: .normal)
+//        self.phraseSelector.type = "SelectorButton"
+//        defaultView.addSubview(self.phraseSelector)
+//        self.phraseSelector.titleLabel?.adjustsFontSizeToFitWidth = true
+//        self.phraseSelector.layer.borderWidth = 1
+//        self.phraseSelector.layer.cornerRadius = 5
+//        self.phraseSelector.layer.borderColor = UIColor.clear.cgColor
+//        self.phraseSelector.titleLabel?.font = UIFont.systemFont(ofSize: fontSize)
+//        self.phraseSelector.addTarget(self, action: #selector(buttonClicked), for: .touchDown)
+//        self.phraseSelector.addTarget(self, action: #selector(buttonClicked), for: .touchDragEnter)
+//        self.phraseSelector.addTarget(self, action: #selector(buttonUnclicked), for: .touchDragExit)
+//        self.phraseSelector.addTarget(self, action: #selector(buttonUnclicked), for: .touchUpInside)
+//        self.phraseSelector.setTitle("Phrases", for: .normal)
         
         //self.textField.placeholder = "Just Start Typing"
         self.textField.font = UIFont.systemFont(ofSize: fontSize)
@@ -235,6 +235,7 @@ class PredictboardBanner: ExtraView {
         var row = 0
         var buttonIndex = 0
         for index in 0..<self.allButtons {
+            /*
             if row == 0 && index + 1 == self.allButtons / self.numRows {
                 self.profileSelector.frame = CGRect(x: (self.getMinX() + x_offset), y: self.getMinY() + y_offset, width: widthBut - 1, height: heightBut - 1)
             }
@@ -242,9 +243,10 @@ class PredictboardBanner: ExtraView {
                 self.phraseSelector.frame = CGRect(x: (self.getMinX() + x_offset), y: self.getMinY() + y_offset, width: widthBut - 1, height: heightBut - 1)
             }
             else{
+            */
                 buttons[buttonIndex].frame = CGRect(x: (self.getMinX() + x_offset), y: self.getMinY() + y_offset, width: widthBut - 1, height: heightBut - 1)
                 buttonIndex += 1
-            }
+            //}
             x_offset += widthBut
             if (index + 1) % (self.allButtons / self.numRows) == 0 {
                 y_offset += heightBut

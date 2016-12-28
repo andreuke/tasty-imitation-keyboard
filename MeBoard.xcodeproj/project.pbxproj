@@ -172,6 +172,8 @@
 		961D4CFE1DE2D41A002DFF28 /* 1grams.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = 1grams.txt; sourceTree = "<group>"; };
 		961D4CFF1DE2D41A002DFF28 /* Phrases.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Phrases.swift; sourceTree = "<group>"; };
 		961D4D001DE2D41A002DFF28 /* Phrases.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = Phrases.xib; sourceTree = "<group>"; };
+		EF20BBF91E116DA7002CB896 /* Keyboard.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Keyboard.entitlements; sourceTree = "<group>"; };
+		EF20BBFA1E116DB0002CB896 /* HostingApp.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = HostingApp.entitlements; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -309,6 +311,7 @@
 		4E807D9519461D9000D875D1 /* HostingApp */ = {
 			isa = PBXGroup;
 			children = (
+				EF20BBFA1E116DB0002CB896 /* HostingApp.entitlements */,
 				4EF16F9A19D2550D0076AFCB /* AppDelegate.swift */,
 				4EF16F9519D255030076AFCB /* ViewController.swift */,
 				4EF16F9D19D2552E0076AFCB /* Main.storyboard */,
@@ -331,6 +334,7 @@
 		4E807DBA19461DC700D875D1 /* Keyboard */ = {
 			isa = PBXGroup;
 			children = (
+				EF20BBF91E116DA7002CB896 /* Keyboard.entitlements */,
 				4E6AEE5219D2488B00931E8F /* Controller */,
 				4E6AEE5019D2486900931E8F /* Model */,
 				4E6AEE4F19D2484B00931E8F /* Views */,
@@ -469,21 +473,21 @@
 				TargetAttributes = {
 					4E807D9219461D9000D875D1 = {
 						CreatedOnToolsVersion = 6.0;
-						DevelopmentTeam = RVGU7YMDGA;
+						DevelopmentTeam = LVH8BH4M73;
 						LastSwiftMigration = 0800;
 						SystemCapabilities = {
 							com.apple.ApplicationGroups.iOS = {
-								enabled = 0;
+								enabled = 1;
 							};
 						};
 					};
 					4E807DB819461DC700D875D1 = {
 						CreatedOnToolsVersion = 6.0;
-						DevelopmentTeam = RVGU7YMDGA;
+						DevelopmentTeam = LVH8BH4M73;
 						LastSwiftMigration = 0800;
 						SystemCapabilities = {
 							com.apple.ApplicationGroups.iOS = {
-								enabled = 0;
+								enabled = 1;
 							};
 						};
 					};
@@ -743,7 +747,8 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = "LaunchImage-1";
-				DEVELOPMENT_TEAM = RVGU7YMDGA;
+				CODE_SIGN_ENTITLEMENTS = HostingApp/HostingApp.entitlements;
+				DEVELOPMENT_TEAM = LVH8BH4M73;
 				EMBEDDED_CONTENT_CONTAINS_SWIFT = YES;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
@@ -751,10 +756,10 @@
 				);
 				INFOPLIST_FILE = HostingApp/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
-				PRODUCT_BUNDLE_IDENTIFIER = eecs481.MeBoard.Beta;
+				PRODUCT_BUNDLE_IDENTIFIER = com.biaffect;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 3.0;
-				TARGETED_DEVICE_FAMILY = 2;
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Debug;
 		};
@@ -763,7 +768,8 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = "LaunchImage-1";
-				DEVELOPMENT_TEAM = RVGU7YMDGA;
+				CODE_SIGN_ENTITLEMENTS = HostingApp/HostingApp.entitlements;
+				DEVELOPMENT_TEAM = LVH8BH4M73;
 				EMBEDDED_CONTENT_CONTAINS_SWIFT = YES;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
@@ -771,10 +777,10 @@
 				);
 				INFOPLIST_FILE = HostingApp/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
-				PRODUCT_BUNDLE_IDENTIFIER = eecs481.MeBoard.Beta;
+				PRODUCT_BUNDLE_IDENTIFIER = com.biaffect;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 3.0;
-				TARGETED_DEVICE_FAMILY = 2;
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Release;
 		};
@@ -782,14 +788,15 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CLANG_ENABLE_MODULES = YES;
-				DEVELOPMENT_TEAM = RVGU7YMDGA;
+				CODE_SIGN_ENTITLEMENTS = Keyboard/Keyboard.entitlements;
+				DEVELOPMENT_TEAM = LVH8BH4M73;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/Carthage/Build/iOS",
 				);
 				INFOPLIST_FILE = Keyboard/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
-				PRODUCT_BUNDLE_IDENTIFIER = eecs481.MeBoard.Beta.Keyboard;
+				PRODUCT_BUNDLE_IDENTIFIER = com.biaffect.prova;
 				PRODUCT_NAME = Keyboard;
 				SKIP_INSTALL = YES;
 				SWIFT_VERSION = 3.0;
@@ -800,14 +807,15 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CLANG_ENABLE_MODULES = YES;
-				DEVELOPMENT_TEAM = RVGU7YMDGA;
+				CODE_SIGN_ENTITLEMENTS = Keyboard/Keyboard.entitlements;
+				DEVELOPMENT_TEAM = LVH8BH4M73;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/Carthage/Build/iOS",
 				);
 				INFOPLIST_FILE = Keyboard/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
-				PRODUCT_BUNDLE_IDENTIFIER = eecs481.MeBoard.Beta.Keyboard;
+				PRODUCT_BUNDLE_IDENTIFIER = com.biaffect.prova;
 				PRODUCT_NAME = Keyboard;
 				SKIP_INSTALL = YES;
 				SWIFT_VERSION = 3.0;

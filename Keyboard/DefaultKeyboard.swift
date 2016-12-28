@@ -40,8 +40,8 @@ func defaultKeyboard() -> Keyboard {
     let keyboardChange = Key(.keyboardChange)
     defaultKeyboard.addKey(keyboardChange, row: 3, page: 0)
     
-    let settings = Key(.settings)
-    defaultKeyboard.addKey(settings, row: 3, page: 0)
+//    let settings = Key(.settings)
+//    defaultKeyboard.addKey(settings, row: 3, page: 0)
     
     let space = Key(.space)
     space.uppercaseKeyCap = "space"
@@ -54,7 +54,7 @@ func defaultKeyboard() -> Keyboard {
     returnKey.uppercaseOutput = "\n"
     returnKey.lowercaseOutput = "\n"
     defaultKeyboard.addKey(returnKey, row: 3, page: 0)
-    defaultKeyboard.pages[0].setRelativeSizes(percentArray: [0.1, 0.1, 0.1, 0.5, 0.2], rowNum: 3)
+    defaultKeyboard.pages[0].setRelativeSizes(percentArray: [0.12, 0.12, 0.56, 0.2], rowNum: 3)
     
     for key in ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"] {
         let keyModel = Key(.specialCharacter)
@@ -88,12 +88,12 @@ func defaultKeyboard() -> Keyboard {
     
     defaultKeyboard.addKey(Key(keyboardChange), row: 3, page: 1)
     
-    defaultKeyboard.addKey(Key(settings), row: 3, page: 1)
+//    defaultKeyboard.addKey(Key(settings), row: 3, page: 1)
     
     defaultKeyboard.addKey(Key(space), row: 3, page: 1)
     
     defaultKeyboard.addKey(Key(returnKey), row: 3, page: 1)
-    defaultKeyboard.pages[1].setRelativeSizes(percentArray: [0.1, 0.1, 0.1, 0.5, 0.2], rowNum: 3)
+    defaultKeyboard.pages[1].setRelativeSizes(percentArray: [0.15, 0.15, 0.5, 0.2], rowNum: 3)
     
     for key in ["[", "]", "{", "}", "#", "%", "^", "*", "+", "="] {
         let keyModel = Key(.specialCharacter)
@@ -121,12 +121,12 @@ func defaultKeyboard() -> Keyboard {
     
     defaultKeyboard.addKey(Key(keyboardChange), row: 3, page: 2)
     
-    defaultKeyboard.addKey(Key(settings), row: 3, page: 2)
+//    defaultKeyboard.addKey(Key(settings), row: 3, page: 2)
     
     defaultKeyboard.addKey(Key(space), row: 3, page: 2)
     
     defaultKeyboard.addKey(Key(returnKey), row: 3, page: 2)
-    defaultKeyboard.pages[2].setRelativeSizes(percentArray: [0.1, 0.1, 0.1, 0.5, 0.2], rowNum: 3)
+    defaultKeyboard.pages[2].setRelativeSizes(percentArray: [0.15, 0.15, 0.5, 0.2], rowNum: 3)
     
     return defaultKeyboard
 }

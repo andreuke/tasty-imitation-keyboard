@@ -108,12 +108,12 @@ class KeyboardViewController: UIInputViewController {
             kPeriodShortcut: true,
             kKeyboardClicks: true,
             kSmallLowercase: true,
-            "numberACSrows": 3,
-            "numberACSbuttons": 13
+            "numberACSrows": 1,
+            "numberACSbuttons": 3
         ])
         let appDefaults = [String:AnyObject]()
         UserDefaults.standard.register(defaults: appDefaults)
-        self.keyboard = exNumKeyboard()
+        self.keyboard = defaultKeyboard()
         
         self.shiftState = .disabled
         self.currentMode = 0

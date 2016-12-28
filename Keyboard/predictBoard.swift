@@ -118,9 +118,25 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
                 }
             }
         }
-        self.addText(text: keyOutput)
         if key.type == .space {
+            let components = self.contextBeforeInput().components(separatedBy: " ")
+            let lastWord = components[components.count-1]
+            
+            if let correction = self.corrections(lastWord)?.first {
+                self.autoComplete(correction)
+            } else {
+                let prediction = self.banner?.buttons[0].currentTitle
+                if (prediction != nil && lastWord.characters.count > 2) {
+                    self.autoComplete(prediction!)
+                }
+                else {
+                    self.addText(text: keyOutput)
+                }
+            }
             self.incrementNgrams()
+        }
+        else {
+            self.addText(text: keyOutput)
         }
         //self.updateButtons()
     }
@@ -367,10 +383,30 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
                 // ------------------------
                 let recEngine = self.recommendationEngine!
                 var numResults = (normalInputMode ? (self.banner?.numButtons)!: 5)
-                var recommendations = Array(recEngine.recommendWords(word1: word1, word2: word2,
+
+                // UITextChecker
+                var recommendations = [String]()
+                
+                if let corrections = self.corrections(current_input) {
+                    recommendations = corrections
+                }
+                
+                let textChecker = UITextChecker()
+                var misspelledRange = textChecker.rangeOfMisspelledWord(
+                    in: current_input, range: NSRange(0..<current_input.utf16.count),
+                    startingAt: 0, wrap: false, language: "en_US")
+                
+                if misspelledRange.location != NSNotFound {
+                    if let completions = textChecker.completions(forPartialWordRange: misspelledRange, in: current_input, language: "en_US") {
+                        recommendations.append(contentsOf: completions)
+                    }
+                }
+                
+                recommendations.append(contentsOf: Array(recEngine.recommendWords(word1: word1, word2: word2,
                                                                      current_input: current_input,
                                                                      shift_state: self.shiftState,
-                                                                     numResults:numResults)).sorted()
+                                                                     numResults:numResults)).sorted())
+
                 var index = 0
                 DispatchQueue.main.async {
                     var buttons = [BannerButton]()
@@ -1146,6 +1182,19 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
     
     func fastDeleteMode(key:Key, secondaryMode:Bool) ->Bool {
         return (key.type == .backspace && secondaryMode)
+    }
+    
+    func corrections(_ word: String) -> [String]? {
+        let textChecker = UITextChecker()
+        let misspelledRange = textChecker.rangeOfMisspelledWord(
+            in: word, range: NSRange(0..<word.utf16.count),
+            startingAt: 0, wrap: false, language: "en_US")
+        
+        if misspelledRange.location != NSNotFound {
+            return textChecker.guesses(forWordRange: misspelledRange, in: word, language: "en_US")! as [String]
+        } else {
+            return nil
+        }
     }
 }
 
