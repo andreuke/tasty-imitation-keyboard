@@ -127,7 +127,9 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
             } else {
                 self.addText(text: keyOutput)
             }
-            self.incrementNgrams()
+            if(self.reccommendationEngineLoaded) {
+                self.incrementNgrams()
+            }
         }
         else {
             self.addText(text: keyOutput)

@@ -189,9 +189,9 @@ class PredictboardBanner: ExtraView {
         self.warningView.addSubview(self.warningButton)
         self.warningButton.addTarget(self, action: #selector(hideWarningView), for: .touchUpInside)
         
-        self.loadingLabel.text = "Loading Predictions (may take several minutes)"
+        self.loadingLabel.text = "Loading Predictions"
         self.loadingLabel.textAlignment = .center
-        self.loadingLabel.font = UIFont.systemFont(ofSize: fontSize)
+        self.loadingLabel.font = UIFont.systemFont(ofSize: 16)
         self.loadingView.addSubview(self.loadingLabel)
         
         self.loadingLabelMessage.textAlignment = .center
@@ -303,7 +303,7 @@ class PredictboardBanner: ExtraView {
         self.loadingLabelMessage.frame = CGRect(x: self.loadingLabel.frame.origin.x, y: self.loadingLabel.frame.maxY + rowSpacing, width: self.loadingLabel.frame.width, height: self.loadingLabel.frame.height)
         
         self.progressBar.setProgress(0, animated: true)
-        self.progressBar.frame = CGRect(x: self.loadingLabel.frame.origin.x, y: self.loadingLabel.frame.maxY + rowSpacing, width: self.loadingLabel.frame.width, height: self.loadingLabel.frame.height)
+        self.progressBar.frame = CGRect(x: self.getMidX() - textWidth/2.0, y: self.getMidY() + CGFloat(2.5) * textHeight / CGFloat(6), width: textWidth, height: textHeight*0.33)
 
     }
     
