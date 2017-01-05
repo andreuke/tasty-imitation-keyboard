@@ -125,13 +125,7 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
             if let correction = self.corrections(lastWord)?.first {
                 self.autoComplete(correction)
             } else {
-                let prediction = self.banner?.buttons[0].currentTitle
-                if (prediction != nil && lastWord.characters.count > 2) {
-                    self.autoComplete(prediction!)
-                }
-                else {
-                    self.addText(text: keyOutput)
-                }
+                self.addText(text: keyOutput)
             }
             self.incrementNgrams()
         }
