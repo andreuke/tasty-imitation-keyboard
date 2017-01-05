@@ -83,9 +83,9 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
         }
         
         //make sure Brad does not accidently double click
-        if !self.canPress && !fastDeleteMode(key: key, secondaryMode: secondaryMode) {
-            return
-        }
+//        if !self.canPress && !fastDeleteMode(key: key, secondaryMode: secondaryMode) {
+//            return
+//        }
         self.canPress = false
         self.keyPressTimer = Timer.scheduledTimer(timeInterval: canPressDelay, target: self, selector: #selector(resetCanPress), userInfo: nil, repeats: false)
         
