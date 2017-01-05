@@ -194,6 +194,10 @@ class Database: NSObject {
                 var ngrams_added = Set<String>()
                 var bulk_ngrams_insert = "INSERT INTO Ngrams (gram, n, frequency) VALUES "
                 var bulk_containers_insert = "INSERT INTO Containers (profile, ngram, n, frequency) VALUES "
+                
+                var ngrams = [String]()
+                var containers = [String]()
+                
                 // Populate the Ngrams table and Container table with words
                 for word in allWords {
                     if word == "" || word == " " {
@@ -203,8 +207,8 @@ class Database: NSObject {
                     let frequency:Float64 = Float64(wordComponents[0])!
                     let oneGram = wordComponents[1]
                     
-                    bulk_ngrams_insert.append("(\"\(oneGram)\",1,\(frequency)), ")
-                    bulk_containers_insert.append("(\"Default\",\"\(oneGram)\",1,\(frequency)), ")
+                    ngrams.append("(\"\(oneGram)\",1,\(frequency)), ")
+                    containers.append("(\"Default\",\"\(oneGram)\",1,\(frequency)), ")
 
                     ngrams_added.insert(oneGram)
 
@@ -235,8 +239,8 @@ class Database: NSObject {
                     }
                     
                     if !ngrams_added.contains(insertNgram) {//result! == 0 {
-                        bulk_ngrams_insert.append("(\"\(insertNgram)\",\(insert_n),\(freq)), ")
-                        bulk_containers_insert.append("(\"Default\",\"\(insertNgram)\",\(insert_n),\(freq)), ")
+                        ngrams.append("(\"\(insertNgram)\",\(insert_n),\(freq)), ")
+                        containers.append("(\"Default\",\"\(insertNgram)\",\(insert_n),\(freq)), ")
 
                         ngrams_added.insert(insertNgram)
                     }
@@ -277,8 +281,8 @@ class Database: NSObject {
                     }
    
                     if !ngrams_added.contains(insertNgram) {//result! == 0 {
-                        bulk_ngrams_insert.append("(\"\(insertNgram)\",\(insert_n),\(freq)), ")
-                        bulk_containers_insert.append("(\"Default\",\"\(insertNgram)\",\(insert_n),\(freq)), ")
+                        ngrams.append("(\"\(insertNgram)\",\(insert_n),\(freq)), ")
+                        containers.append("(\"Default\",\"\(insertNgram)\",\(insert_n),\(freq)), ")
 
                         ngrams_added.insert(insertNgram)
                     }
@@ -290,11 +294,27 @@ class Database: NSObject {
                 }
                 self.counter = 30000
                 // --------------------------
-                bulk_ngrams_insert = String(bulk_ngrams_insert.characters.dropLast(2))+";"
-                _ = try db.run(bulk_ngrams_insert)
+                var ngrams_query = bulk_ngrams_insert
+                for i in 0..<ngrams.count {
+                    ngrams_query.append(ngrams[i])
+                    
+                    if(i % 1000 == 0) {
+                        ngrams_query = String(ngrams_query.characters.dropLast(2))+";"
+                        _ = try db.run(ngrams_query)
+                        ngrams_query = bulk_ngrams_insert
+                    }
+                }
                 
-                bulk_containers_insert = String(bulk_containers_insert.characters.dropLast(2))+";"
-                _ = try db.run(bulk_containers_insert)
+                var containers_query = bulk_containers_insert
+                for i in 0..<containers.count {
+                    containers_query.append(containers[i])
+                    
+                    if(i % 1000 == 0) {
+                        containers_query = String(containers_query.characters.dropLast(2))+";"
+                        _ = try db.run(containers_query)
+                        containers_query = bulk_containers_insert
+                    }
+                }
                 // --------------------------
                 self.dbCreated = true
             }
