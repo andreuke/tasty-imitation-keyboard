@@ -402,6 +402,12 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
                                                                      current_input: current_input,
                                                                      shift_state: self.shiftState,
                                                                      numResults:numResults)).sorted())
+                
+                let words = self.contextBeforeInput().components(separatedBy: " ")
+                if(words.last != nil && words.last!.characters.count > 0) {
+                    recommendations = recommendations.filter{$0.lowercased() != words.last!.lowercased()}
+                    recommendations.insert("«"+words.last!+"»", at: 0)
+                }
 
                 var index = 0
                 DispatchQueue.main.async {
