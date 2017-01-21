@@ -309,7 +309,7 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
         self.canPress = false
         self.keyPressTimer = Timer.scheduledTimer(timeInterval: canPressDelay, target: self, selector: #selector(resetCanPress), userInfo: nil, repeats: false)
         
-        let wordToAdd = sender.titleLabel!.text!
+        let wordToAdd = sender.titleLabel!.text!.replacingOccurrences(of: "\"", with: "")
         if wordToAdd != " "
         {
             self.autoComplete(wordToAdd)
@@ -383,8 +383,9 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
                 // UITextChecker
                 var recommendations = [String]()
                 
-                if let corrections = self.corrections(current_input) {
-                    recommendations = corrections
+                let corrections = self.corrections(current_input)
+                if (corrections != nil) {
+                    recommendations = corrections!
                 }
                 
                 let textChecker = UITextChecker()
@@ -406,7 +407,7 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
                 let words = self.contextBeforeInput().components(separatedBy: " ")
                 if(words.last != nil && words.last!.characters.count > 0) {
                     recommendations = recommendations.filter{$0.lowercased() != words.last!.lowercased()}
-                    recommendations.insert("«"+words.last!+"»", at: 0)
+                    recommendations.insert("\"" + words.last! + "\"", at: 0)
                 }
 
                 var index = 0
@@ -420,6 +421,12 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
                     }
                     for button in buttons {
                         if index < recommendations.count {
+                            if(corrections != nil && (corrections?.count)! > 0 && recommendations[index] == corrections?[0]) {
+                                button.backgroundColor = GlobalColors.buttonColor(self.darkMode())
+                            }
+                            else {
+                                button.backgroundColor = GlobalColors.lightModeSpecialKey
+                            }
                             button.setTitle(recommendations[index], for: UIControlState())
                             button.addTarget(self, action: #selector(KeyboardViewController.playKeySound), for: .touchDown)
                         }

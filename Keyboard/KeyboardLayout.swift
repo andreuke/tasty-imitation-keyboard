@@ -163,8 +163,11 @@ class GlobalColors: NSObject {
     class var darkModeSolidColorRegularKey: UIColor { get { return UIColor(red: CGFloat(83)/CGFloat(255), green: CGFloat(83)/CGFloat(255), blue: CGFloat(83)/CGFloat(255), alpha: 1) }}
     class var lightModeSpecialKey: UIColor { get { return GlobalColors.lightModeSolidColorSpecialKey }}
     class var lightModeSolidColorSpecialKey: UIColor { get { return UIColor(red: CGFloat(177)/CGFloat(255), green: CGFloat(177)/CGFloat(255), blue: CGFloat(177)/CGFloat(255), alpha: 1) }}
+    class var lightModeSolidColorSpecialKeyHighlighted: UIColor { get { return UIColor(red: CGFloat(197)/CGFloat(255), green: CGFloat(197)/CGFloat(255), blue: CGFloat(197)/CGFloat(255), alpha: 1) }}
+    
     class var darkModeSpecialKey: UIColor { get { return UIColor.gray.withAlphaComponent(CGFloat(0.3)) }}
     class var darkModeSolidColorSpecialKey: UIColor { get { return UIColor(red: CGFloat(45)/CGFloat(255), green: CGFloat(45)/CGFloat(255), blue: CGFloat(45)/CGFloat(255), alpha: 1) }}
+    class var darkModeSolidColorSpecialKeyHighlighted: UIColor { get { return UIColor(red: CGFloat(65)/CGFloat(255), green: CGFloat(65)/CGFloat(255), blue: CGFloat(65)/CGFloat(255), alpha: 1) }}
     class var darkModeShiftKeyDown: UIColor { get { return UIColor(red: CGFloat(214)/CGFloat(255), green: CGFloat(220)/CGFloat(255), blue: CGFloat(208)/CGFloat(255), alpha: 1) }}
     class var lightModePopup: UIColor { get { return GlobalColors.lightModeRegularKey }}
     class var darkModePopup: UIColor { get { return UIColor.gray }}
@@ -226,6 +229,16 @@ class GlobalColors: NSObject {
             }
         }
     }
+    
+    class func buttonColor(_ darkMode: Bool) -> UIColor {
+        if darkMode {
+            return self.darkModeSolidColorSpecialKeyHighlighted
+        }
+        else {
+            return self.lightModeSolidColorSpecialKeyHighlighted
+        }
+    }
+
 }
 
 //"darkShadowColor": UIColor(hue: (220/360.0), saturation: 0.04, brightness: 0.56, alpha: 1),
