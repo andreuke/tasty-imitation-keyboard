@@ -406,7 +406,7 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
                 
                 let words = self.contextBeforeInput().components(separatedBy: " ")
                 if(words.last != nil && words.last!.characters.count > 0) {
-                    recommendations = recommendations.filter{$0.lowercased() != words.last!.lowercased()}
+                    recommendations = recommendations.filter{$0 == "I" || $0.lowercased() != words.last!.lowercased()}
                     recommendations.insert("\"" + words.last! + "\"", at: 0)
                 }
 
@@ -425,7 +425,7 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
                                 button.backgroundColor = GlobalColors.buttonColor(self.darkMode())
                             }
                             else {
-                                button.backgroundColor = GlobalColors.lightModeSpecialKey
+                                button.backgroundColor = GlobalColors.specialKey(self.darkMode(), solidColorMode: self.solidColorMode())
                             }
                             button.setTitle(recommendations[index], for: UIControlState())
                             button.addTarget(self, action: #selector(KeyboardViewController.playKeySound), for: .touchDown)
@@ -1194,6 +1194,10 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
     }
     
     func corrections(_ word: String) -> [String]? {
+        if let forcedCorrection = self.specialCorrection(word) {
+            return [forcedCorrection]
+        }
+
         let textChecker = UITextChecker()
         let misspelledRange = textChecker.rangeOfMisspelledWord(
             in: word, range: NSRange(0..<word.utf16.count),
@@ -1204,6 +1208,16 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
         } else {
             return nil
         }
+    }
+    
+    func specialCorrection(_ word: String) -> String? {
+        if(word == "i") {
+            return "I"
+        }
+        if(word.lowercased() == "im") {
+            return "I'm"
+        }
+        return nil
     }
 }
 
