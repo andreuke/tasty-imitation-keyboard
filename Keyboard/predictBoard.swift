@@ -131,6 +131,16 @@ class PredictBoard: KeyboardViewController, UIPopoverPresentationControllerDeleg
                 self.incrementNgrams()
             }
         }
+        else if punctuation.contains(keyOutput) {
+            let components = self.contextBeforeInput().components(separatedBy: " ")
+            let lastWord = components[components.count-1]
+            
+            if let correction = self.corrections(lastWord)?.first {
+                self.autoComplete(correction + keyOutput)
+            } else {
+                self.addText(text: keyOutput)
+            }
+        }
         else {
             self.addText(text: keyOutput)
         }
