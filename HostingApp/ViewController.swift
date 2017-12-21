@@ -20,6 +20,7 @@ class HostingAppViewController: UIViewController {
         NotificationCenter.default.addObserver(self, selector: #selector(HostingAppViewController.keyboardDidHide), name: NSNotification.Name.UIKeyboardDidHide, object: nil)
         //NSNotificationCenter.defaultCenter().addObserver(self, selector: Selector("keyboardWillChangeFrame:"), name: UIKeyboardWillChangeFrameNotification, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(HostingAppViewController.keyboardDidChangeFrame(_:)), name: NSNotification.Name.UIKeyboardDidChangeFrame, object: nil)
+<<<<<<< HEAD
         
         let appGroupID = "group.com.Meboard"
         UserDefaults(suiteName: appGroupID)
@@ -30,6 +31,8 @@ class HostingAppViewController: UIViewController {
         let x = UserDefaults.standard.bool(forKey: "kSmallLowercase")
        let y =  UserDefaults.standard.bool(forKey: "kSmallLowercase")
         
+=======
+>>>>>>> 58ee779d79ff5dffdc170545ab4bb0afdd0e2caa
     }
 
     override func didReceiveMemoryWarning() {
@@ -65,10 +68,16 @@ class HostingAppViewController: UIViewController {
     
     func keyboardDidChangeFrame(_ notification: Notification) {
         //let frameBegin: CGRect! = notification.userInfo?[UIKeyboardFrameBeginUserInfoKey]?.CGRectValue
+<<<<<<< HEAD
         //let frameEnd: CGRect! = ((notification as NSNotification).userInfo?[UIKeyboardFrameEndUserInfoKey] as AnyObject).cgRectValue
         let userInfo = notification.userInfo
         let frameEnd = (userInfo?[UIKeyboardFrameBeginUserInfoKey] as? NSValue)?.cgRectValue
         if frameEnd?.height == referenceHeight {
+=======
+        let frameEnd: CGRect! = (notification.userInfo?[UIKeyboardFrameEndUserInfoKey] as AnyObject).cgRectValue
+        
+        if frameEnd.height == referenceHeight {
+>>>>>>> 58ee779d79ff5dffdc170545ab4bb0afdd0e2caa
             if firstHeightTime == nil {
                 firstHeightTime = CACurrentMediaTime()
                 

@@ -13,9 +13,9 @@ import UIKit
 
 // popup constraints have to be setup with the topmost view in mind; hence these callbacks
 protocol KeyboardKeyProtocol: class {
-    func frameForPopup(_ key: KeyboardKey, direction: Direction) -> CGRect
-    func willShowPopup(_ key: KeyboardKey, direction: Direction) //may be called multiple times during layout
-    func willHidePopup(_ key: KeyboardKey)
+    func popupFrame(for key: KeyboardKey, direction: Direction) -> CGRect
+    func willShowPopup(for key: KeyboardKey, direction: Direction) //may be called multiple times during layout
+    func willHidePopup(for key: KeyboardKey)
 }
 
 enum VibrancyType {
@@ -33,18 +33,8 @@ class KeyboardKey: UIControl {
     var text: String {
         didSet {
             self.label.text = text
-            self.label.lineBreakMode = .byWordWrapping // or NSLineBreakMode.ByWordWrapping
-            self.label.numberOfLines = 0
             self.label.frame = CGRect(x: self.labelInset, y: self.labelInset, width: self.bounds.width - self.labelInset * 2, height: self.bounds.height - self.labelInset * 2)
-        }
-    }
-    
-    var secondaryText: String {
-        didSet {
-            self.secondaryLabel.text = secondaryText
-            self.secondaryLabel.lineBreakMode = .byWordWrapping // or NSLineBreakMode.ByWordWrapping
-            self.secondaryLabel.numberOfLines = 0
-            self.secondaryLabel.frame = CGRect(x: self.labelInset, y: self.labelInset, width: self.bounds.width - self.labelInset * 2, height: self.bounds.height - self.labelInset * 2)
+            self.redrawText()
         }
     }
     
@@ -63,14 +53,10 @@ class KeyboardKey: UIControl {
     var downBorderColor: UIColor? { didSet { updateColors() }}
     var downTextColor: UIColor? { didSet { updateColors() }}
     
-    var secondaryTextColor = UIColor.lightGray
-    var downSecondaryTextColor = UIColor.init(red: 0.95, green: 0.95, blue: 0.95, alpha: 1)
-    
     var labelInset: CGFloat = 0 {
         didSet {
             if oldValue != labelInset {
                 self.label.frame = CGRect(x: self.labelInset, y: self.labelInset, width: self.bounds.width - self.labelInset * 2, height: self.bounds.height - self.labelInset * 2)
-                self.secondaryLabel.frame = CGRect(x: self.labelInset, y: self.labelInset, width: self.bounds.width - self.labelInset * 2, height: self.bounds.height - self.labelInset * 2)
             }
         }
     }
@@ -100,12 +86,11 @@ class KeyboardKey: UIControl {
     
     override var frame: CGRect {
         didSet {
-
+            self.redrawText()
         }
     }
     
     var label: UILabel
-    var secondaryLabel: VerticalTopAlignLabel
     var popupLabel: UILabel?
     var shape: Shape? {
         didSet {
@@ -140,8 +125,6 @@ class KeyboardKey: UIControl {
         
         self.label = UILabel()
         self.text = ""
-        self.secondaryLabel = VerticalTopAlignLabel()
-        self.secondaryText = ""
         
         self.color = UIColor.white
         self.underColor = UIColor.gray
@@ -172,9 +155,8 @@ class KeyboardKey: UIControl {
         
         self.addSubview(self.background)
         self.background.addSubview(self.label)
-        self.background.addSubview(self.secondaryLabel)
         
-        let setupViews: Void = {
+        setupViews: do {
             self.displayView.isOpaque = false
             self.underView?.isOpaque = false
             self.borderView?.isOpaque = false
@@ -193,15 +175,7 @@ class KeyboardKey: UIControl {
             self.label.minimumScaleFactor = CGFloat(0.1)
             self.label.isUserInteractionEnabled = false
             self.label.numberOfLines = 1
-            
-            self.secondaryLabel.textAlignment = NSTextAlignment.right
-            self.secondaryLabel.baselineAdjustment = UIBaselineAdjustment.alignCenters
-            self.secondaryLabel.font = self.secondaryLabel.font.withSize(16)
-            self.secondaryLabel.adjustsFontSizeToFitWidth = true
-            self.secondaryLabel.minimumScaleFactor = CGFloat(0.1)
-            self.secondaryLabel.isUserInteractionEnabled = false
-            self.secondaryLabel.numberOfLines = 1
-        }()
+        }
     }
     
     required init?(coder: NSCoder) {
@@ -234,8 +208,6 @@ class KeyboardKey: UIControl {
         self.background.frame = self.bounds
         self.label.frame = CGRect(x: self.labelInset, y: self.labelInset, width: self.bounds.width - self.labelInset * 2, height: self.bounds.height - self.labelInset * 2)
         
-        self.secondaryLabel.frame = CGRect(x: self.labelInset, y: self.labelInset, width: self.bounds.width - self.labelInset * 2, height: self.bounds.height - self.labelInset * 2)
-        
         self.displayView.frame = boundingBox
         self.shadowView.frame = boundingBox
         self.borderView?.frame = boundingBox
@@ -248,6 +220,7 @@ class KeyboardKey: UIControl {
     
     func refreshViews() {
         self.refreshShapes()
+        self.redrawText()
         self.redrawShape()
         self.updateColors()
     }
@@ -323,7 +296,7 @@ class KeyboardKey: UIControl {
             self.layoutPopup(self.popupDirection!)
             self.configurePopup(self.popupDirection!)
             
-            self.delegate?.willShowPopup(self, direction: self.popupDirection!)
+            self.delegate?.willShowPopup(for: self, direction: self.popupDirection!)
         }
         else {
             self.shadowView.isHidden = true
@@ -331,11 +304,16 @@ class KeyboardKey: UIControl {
         }
     }
     
+    func redrawText() {
+//        self.keyView.frame = self.bounds
+//        self.button.frame = self.bounds
+//        
+//        self.button.setTitle(self.text, forState: UIControlState.Normal)
+    }
     
     func redrawShape() {
         if let shape = self.shape {
             self.text = ""
-            self.secondaryText = ""
             shape.removeFromSuperview()
             self.addSubview(shape)
             
@@ -381,13 +359,11 @@ class KeyboardKey: UIControl {
             
             if let downTextColor = self.downTextColor {
                 self.label.textColor = downTextColor
-                self.secondaryLabel.textColor = self.downSecondaryTextColor
                 self.popupLabel?.textColor = downTextColor
                 self.shape?.color = downTextColor
             }
             else {
                 self.label.textColor = self.textColor
-                self.secondaryLabel.textColor = self.downSecondaryTextColor
                 self.popupLabel?.textColor = self.textColor
                 self.shape?.color = self.textColor
             }
@@ -400,7 +376,6 @@ class KeyboardKey: UIControl {
             self.borderView?.strokeColor = self.borderColor
             
             self.label.textColor = self.textColor
-            self.secondaryLabel.textColor = self.secondaryTextColor
             self.popupLabel?.textColor = self.textColor
             self.shape?.color = self.textColor
         }
@@ -417,7 +392,7 @@ class KeyboardKey: UIControl {
         
         if let popup = self.popup {
             if let delegate = self.delegate {
-                let frame = delegate.frameForPopup(self, direction: dir)
+                let frame = delegate.popupFrame(for: self, direction: dir)
                 popup.frame = frame
                 popupLabel?.frame = popup.bounds
             }
@@ -472,19 +447,12 @@ class KeyboardKey: UIControl {
             self.popupLabel = popupLabel
             
             self.label.isHidden = true
-            self.secondaryLabel.isHidden = true
-        }
-    }
-    
-    func showSecondaryPopup() {
-        if self.popup != nil {
-            self.popupLabel?.text = self.secondaryLabel.text
         }
     }
     
     func hidePopup() {
         if self.popup != nil {
-            self.delegate?.willHidePopup(self)
+            self.delegate?.willHidePopup(for: self)
             
             self.popupLabel?.removeFromSuperview()
             self.popupLabel = nil
@@ -496,7 +464,6 @@ class KeyboardKey: UIControl {
             self.popup = nil
             
             self.label.isHidden = false
-            self.secondaryLabel.isHidden = false
             self.background.attach(nil)
             
             self.layer.zPosition = 0
@@ -613,22 +580,4 @@ class ShapeView: UIView {
 //            self.drawCall(rect)
 //        }
 //    }
-}
-
-class VerticalTopAlignLabel: UILabel {
-    override func drawText(in rect:CGRect) {
-        guard self.text != nil else {
-            return super.drawText(in:rect)
-        }
-        
-        let attributedText = NSAttributedString.init(string: self.text!, attributes: [NSFontAttributeName : self.font])
-        var newRect = rect
-        newRect.size.height = attributedText.boundingRect(with:rect.size, options: .usesLineFragmentOrigin, context: nil).size.height
-        
-        if self.numberOfLines != 0 {
-            newRect.size.height = min(newRect.size.height, CGFloat(self.numberOfLines) * self.font.lineHeight)
-        }
-        super.drawText(in:newRect)
-    }
-    
 }

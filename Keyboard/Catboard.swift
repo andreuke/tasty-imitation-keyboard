@@ -12,6 +12,7 @@ import UIKit
 This is the demo keyboard. If you're implementing your own keyboard, simply follow the example here and then
 set the name of your KeyboardViewController subclass in the Info.plist file.
 */
+
 let kCatTypeEnabled = "kCatTypeEnabled"
 
 class Catboard: KeyboardViewController {
@@ -27,9 +28,10 @@ class Catboard: KeyboardViewController {
         fatalError("init(coder:) has not been implemented")
     }
     
-    override func keyPressed(_ key: Key, secondaryMode: Bool) {
+    override func keyPressed(_ key: Key) {
         let textDocumentProxy = self.textDocumentProxy
-        let keyOutput = key.outputForCase(self.shiftState.uppercase(), secondary: secondaryMode)
+        
+        let keyOutput = key.outputForCase(self.shiftState.uppercase())
         
         if !UserDefaults.standard.bool(forKey: kCatTypeEnabled) {
             textDocumentProxy.insertText(keyOutput)
@@ -85,7 +87,7 @@ class Catboard: KeyboardViewController {
                 for rowKeys in page.rows {
                     for key in rowKeys {
                         if let keyView = self.layout!.viewForKey(key) {
-                            keyView.addTarget(self, action: "takeScreenshotDelay", for: .touchDown)
+                            keyView.addTarget(self, action: #selector(Catboard.takeScreenshotDelay), for: .touchDown)
                         }
                     }
                 }
@@ -110,10 +112,16 @@ class Catboard: KeyboardViewController {
             
             let rect = self.view.bounds
             UIGraphicsBeginImageContextWithOptions(rect.size, true, 0)
-            var context = UIGraphicsGetCurrentContext()
             self.view.drawHierarchy(in: self.view.bounds, afterScreenUpdates: true)
             let capturedImage = UIGraphicsGetImageFromCurrentImageContext()
             UIGraphicsEndImageContext()
+            
+            // AB: consider re-enabling this when interfaceOrientation actually breaks
+            //// HACK: Detecting orientation manually
+            //let screenSize: CGSize = UIScreen.main.bounds.size
+            //let orientation: UIInterfaceOrientation = screenSize.width < screenSize.height ? .portrait : .landscapeLeft
+            //let name = (orientation.isPortrait ? "Screenshot-Portrait" : "Screenshot-Landscape")
+            
             let name = (self.interfaceOrientation.isPortrait ? "Screenshot-Portrait" : "Screenshot-Landscape")
             let imagePath = "/Users/archagon/Documents/Programming/OSX/RussianPhoneticKeyboard/External/tasty-imitation-keyboard/\(name).png"
             
@@ -134,5 +142,6 @@ func randomCat() -> String {
     
     let index = cats.characters.index(cats.startIndex, offsetBy: Int(randomCat))
     let character = cats[index]
+    
     return String(character)
 }
